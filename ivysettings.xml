@@ -17,9 +17,15 @@
                 <artifact pattern="http://maven.restlet.org/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
             </url>
         </chain>
+        <chain name="maven">
+            <url name="maven" m2compatible="true">
+                <artifact pattern="http://repo1.maven.org/maven2/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+            </url>
+        </chain>
         <chain name="tlbChain">
             <resolver ref="local"/>
             <resolver ref="default"/>
+            <resolver ref="maven"/>
             <resolver ref="restlet"/>
         </chain>
     </resolvers>

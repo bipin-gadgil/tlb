@@ -203,7 +203,11 @@
             </class-dirs>
         </jar-restlet>
 
-        <onejar-restlet jar-name="${tlb_server_jar}" name="${tlb.server.jar.name}"/>
+        <onejar-restlet jar-name="${tlb_server_jar}" name="${tlb.server.jar.name}">
+            <additional-dependencies>
+                <fileset refid="server.dependencies.fileset"/>
+            </additional-dependencies>
+        </onejar-restlet>
 
         <delete file="${tlb_server_jar}"/>
     </target>

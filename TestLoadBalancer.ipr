@@ -23,6 +23,7 @@
       <entry name="?*.dtd" />
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
+      <entry name="?*.yaml" />
     </wildcardResourcePatterns>
     <annotationProcessing enabled="false" useClasspath="true" />
   </component>
@@ -420,6 +421,17 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/lib/restlet" recursive="false" />
+    </library>
+    <library name="server">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/lib/server" />
+        <root url="file://$PROJECT_DIR$/lib/server" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/../cassandra/src/java" />
+      </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/lib/server" recursive="false" />
     </library>
     <library name="test">
       <CLASSES>
