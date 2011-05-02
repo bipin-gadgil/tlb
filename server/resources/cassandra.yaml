@@ -43,12 +43,12 @@ concurrent_writes: 32
 
 sliced_buffer_size_in_kb: 64
 
-storage_port: 7000
+storage_port: 1907
 
 listen_address: localhost
 
 rpc_address: localhost
-rpc_port: 9160
+rpc_port: 9107
 
 rpc_keepalive: true
 
