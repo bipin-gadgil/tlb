@@ -2,9 +2,6 @@ package tlb.server;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.internal.verification.Only;
-import org.mockito.internal.verification.Times;
 import org.restlet.Component;
 import org.restlet.Context;
 import org.restlet.Restlet;
@@ -133,9 +130,11 @@ public class TlbServerInitializerTest {
         final Timer timer = new Timer() {
             @Override
             public void schedule(TimerTask task, long delay, long period) {
-                tasks[0] = task;
-                assertThat(delay, is(0l));
-                assertThat(period, is(1*24*60*60*1000l));
+                if (task instanceof TlbServerInitializer.Purge) {
+                    tasks[0] = task;
+                    assertThat(delay, is(0l));
+                    assertThat(period, is(TlbServerInitializer.ONCE_A_DAY));
+                }
             }
         };
 
@@ -146,9 +145,11 @@ public class TlbServerInitializerTest {
             }
         }.init();
 
+        verify(repoFactory).registerExitHook();
+        verifyNoMoreInteractions(repoFactory);
+
         tasks[0].run();
         verify(repoFactory).purgeVersionsOlderThan(7);
-        verify(repoFactory).registerExitHook();
         verifyNoMoreInteractions(repoFactory);
 
         final EntryRepoFactory anotherRepoFactory = mock(EntryRepoFactory.class);
@@ -162,9 +163,43 @@ public class TlbServerInitializerTest {
             }
         }.init();
 
+        verify(repoFactory).registerExitHook();
+        verifyNoMoreInteractions(repoFactory);
+
         tasks[0].run();
         verify(anotherRepoFactory).purgeVersionsOlderThan(3);
-        verify(anotherRepoFactory).registerExitHook();
+        verifyNoMoreInteractions(repoFactory);
+    }
+
+    @Test
+    public void shouldSetTimerToFlushFilesToDisk_EveryHour() {
+        final TimerTask[] tasks = new TimerTask[1];
+        final EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
+        final Timer timer = new Timer() {
+            int index;
+            @Override
+            public void schedule(TimerTask task, long delay, long period) {
+                if (task instanceof TlbServerInitializer.SyncToDisk) {
+                    tasks[0] = task;
+                    assertThat(delay, is(0l));
+                    assertThat(period, is(TlbServerInitializer.ONCE_A_DAY));
+                }
+            }
+        };
+
+        new TlbServerInitializer(new SystemEnvironment(systemEnv), timer) {
+            @Override
+            EntryRepoFactory repoFactory() {
+                return repoFactory;
+            }
+        }.init();
+
+        verify(repoFactory).registerExitHook();
+        verifyNoMoreInteractions(repoFactory);
+
+        tasks[0].run();
+        verify(repoFactory).syncReposToDisk();
+
         verifyNoMoreInteractions(repoFactory);
     }
 
@@ -176,7 +211,9 @@ public class TlbServerInitializerTest {
         final Timer timer = new Timer() {
             @Override
             public void schedule(TimerTask task, long delay, long period) {
-                fail("Should not have scheduled anything!");
+                if (task instanceof TlbServerInitializer.Purge) {
+                    fail("Should not have scheduled anything!");
+                }
             }
         };
 

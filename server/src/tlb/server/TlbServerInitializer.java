@@ -14,6 +14,7 @@ import java.util.TimerTask;
  * @understands running the server as a standalone process
  */
 public class TlbServerInitializer extends ServerInitializer {
+    public static final long ONCE_A_DAY = 1 * 24 * 60 * 60 * 1000;
     private final SystemEnvironment env;
     private final Timer timer;
 
@@ -37,10 +38,15 @@ public class TlbServerInitializer extends ServerInitializer {
         final EntryRepoFactory repoFactory = repoFactory();
 
         setupTimerForPurgingOlderVersions(repoFactory);
+        setupTimerForFlushingToDisk(repoFactory);
 
         repoFactory.registerExitHook();
         appMap.put(TlbConstants.Server.REPO_FACTORY, repoFactory);
         applicationContext.setAttributes(appMap);
+    }
+
+    private void setupTimerForFlushingToDisk(EntryRepoFactory repoFactory) {
+        timer.schedule(new SyncToDisk(repoFactory), 0, ONCE_A_DAY);
     }
 
     private void setupTimerForPurgingOlderVersions(final EntryRepoFactory repoFactory) {
@@ -48,12 +54,7 @@ public class TlbServerInitializer extends ServerInitializer {
         if (versionLifeInDays == -1) {
             return;
         }
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                repoFactory.purgeVersionsOlderThan(versionLifeInDays);
-            }
-        }, 0, 1*24*60*60*1000);
+        timer.schedule(new Purge(repoFactory, versionLifeInDays), 0, ONCE_A_DAY);
     }
 
     private int versionInLife() {
@@ -67,5 +68,33 @@ public class TlbServerInitializer extends ServerInitializer {
 
     EntryRepoFactory repoFactory() {
         return new EntryRepoFactory(env);
+    }
+
+    static class Purge extends TimerTask {
+        private final EntryRepoFactory repoFactory;
+        private final int versionLifeInDays;
+
+        public Purge(EntryRepoFactory repoFactory, int versionLifeInDays) {
+            this.repoFactory = repoFactory;
+            this.versionLifeInDays = versionLifeInDays;
+        }
+
+        @Override
+        public void run() {
+            repoFactory.purgeVersionsOlderThan(versionLifeInDays);
+        }
+    }
+
+    static class SyncToDisk extends TimerTask {
+        private final EntryRepoFactory repoFactory;
+
+        public SyncToDisk(EntryRepoFactory repoFactory) {
+            this.repoFactory = repoFactory;
+        }
+
+        @Override
+        public void run() {
+            repoFactory.syncReposToDisk();
+        }
     }
 }

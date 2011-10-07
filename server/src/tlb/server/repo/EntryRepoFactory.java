@@ -27,6 +27,10 @@ public class EntryRepoFactory implements Runnable {
     private final TimeProvider timeProvider;
     private Cache<EntryRepo> cache;
 
+    public void syncReposToDisk() {
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
     static interface Creator<T> {
         T create();
     }
