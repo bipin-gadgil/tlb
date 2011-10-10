@@ -51,6 +51,8 @@ public interface TlbConstants {
         static final SystemEnvironment.EnvVar TLB_DATA_DIR = new SystemEnvironment.DefaultedEnvVar("TLB_DATA_DIR", DEFAULT_TLB_DATA_DIR);
 
         static final String LISTING_VERSION = "listing_version";
+        static final String JOB_NUMBER = "job_number";
+        static final String TOTAL_JOBS = "total_jobs";
         static final SystemEnvironment.EnvVar TLB_VERSION_LIFE_IN_DAYS = new SystemEnvironment.DefaultedEnvVar("TLB_VERSION_LIFE_IN_DAYS", "7");
         static final SystemEnvironment.EnvVar TLB_SYNC_TO_DISK_INTERVAL_IN_MINS = new SystemEnvironment.DefaultedEnvVar("TLB_SYNC_TO_DISK_INTERVAL_IN_MINS", "60");
 
@@ -58,6 +60,7 @@ public interface TlbConstants {
             static final String SUBSET_SIZE = "subset_size";
             static final String SUITE_TIME = "suite_time";
             static final String SUITE_RESULT = "suite_result";
+            static final String CORRECTNESS_CHECK = "correctness_check";
         }
     }
 }
