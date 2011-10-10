@@ -1,7 +1,7 @@
 package tlb.server.repo;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
@@ -12,10 +12,7 @@ import tlb.domain.SuiteTimeEntry;
 import tlb.domain.TimeProvider;
 import tlb.utils.SystemEnvironment;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.*;
 
 import static org.hamcrest.core.Is.is;
@@ -27,8 +24,9 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 import static org.mockito.Mockito.*;
 import static tlb.TestUtil.deref;
 import static tlb.TlbConstants.Server.EntryRepoFactory.SUBSET_SIZE;
+import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_RESULT;
+import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
-
 
 public class EntryRepoFactoryTest {
     private EntryRepoFactory factory;
@@ -46,6 +44,67 @@ public class EntryRepoFactoryTest {
         baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
         factory = new EntryRepoFactory(env());
         logFixture = new TestUtil.LogFixture();
+    }
+
+    @Test
+    public void shouldSyncReposToDisk() throws ClassNotFoundException, IOException {
+        SubsetSizeRepo subsetRepo = factory.createSubsetRepo("dev", LATEST_VERSION);
+        SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
+        SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
+        subsetRepo.add(new SubsetSizeEntry(10));
+        suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
+        suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+
+        assertThat("No files should exist as sync on this factory has never been called.", baseDir.list().length, is(0));
+
+        factory.syncReposToDisk();
+
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(3));
+
+
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10");
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25");
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
+    }
+
+    @Test
+    public void should_NOT_SyncReposToDisk_unlessDirty() throws ClassNotFoundException, IOException {
+        SubsetSizeRepo subsetRepo = factory.createSubsetRepo("dev", LATEST_VERSION);
+        SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
+        SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
+        subsetRepo.add(new SubsetSizeEntry(10));
+        suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
+        suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+
+        factory.syncReposToDisk();
+
+        FileUtils.cleanDirectory(baseDir);
+
+        assertThat(baseDir.list().length, is(0));
+
+        factory.syncReposToDisk();
+
+        assertThat("No files should exist as no repos were dirty when sync-to-disk was called.", baseDir.list().length, is(0));
+
+        subsetRepo.add(new SubsetSizeEntry(21));
+        suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Bang", 35));
+        suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+
+        factory.syncReposToDisk();
+
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(3));
+
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10", "21");
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25", "foo.bar.Bang: 35");
+        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
+    }
+
+    private void assertContentIs(final String fileName, String... str) throws IOException {
+        List list = IOUtils.readLines(new FileInputStream(new File(baseDir, fileName)));
+        assertThat("Expected content lines and number-of-lines-in-file do not match", list.size(), is(str.length));
+        for (int i = 0; i < str.length; i++) {
+            assertThat((String) list.get(i), is(str[i]));
+        }
     }
 
     @Test
@@ -85,12 +144,18 @@ public class EntryRepoFactoryTest {
         EntryRepo repoFoo = mock(EntryRepo.class);
         EntryRepo repoBar = mock(EntryRepo.class);
         EntryRepo repoBaz = mock(EntryRepo.class);
+
+        when(repoFoo.isDirty()).thenReturn(true);
         when(repoFoo.diskDump()).thenReturn("foo-data");
+        when(repoBar.isDirty()).thenReturn(true);
         when(repoBar.diskDump()).thenReturn("bar-data");
+        when(repoBaz.isDirty()).thenReturn(true);
         when(repoBaz.diskDump()).thenReturn("baz-data");
+
         factory.getRepos().put("foo", repoFoo);
         factory.getRepos().put("bar", repoBar);
         factory.getRepos().put("baz", repoBaz);
+        
         Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
@@ -131,7 +196,9 @@ public class EntryRepoFactoryTest {
         EntryRepo repoBar = mock(EntryRepo.class);
         factory.getRepos().put("foo_subset__size", repoFoo);
         factory.getRepos().put("bar_subset__size", repoBar);
-        when(repoFoo.diskDump()).thenThrow(new IOException("test exception"));
+        when(repoFoo.isDirty()).thenReturn(true);
+        when(repoFoo.diskDump()).thenThrow(new RuntimeException("test exception"));
+        when(repoBar.isDirty()).thenReturn(true);
         when(repoBar.diskDump()).thenReturn("bar-data");
         logFixture.startListening();
         factory.run();

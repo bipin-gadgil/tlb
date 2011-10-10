@@ -14,7 +14,8 @@ import java.util.TimerTask;
  * @understands running the server as a standalone process
  */
 public class TlbServerInitializer extends ServerInitializer {
-    public static final long ONCE_A_DAY = 1 * 24 * 60 * 60 * 1000;
+    public static final long ONCE_AN_HOUR = 60 * 60 * 1000;
+    public static final long ONCE_A_DAY = 24 * ONCE_AN_HOUR;
     private final SystemEnvironment env;
     private final Timer timer;
 
@@ -46,7 +47,7 @@ public class TlbServerInitializer extends ServerInitializer {
     }
 
     private void setupTimerForFlushingToDisk(EntryRepoFactory repoFactory) {
-        timer.schedule(new SyncToDisk(repoFactory), 0, ONCE_A_DAY);
+        timer.schedule(new SyncToDisk(repoFactory), 0, ONCE_AN_HOUR);
     }
 
     private void setupTimerForPurgingOlderVersions(final EntryRepoFactory repoFactory) {

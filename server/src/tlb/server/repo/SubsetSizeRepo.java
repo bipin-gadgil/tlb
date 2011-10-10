@@ -5,20 +5,26 @@ import tlb.domain.SubsetSizeEntry;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @understands storage and retrival of size of subset of total suites run by job
  */
 public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
-    private List<SubsetSizeEntry> entries;
+    private volatile List<SubsetSizeEntry> entries;
+    private volatile boolean dirty;
 
     public SubsetSizeRepo() {
-        entries = new ArrayList<SubsetSizeEntry>();
+        setEntries(new ArrayList<SubsetSizeEntry>());
+    }
+
+    private synchronized void setEntries(final List<SubsetSizeEntry> list) {
+        entries = Collections.synchronizedList(list);
     }
 
     public Collection<SubsetSizeEntry> list() {
-        return entries;
+        return Collections.unmodifiableList(entries);
     }
 
     public Collection<SubsetSizeEntry> list(String version) throws IOException, ClassNotFoundException {
@@ -29,20 +35,23 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
         throw new UnsupportedOperationException("update not allowed on repository");
     }
 
-    public String diskDump() throws IOException {
+    public synchronized String diskDump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (SubsetSizeEntry entry : entries) {
             dumpBuffer.append(entry.dump());
         }
+        dirty = false;
         return dumpBuffer.toString();
     }
 
-    public void load(final String fileContents) throws IOException {
-        entries = parse(fileContents);
+    public synchronized void load(final String fileContents) {
+        setEntries(parse(fileContents));
+        dirty = false;
     }
 
-    public void add(SubsetSizeEntry entry) {
+    public synchronized void add(SubsetSizeEntry entry) {
         entries.add(entry);
+        dirty = true;
     }
 
     public void setFactory(EntryRepoFactory factory) {
@@ -59,5 +68,9 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
 
     public List<SubsetSizeEntry> parse(String string) {
         return SubsetSizeEntry.parse(string);
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 }

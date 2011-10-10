@@ -58,7 +58,7 @@ public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends Sui
     }
 
     @Override
-    public final void load(final String fileContents) throws IOException {
+    public final void load(final String fileContents) {
         super.load(fileContents);
         loadedData = true;
     }

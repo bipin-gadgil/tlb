@@ -182,7 +182,7 @@ public class TlbServerInitializerTest {
                 if (task instanceof TlbServerInitializer.SyncToDisk) {
                     tasks[0] = task;
                     assertThat(delay, is(0l));
-                    assertThat(period, is(TlbServerInitializer.ONCE_A_DAY));
+                    assertThat(period, is(TlbServerInitializer.ONCE_AN_HOUR));
                 }
             }
         };
