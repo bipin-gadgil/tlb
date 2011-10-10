@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static junit.framework.Assert.fail;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -176,13 +177,12 @@ public class TlbServerInitializerTest {
         final TimerTask[] tasks = new TimerTask[1];
         final EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
         final Timer timer = new Timer() {
-            int index;
             @Override
             public void schedule(TimerTask task, long delay, long period) {
                 if (task instanceof TlbServerInitializer.SyncToDisk) {
                     tasks[0] = task;
                     assertThat(delay, is(0l));
-                    assertThat(period, is(TlbServerInitializer.ONCE_AN_HOUR));
+                    assertThat(period, is((long) TlbServerInitializer.MILLS_PER_HOUR));
                 }
             }
         };
@@ -201,6 +201,34 @@ public class TlbServerInitializerTest {
         verify(repoFactory).syncReposToDisk();
 
         verifyNoMoreInteractions(repoFactory);
+    }
+    
+    @Test
+    public void shouldSetTimerToFlushFilesToDisk_AtSpecifiedInterval() {
+        final TimerTask[] tasks = new TimerTask[1];
+        final EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
+        final Timer timer = new Timer() {
+            @Override
+            public void schedule(TimerTask task, long delay, long period) {
+                if (task instanceof TlbServerInitializer.SyncToDisk) {
+                    tasks[0] = task;
+                    assertThat(delay, is(0l));
+                    assertThat(period, is(2l * TlbServerInitializer.MILLS_PER_MINUTE));//every 2 mins
+                }
+            }
+        };
+
+        new TlbServerInitializer(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_SYNC_TO_DISK_INTERVAL_IN_MINS.key, "2")), timer) {
+            @Override
+            EntryRepoFactory repoFactory() {
+                return repoFactory;
+            }
+        }.init();
+
+        verify(repoFactory).registerExitHook();
+        verifyNoMoreInteractions(repoFactory);
+
+        assertThat(tasks[0], is(notNullValue()));
     }
 
     @Test

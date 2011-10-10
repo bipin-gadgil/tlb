@@ -52,6 +52,7 @@ public interface TlbConstants {
 
         static final String LISTING_VERSION = "listing_version";
         static final SystemEnvironment.EnvVar TLB_VERSION_LIFE_IN_DAYS = new SystemEnvironment.DefaultedEnvVar("TLB_VERSION_LIFE_IN_DAYS", "7");
+        static final SystemEnvironment.EnvVar TLB_SYNC_TO_DISK_INTERVAL_IN_MINS = new SystemEnvironment.DefaultedEnvVar("TLB_SYNC_TO_DISK_INTERVAL_IN_MINS", "60");
 
         public static interface EntryRepoFactory {
             static final String SUBSET_SIZE = "subset_size";

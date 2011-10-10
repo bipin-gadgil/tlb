@@ -14,10 +14,12 @@ import java.util.TimerTask;
  * @understands running the server as a standalone process
  */
 public class TlbServerInitializer extends ServerInitializer {
-    public static final long ONCE_AN_HOUR = 60 * 60 * 1000;
-    public static final long ONCE_A_DAY = 24 * ONCE_AN_HOUR;
+    public static final int MILLS_PER_MINUTE = 60 * 1000;
+    public static final int MILLS_PER_HOUR = 60 * MILLS_PER_MINUTE;
+    public static final long ONCE_A_DAY = 24 * MILLS_PER_HOUR;
     private final SystemEnvironment env;
     private final Timer timer;
+
 
     public TlbServerInitializer(SystemEnvironment env) {
         this(env, new Timer());
@@ -47,18 +49,18 @@ public class TlbServerInitializer extends ServerInitializer {
     }
 
     private void setupTimerForFlushingToDisk(EntryRepoFactory repoFactory) {
-        timer.schedule(new SyncToDisk(repoFactory), 0, ONCE_AN_HOUR);
+        timer.schedule(new SyncToDisk(repoFactory), 0, Integer.parseInt(env.val(TlbConstants.Server.TLB_SYNC_TO_DISK_INTERVAL_IN_MINS)) * MILLS_PER_MINUTE);
     }
 
     private void setupTimerForPurgingOlderVersions(final EntryRepoFactory repoFactory) {
-        final int versionLifeInDays = versionInLife();
+        final int versionLifeInDays = versionLifeInDays();
         if (versionLifeInDays == -1) {
             return;
         }
         timer.schedule(new Purge(repoFactory, versionLifeInDays), 0, ONCE_A_DAY);
     }
 
-    private int versionInLife() {
+    private int versionLifeInDays() {
         return Integer.parseInt(env.val(TlbConstants.Server.TLB_VERSION_LIFE_IN_DAYS));
     }
 
