@@ -6,6 +6,7 @@ import tlb.TlbFileResource;
 import tlb.TlbSuiteFile;
 import tlb.factory.TlbBalancerFactory;
 import tlb.orderer.TestOrderer;
+import tlb.splitter.AbstractTestSplitter;
 import tlb.splitter.TestSplitter;
 import tlb.utils.SuiteFileConvertor;
 import tlb.utils.SystemEnvironment;
@@ -28,7 +29,7 @@ public class LoadBalancedFileSet extends FileSet {
     }
 
     public LoadBalancedFileSet(SystemEnvironment systemEnvironment) {
-        this(TlbBalancerFactory.getCriteria(systemEnvironment.val(TestSplitter.TLB_SPLITTER), systemEnvironment),
+        this(TlbBalancerFactory.getCriteria(systemEnvironment.val(AbstractTestSplitter.TLB_SPLITTER), systemEnvironment),
                 TlbBalancerFactory.getOrderer(systemEnvironment.val(TestOrderer.TLB_ORDERER), systemEnvironment));
     }
 

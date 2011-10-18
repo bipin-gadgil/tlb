@@ -3,10 +3,8 @@ package tlb.twist;
 import org.apache.tools.ant.*;
 
 import tlb.factory.TlbBalancerFactory;
-import tlb.splitter.TestSplitter;
+import tlb.splitter.AbstractTestSplitter;
 import tlb.utils.SystemEnvironment;
-
-import static tlb.TlbConstants.TLB_SPLITTER;
 
 public class FilterScenariosTask extends Task {
 
@@ -22,7 +20,7 @@ public class FilterScenariosTask extends Task {
     }
 
     private FilterScenariosTask(SystemEnvironment systemEnvironment) {
-        this(new LoadBalancedTwistSuite(TlbBalancerFactory.getCriteria(systemEnvironment.val(TestSplitter.TLB_SPLITTER), systemEnvironment)));
+        this(new LoadBalancedTwistSuite(TlbBalancerFactory.getCriteria(systemEnvironment.val(AbstractTestSplitter.TLB_SPLITTER), systemEnvironment)));
     }
     
     FilterScenariosTask(LoadBalancedTwistSuite suite) {

@@ -101,10 +101,10 @@ public class LoadBalancedFileSetTest {
     }
 
     @Test
-    public void shouldUseSystemPropertyToInstantiateCriteria() {
+    public void shouldUseSystemPropertyToInstantiateCriteria() throws IllegalAccessException {
         fileSet = new LoadBalancedFileSet(initEnvironment("tlb.splitter.CountBasedTestSplitter"));
         fileSet.setDir(projectDir);
-        assertThat(fileSet.getSplitterCriteria(), instanceOf(CountBasedTestSplitter.class));
+        assertThat(TestUtil.deref("splitter", fileSet.getSplitterCriteria()), instanceOf(CountBasedTestSplitter.class));
     }
 
     private SystemEnvironment initEnvironment(String strategyName) {

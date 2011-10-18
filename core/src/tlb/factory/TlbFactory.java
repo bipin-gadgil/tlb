@@ -18,13 +18,19 @@ public class TlbFactory<T> {
     private static TlbFactory<Server> talkToServiceFactory;
 
     private static final Logger LOGGER = Logger.getLogger(TlbFactory.class);
+    private final Class[] argTypes;
 
     TlbFactory(Class<T> klass, T defaultValue) {
-        this.klass = klass;
-        this.defaultValue = defaultValue;
+        this(klass, defaultValue, SystemEnvironment.class);
     }
 
-    public <T> T getInstance(String klassName, SystemEnvironment environment) {
+    TlbFactory(Class<T> klass, T defaultValue, Class... argTypes) {
+        this.klass = klass;
+        this.defaultValue = defaultValue;
+        this.argTypes = argTypes;
+    }
+
+    public <T> T getInstance(String klassName, SystemEnvironment environment, Object... args) {
         if (klassName == null || klassName.isEmpty()) {
             return (T) defaultValue;
         }
@@ -33,15 +39,15 @@ public class TlbFactory<T> {
             if(!klass.isAssignableFrom(criteriaClass)) {
                 throw new IllegalArgumentException("Class '" + klassName + "' is-not/does-not-implement '" + klass + "'");
             }
-            return getInstance((Class<? extends T>) criteriaClass, environment);
+            return getInstance((Class<? extends T>) criteriaClass, environment, args);
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Unable to locate class '" + klassName + "'");
         }
     }
 
-    <T> T getInstance(Class<? extends T> actualKlass, SystemEnvironment environment) {
+    <T> T getInstance(Class<? extends T> actualKlass, SystemEnvironment environment, Object... args) {
         try {
-            T criteria = actualKlass.getConstructor(SystemEnvironment.class).newInstance(environment);
+            T criteria = actualKlass.getConstructor(argTypes).newInstance(args);
             if (TalksToServer.class.isInstance(criteria)) {
                 Server service = getTalkToService(environment);
                 ((TalksToServer)criteria).talksToServer(service);
@@ -63,7 +69,7 @@ public class TlbFactory<T> {
     public static Server getTalkToService(SystemEnvironment environment) {
         if (talkToServiceFactory == null)
             talkToServiceFactory = new TlbFactory<Server>(Server.class, null);
-        return talkToServiceFactory.getInstance(environment.val(TlbConstants.TYPE_OF_SERVER), environment);
+        return talkToServiceFactory.getInstance(environment.val(TlbConstants.TYPE_OF_SERVER), environment, environment);
     }
 
 }

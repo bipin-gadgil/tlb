@@ -42,6 +42,10 @@ public interface TlbConstants {
         static final String QUERY = "query";
     }
 
+    public static interface Correctness {
+        static final SystemEnvironment.EnvVar SPLIT_CORRECTNESS_CHECKER = new SystemEnvironment.DefaultedEnvVar("SPLIT_CORRECTNESS_CHECKER", "tlb.splitter.correctness.NoOp");
+    }
+
     public static interface Server {
         static final String REPO_FACTORY = "repo_factory";
         static final String REQUEST_NAMESPACE = "namespace";

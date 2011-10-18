@@ -14,7 +14,7 @@ import tlb.utils.SystemEnvironment;
 /**
  * @understands the criteria for splitting a given test suite across jobs from the same family
  */
-public abstract class JobFamilyAwareSplitter extends TestSplitter implements TalksToServer {
+public abstract class JobFamilyAwareSplitter extends AbstractTestSplitter implements TalksToServer {
     public static TestSplitter MATCH_ALL_FILE_SET = new JobFamilyAwareSplitter(null) {
         @Override
         public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
