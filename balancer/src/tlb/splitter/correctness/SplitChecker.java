@@ -15,7 +15,14 @@ public abstract class SplitChecker implements TestSplitter {
         this.splitter = splitter;
     }
 
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
-        return splitter.filterSuites(fileResources);
+    public final List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> files) {
+        universalSet(files);
+        List<TlbSuiteFile> filteredFiles = splitter.filterSuites(files);
+        subSet(filteredFiles);
+        return filteredFiles;
     }
+
+    abstract public void universalSet(List<TlbSuiteFile> fileResources);
+
+    abstract public void subSet(List<TlbSuiteFile> fileResources);
 }

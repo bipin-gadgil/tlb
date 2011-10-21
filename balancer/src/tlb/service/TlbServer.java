@@ -1,10 +1,12 @@
 package tlb.service;
 
 import tlb.TlbConstants;
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.service.http.DefaultHttpAction;
 import tlb.service.http.HttpAction;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
 import java.util.List;
@@ -64,6 +66,14 @@ public class TlbServer extends SmoothingServer {
 
     public int totalPartitions() {
         return Integer.parseInt(environment.val(new SystemEnvironment.EnvVar(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS)));
+    }
+
+    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet) {
+        throw new UnsupportedOperationException("not implemented yet");
     }
 
     private String getUrl(String... parts) {

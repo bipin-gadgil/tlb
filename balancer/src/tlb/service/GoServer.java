@@ -15,10 +15,12 @@ import tlb.TlbConstants;
 
 import static tlb.TlbConstants.*;
 
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.service.http.HttpAction;
 import tlb.service.http.DefaultHttpAction;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.storage.TlbEntryRepository;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
@@ -323,5 +325,13 @@ public class GoServer extends SmoothingServer {
 
     public int totalPartitions() {
         return pearJobs().size();
+    }
+
+    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet) {
+        throw new UnsupportedOperationException("not implemented yet");
     }
 }

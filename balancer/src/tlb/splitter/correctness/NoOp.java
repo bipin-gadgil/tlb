@@ -13,4 +13,12 @@ public class NoOp extends SplitChecker {
     public NoOp(TestSplitter splitter) {
         super(splitter);
     }
+
+    @Override
+    public final void universalSet(List<TlbSuiteFile> fileResources) {
+    }
+
+    @Override
+    public final void subSet(List<TlbSuiteFile> fileResources) {
+    }
 }
