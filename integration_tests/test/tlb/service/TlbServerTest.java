@@ -6,16 +6,18 @@ import org.junit.matchers.JUnitMatchers;
 import org.restlet.Component;
 import tlb.TestUtil;
 import tlb.TlbConstants;
+import tlb.TlbSuiteFile;
+import tlb.TlbSuiteFileImpl;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.server.ServerInitializer;
 import tlb.server.TlbServerInitializer;
 import tlb.service.http.DefaultHttpAction;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -33,6 +35,10 @@ public class TlbServerTest {
     private HashMap<String,String> clientEnv;
     private DefaultHttpAction httpAction;
     private SystemEnvironment env;
+    private String jobVersion;
+    private String jobName;
+    private String partitionNumber;
+    private String totalPartitions;
 
     @BeforeClass
     public static void startTlbServer() throws Exception {
@@ -54,10 +60,14 @@ public class TlbServerTest {
     @Before
     public void setUp() {
         clientEnv = new HashMap<String, String>();
-        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_NAME, "job");
-        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "4");
-        clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, "15");
-        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_VERSION, String.valueOf(UUID.randomUUID()));
+        jobName = "job";
+        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_NAME, jobName);
+        partitionNumber = "4";
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, partitionNumber);
+        totalPartitions = "15";
+        clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, totalPartitions);
+        jobVersion = String.valueOf(UUID.randomUUID());
+        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_VERSION, jobVersion);
         String url = "http://localhost:" + freePort;
         clientEnv.put(TlbConstants.TlbServer.TLB_BASE_URL, url);
         httpAction = new DefaultHttpAction();
@@ -213,5 +223,26 @@ public class TlbServerTest {
         Assert.assertThat(server.totalPartitions(), Is.is(15));
         updateEnv(env, TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, "7");
         Assert.assertThat(server.totalPartitions(), Is.is(7));
+    }
+
+    @Test
+    public void shouldPostUniversalSetToServer_ForFirstPartition() throws IllegalAccessException {
+        final String url = correctnessCheckUrl(TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files);
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+    }
+
+    private String correctnessCheckUrl(String checkType) {
+        return String.format("http://localhost:%s/%s/%s/%s/%s/%s", jobName, TlbConstants.Server.EntryRepoFactory.CORRECTNESS_CHECK, jobVersion, totalPartitions, partitionNumber, checkType);
     }
 }

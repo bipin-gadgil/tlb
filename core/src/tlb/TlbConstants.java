@@ -65,6 +65,8 @@ public interface TlbConstants {
             static final String SUITE_TIME = "suite_time";
             static final String SUITE_RESULT = "suite_result";
             static final String CORRECTNESS_CHECK = "correctness_check";
+            static final String UNIVERSAL_SET = "universal_set";
+            static final String SUB_SET = "sub_set";
         }
     }
 }

@@ -83,12 +83,16 @@ public class EntryRepoFactory implements Runnable {
         });
     }
 
-    public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException, ClassNotFoundException {
-        return (SubsetSizeRepo) findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
+    public SetRepo createSubsetRepo(final String namespace, final String version) throws IOException, ClassNotFoundException {
+        return (SetRepo) findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
             public SubsetSizeRepo create() {
                 return new SubsetSizeRepo();
             }
         });
+    }
+
+    public SetRepo createUniversalSetRepo(String namespace, String version) {
+        return null;
     }
 
     EntryRepo findOrCreate(String namespace, String version, String type, Creator<? extends EntryRepo> creator) throws IOException {

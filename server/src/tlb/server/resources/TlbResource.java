@@ -41,8 +41,8 @@ public abstract class TlbResource extends Resource {
         }
     }
 
-    protected String strAttr(final String requestNamespace) {
-        return (String) reqAttrs.get(requestNamespace);
+    protected String strAttr(final String key) {
+        return (String) reqAttrs.get(key);
     }
 
     protected Collection<Entry> getListing() throws IOException, ClassNotFoundException {

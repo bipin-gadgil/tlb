@@ -68,7 +68,21 @@ public class DefaultHttpAction implements HttpAction {
         }
     }
 
-    private synchronized String executeMethod(HttpRequestBase req) {
+    private String executeMethod(HttpRequestBase req) {
+        return responseString(req.getURI().toString(), execute(req));
+    }
+
+    private String responseString(String uri, HttpResponse res) {
+        HttpEntity entity = res.getEntity();
+        try {
+            return EntityUtils.toString(entity);
+        } catch (IOException e) {
+            logger.fatal(String.format("Could not de-reference response from [%s].", uri), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private synchronized HttpResponse execute(HttpRequestBase req) {
         URI uri = req.getURI();
         HttpHost targetHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
         if (HTTPS.equals(uri.getScheme())) {
@@ -85,13 +99,7 @@ public class DefaultHttpAction implements HttpAction {
             throw new RuntimeException(e);
         }
         // response.getStatusLine().getStatusCode();//TODO: check me and bomb if need be
-        HttpEntity entity = response.getEntity();
-        try {
-            return EntityUtils.toString(entity);
-        } catch (IOException e) {
-            logger.fatal(String.format("Could not de-reference response from [%s].", uri), e);
-            throw new RuntimeException(e);
-        }
+        return response;
     }
 
     public String get(String url) {
@@ -116,10 +124,15 @@ public class DefaultHttpAction implements HttpAction {
     }
 
     public String post(String url, String data) {
+        return responseString(url, doPost(url, data));
+    }
+
+    public HttpResponse doPost(String url, String data) {
         HttpPost httpPost = new HttpPost(url);
         setStringEntity(data, httpPost);
-        return executeMethod(httpPost);
+        return execute(httpPost);
     }
+
 
     public String put(String url, String data) {
         HttpPut httpPut = new HttpPut(url);
