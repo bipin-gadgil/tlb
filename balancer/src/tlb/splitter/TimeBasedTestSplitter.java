@@ -17,7 +17,6 @@ import java.util.*;
  * @understands criteria for splitting tests based on time taken
  */
 public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements TalksToServer {
-    private final FileUtil fileUtil;
     private static final Logger logger = Logger.getLogger(TimeBasedTestSplitter.class.getName());
     private static final String NO_HISTORICAL_DATA = "no historical test time data, aborting attempt to balance based on time";
 
@@ -28,7 +27,6 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
 
     public TimeBasedTestSplitter(SystemEnvironment env) {
         super(env);
-        fileUtil = new FileUtil(env);
     }
 
     protected List<TlbSuiteFile> subset(List<TlbSuiteFile> fileResources) {

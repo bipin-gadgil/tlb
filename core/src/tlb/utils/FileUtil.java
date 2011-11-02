@@ -54,7 +54,7 @@ public class FileUtil {
 
     public File getUniqueFile(String seedString) {
         String fileName = DigestUtils.md5Hex(seedString);
-        File file = new File(new File(tmpDir()), fileName);
+        File file = new File(tmpDir(), fileName);
         logger.info(String.format("unique file name %s translated to %s", seedString, file.getAbsolutePath()));
         return file;
     }
