@@ -1,5 +1,6 @@
 package tlb.ant;
 
+import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
 import tlb.TlbFileResource;
@@ -19,6 +20,8 @@ import java.util.List;
  * @understands splitting Junit test classes into groups
  */
 public class LoadBalancedFileSet extends FileSet {
+    private static final Logger logger = Logger.getLogger(LoadBalancedFileSet.class.getName());
+
     private final TestSplitter criteria;
     private final TestOrderer orderer;
 
@@ -48,8 +51,11 @@ public class LoadBalancedFileSet extends FileSet {
 
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
         List<TlbSuiteFile> suiteFiles = convertor.toTlbSuiteFiles(matchedFiles);
+        logger.info("About to filter tests");
         suiteFiles = criteria.filterSuites(suiteFiles);
+        logger.info("Done filtering. About to order tests.");
         Collections.sort(suiteFiles, orderer);
+        logger.info("Done ordering.");
         List<TlbFileResource> matchedTlbFileResources = convertor.toTlbFileResources(suiteFiles);
 
         List<FileResource> matchedFileResources = new ArrayList<FileResource>();
