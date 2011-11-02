@@ -131,27 +131,34 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public void run() {
+        syncReposToDisk();
+    }
+
+    public void syncReposToDisk() {
         for (String identifier : cache.keys()) {
             FileWriter writer = null;
             try {
                 //don't care about a couple entries not being persisted(at teardown), as client is capable of balancing on averages(treat like new suites)
-                synchronized (repoId(identifier)) {
-                    EntryRepo entryRepo = cache.get(identifier);
-                    if (entryRepo != null) {
-                        writer = new FileWriter(dumpFile(identifier));
-                        String dump = entryRepo.diskDump();
-                        writer.write(dump);
+                EntryRepo entryRepo = cache.get(identifier);
+                if (entryRepo != null) {
+                    synchronized (repoId(identifier)) {
+                        entryRepo = cache.get(identifier);
+                        if (entryRepo != null && entryRepo.isDirty()) {
+                            writer = new FileWriter(dumpFile(identifier));
+                            String dump = entryRepo.diskDump();
+                            writer.write(dump);
+                        }
                     }
                 }
-            } catch (IOException e) {
-                logger.warn(String.format("disk dump of %s failed, tlb server may not be able to perform data dependent on next reboot.", identifier), e);
+            } catch (Exception e) {
+                logger.warn(String.format("disk dump of %s failed, tlb server may not be able to perform data dependent operations well on next reboot.", identifier), e);
             } finally {
                 try {
                     if (writer != null) {
                         writer.close();
                     }
                 } catch (IOException e) {
-                    logger.warn(String.format("closing of disk dump file of %s failed, tlb server may not be able to perform data dependent on next reboot.", identifier), e);
+                    logger.warn(String.format("closing of disk dump file of %s failed, tlb server may not be able to perform data dependent operations well on next reboot.", identifier), e);
                 }
             }
         }

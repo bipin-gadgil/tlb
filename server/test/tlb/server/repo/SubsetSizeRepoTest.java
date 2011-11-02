@@ -84,4 +84,22 @@ public class SubsetSizeRepoTest {
         assertThat(subsetSizeEntry.get(1), is(new SubsetSizeEntry(19)));
         assertThat(subsetSizeEntry.size(), is(2));
     }
+
+    @Test
+    public void shouldUnderstandDirtiness() throws IOException {
+        SubsetSizeRepo repo = new SubsetSizeRepo();
+        assertThat(repo.isDirty(), is(false));
+
+        repo.add(new SubsetSizeEntry(10));
+        assertThat(repo.isDirty(), is(true));
+
+        repo.diskDump();
+        assertThat(repo.isDirty(), is(false));
+
+        repo.add(new SubsetSizeEntry(25));
+        assertThat(repo.isDirty(), is(true));
+
+        repo.load("10");
+        assertThat("Its not dirty if just loaded from file.", repo.isDirty(), is(false));
+    }
 }

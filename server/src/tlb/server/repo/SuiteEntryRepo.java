@@ -11,10 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @understands persistence and retrieval of suite based data
  */
 public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements EntryRepo<T> {
-    protected Map<String, T> suiteData;
+    private volatile Map<String, T> suiteData;
     protected String namespace;
     transient protected EntryRepoFactory factory;
     protected String identifier;
+    private volatile boolean dirty;
 
     public SuiteEntryRepo() {
         super();
@@ -25,8 +26,9 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         return suiteData.values();
     }
 
-    public void update(T record) {
+    public synchronized void update(T record) {
         suiteData.put(record.getName(), record);
+        dirty = true;
     }
 
     public final void add(T entry) {
@@ -37,6 +39,7 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         this.factory = factory;
     }
 
+    //TODO: kill these two setters(namespace and identifier), pass data in one shot to set both internally
     public final void setNamespace(String namespace) {
         this.namespace = namespace;
     }
@@ -45,17 +48,24 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         this.identifier = type;
     }
 
-    public final String diskDump() throws IOException {
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public synchronized final String diskDump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (T entry : suiteData.values()) {
             dumpBuffer.append(entry.dump());
         }
+        dirty = false;
         return dumpBuffer.toString();
     }
 
-    public void load(final String fileContents) throws IOException {
+    public synchronized void load(final String fileContents) {
+        suiteData.clear();
         for (T entry : parse(fileContents)) {
             suiteData.put(entry.getName(), entry);
         }
+        dirty = false;
     }
 }

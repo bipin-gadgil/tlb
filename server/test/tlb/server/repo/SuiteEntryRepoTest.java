@@ -108,7 +108,34 @@ public class SuiteEntryRepoTest {
         assertThat(entryList.size(), is(2));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
+    }
 
+    @Test
+    public void shouldUnderstandDirtiness() {
+        assertThat(testCaseRepo.isDirty(), is(false));
+
+        testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_run", "my.Suite"));
+        assertThat(testCaseRepo.isDirty(), is(true));
+
+        testCaseRepo.diskDump();
+        assertThat(testCaseRepo.isDirty(), is(false));
+
+        testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_bun", "my.Suite"));
+        assertThat(testCaseRepo.isDirty(), is(true));
+
+        testCaseRepo.load("should_run#my.Suite\nshould_eat_bun#my.Suite");
+        assertThat("Its not dirty if just loaded from file.", testCaseRepo.isDirty(), is(false));
+    }
+
+    @Test
+    public void shouldResetEntriesWhenLoadingFromString() {
+        testCaseRepo.update(new TestCaseRepo.TestCaseEntry("test_name", "suite_name"));
+
+        testCaseRepo.load("foo#bar");
+
+        Collection<TestCaseRepo.TestCaseEntry> list = testCaseRepo.list();
+        assertThat(list.size(), is(1));
+        assertThat(list.iterator().next(), is(new TestCaseRepo.TestCaseEntry("foo", "bar")));
     }
 
     private List<SuiteLevelEntry> listOf(SuiteLevelEntry... entries) {
