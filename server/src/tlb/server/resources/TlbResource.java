@@ -1,5 +1,6 @@
 package tlb.server.resources;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import tlb.TlbConstants;
 import tlb.domain.Entry;
@@ -63,7 +64,11 @@ public abstract class TlbResource extends Resource {
         for (Entry entry : listing) {
             builder.append(entry.dump());
         }
-        return new StringRepresentation(builder.toString(), MediaType.TEXT_PLAIN);
+        String text = builder.toString();
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Request %s was served listing checksum: %s", getRequest().getOriginalRef().getPath(), DigestUtils.md5Hex(text)));
+        }
+        return new StringRepresentation(text, MediaType.TEXT_PLAIN);
     }
 
     @Override

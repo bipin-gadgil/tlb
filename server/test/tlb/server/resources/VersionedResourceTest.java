@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
+import org.restlet.data.Reference;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.resource.Representation;
@@ -37,6 +38,7 @@ public class VersionedResourceTest {
     public void setUp() throws ClassNotFoundException, IOException {
         Context context = new Context();
         Request request = mock(Request.class);
+        when(request.getOriginalRef()).thenReturn(new Reference("http://baz.com:7019/foo/bar/baz"));
         factory = mock(EntryRepoFactory.class);
         context.setAttributes(Collections.singletonMap(TlbConstants.Server.REPO_FACTORY, (Object) factory));
         attributeMap = new HashMap<String, Object>();
