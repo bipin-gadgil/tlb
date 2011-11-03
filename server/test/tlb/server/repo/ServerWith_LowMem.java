@@ -1,5 +1,6 @@
 package tlb.server.repo;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +34,8 @@ public class ServerWith_LowMem {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws IOException {
+        FileUtils.forceDelete(baseDir.getParentFile());
         factory = null;
         System.gc();
     }

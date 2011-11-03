@@ -34,4 +34,8 @@ public class Bucket implements Comparable<Bucket> {
     public List<TlbSuiteFile> files() {
         return files;
     }
+
+    public int index() {
+        return partition;
+    }
 }

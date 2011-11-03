@@ -50,4 +50,15 @@ public class TlbEntryRepositoryTest {
         repo.cleanup();
         assertThat(repo.getFile().exists(), is(false));
     }
+
+    @Test
+    public void shouldCleanupTheRepositoryDirectory() throws IOException {
+        File repoFile = new File(TestUtil.createTempFolder(), "foo_bar_baz");
+        boolean createdNewFile = repoFile.createNewFile();
+        assertThat(createdNewFile, is(true));
+        TlbEntryRepository repo = new TlbEntryRepository(repoFile);
+        assertThat(repo.getFile().exists(), is(true));
+        repo.cleanup();
+        assertThat(repo.getFile().exists(), is(false));
+    }
 }

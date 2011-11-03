@@ -2,6 +2,7 @@ package tlb.server.repo;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
@@ -44,6 +45,11 @@ public class EntryRepoFactoryTest {
         baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
         factory = new EntryRepoFactory(env());
         logFixture = new TestUtil.LogFixture();
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        FileUtils.forceDelete(baseDir.getParentFile());
     }
 
     @Test

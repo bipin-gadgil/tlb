@@ -213,7 +213,11 @@ public class TestUtil {
     public static File createTempFolder() {
         final File file = new File(System.getProperty(SystemEnvironment.TMP_DIR), UUID.randomUUID().toString());
         file.mkdirs();
-        file.deleteOnExit();
+        try {
+            FileUtils.forceDeleteOnExit(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete file: " + file, e);
+        }
         return file;
     }
 

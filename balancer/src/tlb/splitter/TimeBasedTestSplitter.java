@@ -17,7 +17,6 @@ import java.util.*;
  * @understands criteria for splitting tests based on time taken
  */
 public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements TalksToServer {
-    private final FileUtil fileUtil;
     private static final Logger logger = Logger.getLogger(TimeBasedTestSplitter.class.getName());
     private static final String NO_HISTORICAL_DATA = "no historical test time data, aborting attempt to balance based on time";
 
@@ -28,7 +27,6 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
 
     public TimeBasedTestSplitter(SystemEnvironment env) {
         super(env);
-        fileUtil = new FileUtil(env);
     }
 
     protected List<TlbSuiteFile> subset(List<TlbSuiteFile> fileResources) {
@@ -50,6 +48,13 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
 
         assignToBuckets(testFiles, buckets);
 
+        logger.info("Current bucket is partitions number: " + thisPartition);
+        logger.info("Assigned the tests to buckets in the following way:");
+
+        for (Bucket bucket : buckets) {
+            logger.info("Bucket number " + bucket.index() + " has following files:\n" + bucket.files() + "\n");
+        }
+
         return thisBucket;
     }
 
@@ -62,14 +67,16 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
 
     private List<TestFile> testFiles(List<TlbSuiteFile> fileResources) {
         List<SuiteTimeEntry> suiteTimeEntries = server.getLastRunTestTimes();
-        logger.info(String.format("historical test time data has entries for %s suites", suiteTimeEntries.size()));
         if (suiteTimeEntries.isEmpty()) {
             logger.warn(NO_HISTORICAL_DATA);
             throw new IllegalStateException(NO_HISTORICAL_DATA);
         }
         Map<String, TlbSuiteFile> fileNameToResource = new HashMap<String, TlbSuiteFile>();
         Set<String> currentFileNames = new HashSet<String>();
-        logger.info("The TLB Resources are: \n" + fileResources + "\n");
+        logger.info(String.format("Historical test time data has entries for %s suites", suiteTimeEntries.size()));
+        logger.info("The historical suite entries are: \n" + suiteTimeEntries + "\n");
+        logger.info("The files to be balanced are: \n" + fileResources + "\n");
+
         for (TlbSuiteFile fileResource : fileResources) {
             String name = fileResource.getName();
             currentFileNames.add(name);
@@ -79,18 +86,18 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
         List<TestFile> testFiles = new ArrayList<TestFile>();
         double totalTime = 0;
 
-        logger.info("The suite entries are: \n" + suiteTimeEntries + "\n");
         for (SuiteTimeEntry suiteTimeEntry : suiteTimeEntries) {
             String fileName = suiteTimeEntry.getName();
             double time = suiteTimeEntry.getTime();
             totalTime += time;
             if (currentFileNames.remove(fileName)) testFiles.add(new TestFile(fileNameToResource.get(fileName), time));
         }
-        logger.info(String.format("%s entries of historical test time data found relavent", testFiles.size()));
+
+        logger.info(String.format("%s entries of historical test time data found relevant", testFiles.size()));
 
         double avgTime = totalTime / suiteTimeEntries.size();
 
-        logger.info(String.format("encountered %s new files which don't have historical time data, used average time [ %s ] to balance", currentFileNames.size(), avgTime));
+        logger.info(String.format("Encountered %s new files which don't have historical time data, used average time [ %s ] to balance", currentFileNames.size(), avgTime));
 
         for (String newFile : currentFileNames) {
             testFiles.add(new TestFile(fileNameToResource.get(newFile), avgTime));

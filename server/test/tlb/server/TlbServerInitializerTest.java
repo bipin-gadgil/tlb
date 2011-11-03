@@ -113,6 +113,7 @@ public class TlbServerInitializerTest {
         initializer = new TlbServerInitializer(new SystemEnvironment(systemEnv));
         EntryRepoFactory factory = initializer.repoFactory();
         File file = new File(tmpDir, EntryRepoFactory.name("quux", LATEST_VERSION, SUBSET_SIZE));
+        file.deleteOnExit();
         writeEntriedTo(file);
         SubsetSizeRepo repo = factory.createSubsetRepo("quux", LATEST_VERSION);
         assertThat((List<SubsetSizeEntry>) repo.list(), is(Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));

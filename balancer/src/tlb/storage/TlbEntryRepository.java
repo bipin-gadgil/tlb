@@ -13,7 +13,7 @@ import java.util.List;
 
 
 /**
- * @understands storing and retrieving entries
+ * @understands storing and retrieving entries on the balancer
  */
 public class TlbEntryRepository {
     private static final Logger logger = Logger.getLogger(TlbEntryRepository.class.getName());
@@ -21,6 +21,11 @@ public class TlbEntryRepository {
 
     public TlbEntryRepository(final File file) {
         this.file = file;
+        try {
+            FileUtils.forceDeleteOnExit(repoLocation());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void appendLine(String line) {
@@ -64,6 +69,10 @@ public class TlbEntryRepository {
         if (getFile().exists()) {
             FileUtils.forceDelete(getFile());
         }
+    }
+
+    private File repoLocation() {
+        return getFile().getParentFile();
     }
 
     public String loadLastLine() {

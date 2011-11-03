@@ -1,5 +1,6 @@
 package tlb.service;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import tlb.TlbConstants;
 import tlb.domain.SuiteTimeEntry;
@@ -7,6 +8,7 @@ import tlb.storage.TlbEntryRepository;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +36,7 @@ public abstract class SmoothingServer implements Server {
 
     protected SmoothingServer(SystemEnvironment environment) {
         this.environment = environment;
-        FileUtil fileUtil = new FileUtil(this.environment);
-        oldTestTimesRepo = new TlbEntryRepository(fileUtil.getUniqueFile("old_test_times"));
+        oldTestTimesRepo = new TlbEntryRepository(new FileUtil(this.environment).getUniqueFile("old_test_times"));
     }
 
     public abstract List<SuiteTimeEntry> fetchLastRunTestTimes();

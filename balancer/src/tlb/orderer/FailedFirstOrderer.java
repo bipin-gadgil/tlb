@@ -16,11 +16,9 @@ import java.util.ArrayList;
 public class FailedFirstOrderer extends TestOrderer implements TalksToServer {
     private Server toService;
     private List<String> failedTestFiles;
-    private FileUtil fileUtil;
 
     public FailedFirstOrderer(SystemEnvironment environment) {
         super(environment);
-        fileUtil = new FileUtil(environment);
     }
 
     public int compare(TlbSuiteFile o1, TlbSuiteFile o2) {

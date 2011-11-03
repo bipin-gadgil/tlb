@@ -172,9 +172,9 @@ public class TimeBasedTestSplitterTest {
         List<TlbSuiteFile> filteredResources = criteria.filterSuites(resources);
         logFixture.assertHeard("got total of 7 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
-        logFixture.assertHeard("historical test time data has entries for 5 suites");
-        logFixture.assertHeard("5 entries of historical test time data found relavent");
-        logFixture.assertHeard("encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance");
+        logFixture.assertHeard("Historical test time data has entries for 5 suites");
+        logFixture.assertHeard("5 entries of historical test time data found relevant");
+        logFixture.assertHeard("Encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance");
         logFixture.assertHeard("assigned total of 4 files to [ job-1 ]");
         assertThat(filteredResources.size(), is(4));
         assertThat(filteredResources, hasItems(second, firstNew, first, third));
@@ -184,9 +184,9 @@ public class TimeBasedTestSplitterTest {
         filteredResources = criteria.filterSuites(resources);
         logFixture.assertHeard("got total of 7 files to balance", 2);
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
-        logFixture.assertHeard("historical test time data has entries for 5 suites", 2);
-        logFixture.assertHeard("5 entries of historical test time data found relavent", 2);
-        logFixture.assertHeard("encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
+        logFixture.assertHeard("Historical test time data has entries for 5 suites", 2);
+        logFixture.assertHeard("5 entries of historical test time data found relevant", 2);
+        logFixture.assertHeard("Encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
         logFixture.assertHeard("assigned total of 3 files to [ job-2 ]");
         assertThat(filteredResources.size(), is(3));
         assertThat(filteredResources, hasItems(fourth, fifth, secondNew));
@@ -210,9 +210,9 @@ public class TimeBasedTestSplitterTest {
         assertThat(criteria.filterSuites(resources), is(Arrays.asList(second)));
         logFixture.assertHeard("got total of 3 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
-        logFixture.assertHeard("historical test time data has entries for 5 suites");
-        logFixture.assertHeard("3 entries of historical test time data found relavent");
-        logFixture.assertHeard("encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance");
+        logFixture.assertHeard("Historical test time data has entries for 5 suites");
+        logFixture.assertHeard("3 entries of historical test time data found relevant");
+        logFixture.assertHeard("Encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance");
         logFixture.assertHeard("assigned total of 1 files to [ job-1 ]");
 
         when(server.partitionNumber()).thenReturn(2);
@@ -221,9 +221,9 @@ public class TimeBasedTestSplitterTest {
         assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, third)));
         logFixture.assertHeard("got total of 3 files to balance", 2);
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
-        logFixture.assertHeard("historical test time data has entries for 5 suites", 2);
-        logFixture.assertHeard("3 entries of historical test time data found relavent", 2);
-        logFixture.assertHeard("encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
+        logFixture.assertHeard("Historical test time data has entries for 5 suites", 2);
+        logFixture.assertHeard("3 entries of historical test time data found relevant", 2);
+        logFixture.assertHeard("Encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
         logFixture.assertHeard("assigned total of 2 files to [ job-2 ]");
     }
 

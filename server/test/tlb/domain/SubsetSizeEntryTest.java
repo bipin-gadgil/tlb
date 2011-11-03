@@ -17,7 +17,7 @@ public class SubsetSizeEntryTest {
     }
 
     @Test
-    public void shouldParseSubsetSizes() {
+    public void shouldParseSubsetSizes() throws Exception {
         List<SubsetSizeEntry> sizeEntries = SubsetSizeEntry.parse("10\n20\n");
         assertThat(sizeEntries, is(Arrays.asList(new SubsetSizeEntry(10), new SubsetSizeEntry(20))));
     }

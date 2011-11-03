@@ -27,9 +27,7 @@ public class TlbSuiteFileImpl implements TlbSuiteFile {
 
     @Override
     public String toString() {
-        return "TlbSuiteFileImpl{" +
-                "fileName='" + fileName + '\'' +
-                '}';
+        return getName();
     }
 
     @Override
