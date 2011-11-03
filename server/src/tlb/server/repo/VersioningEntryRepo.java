@@ -14,6 +14,7 @@ public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends Sui
     private Map<String, VersioningEntryRepo<T>> versions;
     private final TimeProvider timeProvider;
     private Date createdAt;
+    private volatile boolean purged;
 
     public VersioningEntryRepo(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
@@ -34,24 +35,31 @@ public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends Sui
         }
         for (Map.Entry<String, VersioningEntryRepo> purgableVersion : versionsToBePurged.entrySet()) {
             versions.remove(purgableVersion.getKey());
-            factory.purge(purgableVersion.getValue().identifier);
+            purgableVersion.getValue().purgeSelf();
         }
+    }
+
+    void purgeSelf() throws IOException {
+        purged = true;
+        factory.purge(identifier);
     }
 
     public abstract VersioningEntryRepo<T> getSubRepo(String versionIdentifier) throws IOException;
 
     public Collection<T> list(String versionIdentifier) throws IOException {
-        VersioningEntryRepo<T> version;
-        synchronized (versionIdentifier.intern()) {
-            version = versions.get(versionIdentifier);
-            if (version == null) {
-                version = getSubRepo(versionIdentifier);
-                if (!version.loadedData) {
-                    for (T entry : list()) {
-                        version.update(entry);
+        VersioningEntryRepo<T> version = versions.get(versionIdentifier);
+        if (version == null) {
+            synchronized (versionIdentifier.intern()) {
+                version = versions.get(versionIdentifier);
+                if (version == null) {
+                    version = getSubRepo(versionIdentifier);
+                    if (!version.loadedData) {
+                        for (T entry : list()) {
+                            version.update(entry);
+                        }
                     }
+                    versions.put(versionIdentifier, version);
                 }
-                versions.put(versionIdentifier, version);
             }
         }
         return version.list();
@@ -61,5 +69,10 @@ public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends Sui
     public final void load(final String fileContents) {
         super.load(fileContents);
         loadedData = true;
+    }
+
+    @Override
+    protected boolean shouldSyncToDisk() {
+        return (! purged) && super.shouldSyncToDisk();
     }
 }

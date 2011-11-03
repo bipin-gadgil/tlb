@@ -256,10 +256,10 @@ public class TestUtil {
             accessibleObject.setAccessible(true);
             return getter.eval(accessibleObject);
         } catch (Exception e) {
-            Class superKlass = klass.getSuperclass();
-            if (superKlass.equals(Object.class)) {
+            if (klass.equals(Object.class)) {
                 throw new RuntimeException("Matching object could not be found in any of the classes in the hirarchy", e);
             }
+            Class superKlass = klass.getSuperclass();
             return getSth(superKlass, getter);
         }
     }

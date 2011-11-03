@@ -17,6 +17,9 @@ import static junit.framework.Assert.fail;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static tlb.server.repo.TestCaseRepo.TestCaseEntry.parseSingleEntry;
 
 public class SuiteEntryRepoTest {
@@ -101,16 +104,6 @@ public class SuiteEntryRepoTest {
     }
 
     @Test
-    public void shouldVersionListItself() {
-        testCaseRepo.update(parseSingleEntry("shouldBar#Bar"));
-        testCaseRepo.update(parseSingleEntry("shouldFoo#Foo"));
-        List<SuiteLevelEntry> entryList = TestUtil.sortedList(testCaseRepo.list());
-        assertThat(entryList.size(), is(2));
-        assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
-        assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
-    }
-
-    @Test
     public void shouldUnderstandDirtiness() {
         assertThat(testCaseRepo.isDirty(), is(false));
 
@@ -136,6 +129,29 @@ public class SuiteEntryRepoTest {
         Collection<TestCaseRepo.TestCaseEntry> list = testCaseRepo.list();
         assertThat(list.size(), is(1));
         assertThat(list.iterator().next(), is(new TestCaseRepo.TestCaseEntry("foo", "bar")));
+    }
+
+    @Test
+    public void shouldWriteDataBackToFileWhenDirty_beforeGettingGarbageCollected() throws IllegalAccessException {
+        EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
+        testCaseRepo.setFactory(repoFactory);
+        testCaseRepo.setIdentifier("foo_bar_baz");
+
+        testCaseRepo.update(new TestCaseRepo.TestCaseEntry("testFoo", "foo.Bar"));
+        TestUtil.invoke("finalize", testCaseRepo);
+        verify(repoFactory).syncRepoToDisk("foo_bar_baz", testCaseRepo);
+    }
+
+    @Test
+    public void shouldNOTWriteDataBackToFileWhenNOTDirty_beforeGettingGarbageCollected() throws IllegalAccessException {
+        EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
+        testCaseRepo.setFactory(repoFactory);
+        testCaseRepo.setIdentifier("foo_bar_baz");
+
+        testCaseRepo.update(new TestCaseRepo.TestCaseEntry("testFoo", "foo.Bar"));
+        String ignore = testCaseRepo.diskDump();
+        TestUtil.invoke("finalize", testCaseRepo);
+        verify(repoFactory, never()).syncRepoToDisk("foo_bar_baz", testCaseRepo);
     }
 
     private List<SuiteLevelEntry> listOf(SuiteLevelEntry... entries) {

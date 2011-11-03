@@ -128,6 +128,29 @@ public class VersioningEntryRepoTest {
         assertThat(repo.getNamespace(), is("foo"));
         assertThat(repo.getFactory(), sameInstance(factory));
     }
+
+    @Test
+    public void shouldWriteDataBackToDisk_ifGarbageCollected_beforePurge() throws IllegalAccessException {
+        repo = new TestCaseRepo(new TimeProvider());
+        repo.update(new TestCaseRepo.TestCaseEntry("testBar", "foo.Quux"));
+        EntryRepoFactory factory = mock(EntryRepoFactory.class);
+        repo.setFactory(factory);
+        repo.setIdentifier("foo_quux");
+        TestUtil.invoke("finalize", repo);
+        verify(factory).syncRepoToDisk("foo_quux", repo);
+    }
+
+    @Test
+    public void shouldNotWriteDataBackToDisk_ifGarbageCollected_afterPurge() throws IllegalAccessException, IOException {
+        repo = new TestCaseRepo(new TimeProvider());
+        repo.update(new TestCaseRepo.TestCaseEntry("testBar", "foo.Quux"));
+        EntryRepoFactory factory = mock(EntryRepoFactory.class);
+        repo.setFactory(factory);
+        repo.setIdentifier("foo_quux");
+        repo.purgeSelf();
+        TestUtil.invoke("finalize", repo);
+        verify(factory, never()).syncRepoToDisk("foo_quux", repo);
+    }
     
     private TestCaseRepo createRepo(final EntryRepoFactory factory) throws IOException, ClassNotFoundException {
         return (TestCaseRepo) factory.findOrCreate("foo", LATEST_VERSION, "test_case", new EntryRepoFactory.Creator<TestCaseRepo>() {

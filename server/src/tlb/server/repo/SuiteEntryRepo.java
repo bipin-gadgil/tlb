@@ -68,4 +68,16 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         }
         dirty = false;
     }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if (shouldSyncToDisk()) {
+            factory.syncRepoToDisk(identifier, this);
+        }
+    }
+
+    protected boolean shouldSyncToDisk() {
+        return isDirty();
+    }
 }
