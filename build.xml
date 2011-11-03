@@ -9,6 +9,7 @@
     <property name="test.lib.dir" location="${lib.dir}/test"/>
 
     <property name="target.dir" location="${basedir}/target"/>
+    <property name="test.tmpdata.dir" location="${target.dir}/tmp"/>
     <property name="dog-fooding.reports.target.dir" location="${target.dir}/reports"/>
     <property name="all.tests.dir" location="${target.dir}/all-tests"/>
 
@@ -116,6 +117,30 @@
         <property name="tlb.complete.basename" value="tlb-complete-${short_rev}"/>
         <property name="tlb.examples.basename" value="setup-examples-${short_rev}"/>
     </target>
+
+    <macrodef name="test-task-config">
+        <attribute name="emma.file"/>
+        <attribute name="test.classpath"/>
+        <attribute name="test.reports.dir"/>
+        <attribute name="test.classes.dir"/>
+        <attribute name="test.wildcard" default="**/*Test.class*"/>
+        <element name="extra-jvmargs" optional="true"/>
+        <sequential>
+            <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
+                <classpath refid="emma.classpath"/>
+                <jvmarg value="-Demma.coverage.out.file=@{emma.file}"/>
+                <jvmarg value="-Demma.coverage.out.merge=true"/>
+                <jvmarg value="-Dtest.tmp.dir=${test.tmpdata.dir}"/>
+                <extra-jvmargs/>
+
+                <classpath refid="@{test.classpath}"/>
+                <batchtest todir="@{test.reports.dir}">
+                    <fileset dir="@{test.classes.dir}" includes="@{test.wildcard}"/>
+                    <formatter type="plain"/>
+                </batchtest>
+            </junit>
+        </sequential>
+    </macrodef>
 
     <macrodef name="tlb-jar">
         <attribute name="dest"/>

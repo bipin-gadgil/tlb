@@ -50,17 +50,7 @@
     </target>
 
     <target name="restlet.test" depends="restlet.compile.tests, restlet.compile">
-        <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
-            <classpath refid="emma.classpath"/>
-            <jvmarg value="-Demma.coverage.out.file=${restlet.emma.file}"/>
-            <jvmarg value="-Demma.coverage.out.merge=true"/>
-
-            <classpath refid="restlet.test.classpath"/>
-            <batchtest todir="${restlet.test.reports.dir}">
-                <fileset dir="${restlet.test.classes.dir}" includes="**/*Test.class*"/>
-                <formatter type="plain"/>
-            </batchtest>
-        </junit>
+        <test-task-config test.classpath="restlet.test.classpath" test.classes.dir="${restlet.test.classes.dir}" test.reports.dir="${restlet.test.reports.dir}" emma.file="${restlet.emma.file}"/>
     </target>
 
     <target name="emma.instr.restlet" depends="restlet.compile">

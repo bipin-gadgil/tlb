@@ -53,17 +53,7 @@
     </target>
 
     <target name="balancer.test" depends="balancer.compile.tests, balancer.compile">
-        <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
-            <classpath refid="emma.classpath"/>
-            <jvmarg value="-Demma.coverage.out.file=${balancer.emma.file}"/>
-            <jvmarg value="-Demma.coverage.out.merge=true"/>
-
-            <classpath refid="balancer.test.classpath"/>
-            <batchtest todir="${balancer.test.reports.dir}">
-                <fileset dir="${balancer.test.classes.dir}" includes="**/*Test.class*"/>
-                <formatter type="plain"/>
-            </batchtest>
-        </junit>
+        <test-task-config test.classpath="balancer.test.classpath" test.classes.dir="${balancer.test.classes.dir}" test.reports.dir="${balancer.test.reports.dir}" emma.file="${balancer.emma.file}"/>
     </target>
 
     <target name="emma.instr.balancer" depends="balancer.compile">

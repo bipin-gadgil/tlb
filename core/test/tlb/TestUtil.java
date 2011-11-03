@@ -211,7 +211,8 @@ public class TestUtil {
     }
 
     public static File createTempFolder() {
-        final File file = new File(System.getProperty(SystemEnvironment.TMP_DIR), UUID.randomUUID().toString());
+        String tmpDir = System.getProperty("test.tmp.dir", System.getProperty(SystemEnvironment.TMP_DIR));
+        final File file = new File(tmpDir, UUID.randomUUID().toString());
         file.mkdirs();
         try {
             FileUtils.forceDeleteOnExit(file);

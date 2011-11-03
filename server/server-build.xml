@@ -52,35 +52,18 @@
     </target>
 
     <target name="server.test" depends="server.compile.tests, server.compile">
-        <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
-            <classpath refid="emma.classpath"/>
-            <jvmarg value="-Demma.coverage.out.file=${server.emma.file}"/>
-            <jvmarg value="-Demma.coverage.out.merge=true"/>
-
-            <classpath refid="server.test.classpath"/>
-            <batchtest todir="${server.test.reports.dir}">
-                <fileset dir="${server.test.classes.dir}" includes="**/*Test.class*"/>
-                <formatter type="plain"/>
-            </batchtest>
-        </junit>
+        <test-task-config test.classpath="server.test.classpath" test.classes.dir="${server.test.classes.dir}" test.reports.dir="${server.test.reports.dir}" emma.file="${server.emma.file}"/>
     </target>
 
     <target name="server.test.perf" depends="server.test.lowmem"/>
 
     <target name="server.test.lowmem" depends="server.compile.tests, server.compile">
-        <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
-            <classpath refid="emma.classpath"/>
-            <jvmarg value="-Xms30m"/>
-            <jvmarg value="-Xmx30m"/>
-            <jvmarg value="-Demma.coverage.out.file=${server.emma.file}"/>
-            <jvmarg value="-Demma.coverage.out.merge=true"/>
-
-            <classpath refid="server.test.classpath"/>
-            <batchtest todir="${server.test.reports.dir}">
-                <fileset dir="${server.test.classes.dir}" includes="**/*_LowMem.class*"/>
-                <formatter type="plain"/>
-            </batchtest>
-        </junit>
+        <test-task-config test.classpath="server.test.classpath" test.classes.dir="${server.test.classes.dir}" test.reports.dir="${server.test.reports.dir}" emma.file="${server.emma.file}" test.wildcard="**/*_LowMem.class*">
+            <extra-jvmargs>
+                <jvmarg value="-Xms30m"/>
+                <jvmarg value="-Xmx30m"/>
+            </extra-jvmargs>
+        </test-task-config>
     </target>
 
     <target name="emma.instr.server" depends="server.compile">
