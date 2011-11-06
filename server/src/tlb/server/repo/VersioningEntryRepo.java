@@ -57,9 +57,17 @@ public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends Sui
         return version.list();
     }
 
+    public List<T> sortedList(String version) {
+        try {
+            return sortedListFor(list(version));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
-    public final void load(final String fileContents) {
-        super.load(fileContents);
+    public final void loadCopyFromDisk(final String fileContents) {
+        super.loadCopyFromDisk(fileContents);
         loadedData = true;
     }
 }

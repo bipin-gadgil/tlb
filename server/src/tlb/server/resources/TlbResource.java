@@ -22,9 +22,9 @@ import static tlb.TlbConstants.Server.REQUEST_NAMESPACE;
 /**
  * @understands listing and modification of tlb resource
  */
-public abstract class TlbResource extends Resource {
+public abstract class TlbResource<T extends EntryRepo> extends Resource {
     private static final Logger logger = Logger.getLogger(TlbResource.class.getName());
-    protected EntryRepo repo;
+    protected T repo;
     private final Map<String, Object> reqAttrs;
 
     public TlbResource(Context context, Request request, Response response) {
@@ -32,11 +32,11 @@ public abstract class TlbResource extends Resource {
         EntryRepoFactory repoFactory = (EntryRepoFactory) context.getAttributes().get(TlbConstants.Server.REPO_FACTORY);
         reqAttrs = request.getAttributes();
         getVariants().add(new Variant(MediaType.TEXT_PLAIN));
-        String key = strAttr(REQUEST_NAMESPACE);
+        String namespace = strAttr(REQUEST_NAMESPACE);
         try {
-            repo = getRepo(repoFactory, key);
+            repo = getRepo(repoFactory, namespace);
         } catch (Exception e) {
-            logger.warn(String.format("Failed to get repo for '%s'", key), e);
+            logger.warn(String.format("Failed to get repo for '%s'", namespace), e);
             throw new RuntimeException(e);
         }
     }
@@ -49,7 +49,7 @@ public abstract class TlbResource extends Resource {
         return repo.list();
     }
 
-    protected abstract EntryRepo getRepo(EntryRepoFactory repoFactory, String key) throws IOException, ClassNotFoundException;
+    protected abstract T getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException;
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {

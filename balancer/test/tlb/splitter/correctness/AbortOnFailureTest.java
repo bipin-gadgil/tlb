@@ -83,5 +83,4 @@ public class AbortOnFailureTest {
         verify(server).validateSubSet(given);
         verifyNoMoreInteractions(server);
     }
-
 }

@@ -32,7 +32,7 @@ public class SuiteTimeEntry implements SuiteLevelEntry {
     }
 
     public static String dump(List<SuiteTimeEntry> entries) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (Entry entry : entries) {
             buffer.append(entry.dump());
         }

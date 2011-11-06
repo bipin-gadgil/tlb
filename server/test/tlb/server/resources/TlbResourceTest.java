@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
+import org.restlet.data.Reference;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.resource.Representation;
@@ -38,14 +39,14 @@ public class TlbResourceTest {
     private SubsetSizeRepo repo;
     private TestUtil.LogFixture logFixture;
 
-    static class TestTlbResource extends TlbResource {
+    static class TestTlbResource extends TlbResource<SubsetSizeRepo> {
         public TestTlbResource(Context context, Request request, Response response) {
             super(context, request, response);
         }
 
         @Override
-        protected EntryRepo getRepo(EntryRepoFactory repoFactory, String key) throws IOException, ClassNotFoundException {
-            return repoFactory.createSubsetRepo(key, EntryRepoFactory.LATEST_VERSION);
+        protected SubsetSizeRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
+            return repoFactory.createSubsetRepo(namespace, EntryRepoFactory.LATEST_VERSION);
         }
 
         @Override
@@ -61,6 +62,7 @@ public class TlbResourceTest {
         repo = mock(SubsetSizeRepo.class);
         context.setAttributes(Collections.singletonMap(TlbConstants.Server.REPO_FACTORY, (Object) repoFactory));
         request = mock(Request.class);
+        when(request.getOriginalRef()).thenReturn(new Reference("http://foo:7019/quux/foo/bar"));
         attributeMap = new HashMap<String, Object>();
         attributeMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "identifier");
         when(request.getAttributes()).thenReturn(attributeMap);

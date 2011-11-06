@@ -8,21 +8,22 @@ import org.restlet.Context;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.resource.Representation;
+import tlb.server.repo.SuiteResultRepo;
 
 import java.io.IOException;
 
 /**
  * @understands result of suite reported by job
  */
-public class SuiteResultResource extends TlbResource {
+public class SuiteResultResource extends TlbResource<SuiteResultRepo> {
 
     public SuiteResultResource(Context context, Request request, Response response) {
         super(context, request, response);
     }
 
     @Override
-    protected EntryRepo getRepo(EntryRepoFactory repoFactory, String key) throws IOException, ClassNotFoundException {
-        return repoFactory.createSuiteResultRepo(key, EntryRepoFactory.LATEST_VERSION);
+    protected SuiteResultRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
+        return repoFactory.createSuiteResultRepo(namespace, EntryRepoFactory.LATEST_VERSION);
     }
 
     @Override

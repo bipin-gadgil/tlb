@@ -6,10 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SubsetSizeEntry;
-import tlb.domain.SuiteResultEntry;
-import tlb.domain.SuiteTimeEntry;
-import tlb.domain.TimeProvider;
+import tlb.domain.*;
 import tlb.utils.SystemEnvironment;
 
 import java.io.*;
@@ -23,9 +20,7 @@ import static org.junit.matchers.JUnitMatchers.hasItem;
 import static org.junit.matchers.JUnitMatchers.hasItems;
 import static org.mockito.Mockito.*;
 import static tlb.TestUtil.deref;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUBSET_SIZE;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_RESULT;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
+import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
 
 public class EntryRepoFactoryTest {
@@ -51,20 +46,25 @@ public class EntryRepoFactoryTest {
         SubsetSizeRepo subsetRepo = factory.createSubsetRepo("dev", LATEST_VERSION);
         SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
         SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
+        String version = "foo-bar";
+        SetRepo setRepo = factory.createUniversalSetRepo("dev", version);
+
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+        setRepo.load("foo/bar/Baz.quux");
 
         assertThat("No files should exist as sync on this factory has never been called.", baseDir.list().length, is(0));
 
         factory.syncReposToDisk();
 
-        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(3));
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
 
 
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10");
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25");
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
+        assertContentIs(EntryRepoFactory.name("dev", version, UNIVERSAL_SET), "foo/bar/Baz.quux");
     }
 
     @Test

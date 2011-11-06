@@ -3,23 +3,36 @@ package tlb.server.repo;
 import tlb.domain.SuiteLevelEntry;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @understands persistence and retrieval of suite based data
  */
 public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements EntryRepo<T> {
-    private volatile Map<String, T> suiteData;
+    protected volatile Map<String, T> suiteData;
     protected String namespace;
     transient protected EntryRepoFactory factory;
-    protected String identifier;
+    protected volatile String identifier;
     private volatile boolean dirty;
 
     public SuiteEntryRepo() {
         super();
         suiteData = new ConcurrentHashMap<String, T>();
+    }
+
+    public List<T> sortedList() {
+        return sortedListFor(list());
+    }
+
+    protected static <T extends SuiteLevelEntry> List<T> sortedListFor(Collection<T> list) {
+        List<T> entryList = new ArrayList<T>(list);
+        Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
+            public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        return entryList;
     }
 
     public Collection<T> list() {
@@ -39,6 +52,10 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         this.factory = factory;
     }
 
+    public final boolean hasFactory() {
+        return factory != null;
+    }
+
     //TODO: kill these two setters(namespace and identifier), pass data in one shot to set both internally
     public final void setNamespace(String namespace) {
         this.namespace = namespace;
@@ -46,6 +63,10 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
 
     public void setIdentifier(String type) {
         this.identifier = type;
+    }
+
+    public String getIdentifier() {
+        return identifier;
     }
 
     public boolean isDirty() {
@@ -61,11 +82,16 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         return dumpBuffer.toString();
     }
 
-    public synchronized void load(final String fileContents) {
+    public synchronized void loadCopyFromDisk(final String fileContents) {
+        load(fileContents);
+        dirty = false;
+    }
+
+    public void load(String contents) {
         suiteData.clear();
-        for (T entry : parse(fileContents)) {
+        for (T entry : parse(contents)) {
             suiteData.put(entry.getName(), entry);
         }
-        dirty = false;
+        dirty = true;
     }
 }

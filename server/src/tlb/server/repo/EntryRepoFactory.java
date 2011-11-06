@@ -9,10 +9,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 
-
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUBSET_SIZE;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_RESULT;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
+import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 
 /**
  * @understands creation of EntryRepo
@@ -49,7 +46,7 @@ public class EntryRepoFactory implements Runnable {
         }
     }
 
-    private String repoId(String identifier) {
+    public static String repoId(String identifier) {
         return identifier.intern();
     }
 
@@ -68,7 +65,7 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public SuiteResultRepo createSuiteResultRepo(final String namespace, final String version) throws ClassNotFoundException, IOException {
-        return (SuiteResultRepo) findOrCreate(namespace, version, SUITE_RESULT, new Creator<SuiteResultRepo>() {
+        return findOrCreate(namespace, version, SUITE_RESULT, new Creator<SuiteResultRepo>() {
             public SuiteResultRepo create() {
                 return new SuiteResultRepo();
             }
@@ -76,44 +73,57 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public SuiteTimeRepo createSuiteTimeRepo(final String namespace, final String version) throws IOException {
-        return (SuiteTimeRepo) findOrCreate(namespace, version, SUITE_TIME, new Creator<SuiteTimeRepo>() {
+        return findOrCreate(namespace, version, SUITE_TIME, new Creator<SuiteTimeRepo>() {
             public SuiteTimeRepo create() {
                 return new SuiteTimeRepo(timeProvider);
             }
         });
     }
 
-    public SetRepo createSubsetRepo(final String namespace, final String version) throws IOException, ClassNotFoundException {
-        return (SetRepo) findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
+    public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException {
+        return findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
             public SubsetSizeRepo create() {
                 return new SubsetSizeRepo();
             }
         });
     }
 
-    public SetRepo createUniversalSetRepo(String namespace, String version) {
-        return null;
+    public SetRepo createUniversalSetRepo(String namespace, String version) throws IOException {
+        return findOrCreate(namespace, version, UNIVERSAL_SET, new Creator<SetRepo>() {
+            public SetRepo create() {
+                return new SetRepo(timeProvider);
+            }
+        });
     }
 
-    EntryRepo findOrCreate(String namespace, String version, String type, Creator<? extends EntryRepo> creator) throws IOException {
+    <T extends EntryRepo> T findOrCreate(String namespace, String version, String type, Creator<T> creator) throws IOException {
         String identifier = name(namespace, version, type);
-        synchronized (repoId(identifier)) {
-            EntryRepo repo = cache.get(identifier);
-            if (repo == null) {
-                repo = creator.create();
-                repo.setNamespace(namespace);
-                repo.setIdentifier(identifier);
-                cache.put(identifier, repo);
+        T repo = (T) cache.get(identifier);
+        if (repo == null) {
+            synchronized (repoId(identifier)) {
+                repo = (T) cache.get(identifier);
+                if (repo == null) {
+                    repo = creator.create();
+                    repo.setNamespace(namespace);
+                    repo.setIdentifier(identifier);
+                    cache.put(identifier, repo);
 
-                File diskDump = dumpFile(identifier);
-                if (diskDump.exists()) {
-                    final FileReader reader = new FileReader(diskDump);
-                    repo.load(FileUtil.readIntoString(new BufferedReader(reader)));
+                    File diskDump = dumpFile(identifier);
+                    if (diskDump.exists()) {
+                        final FileReader reader = new FileReader(diskDump);
+                        repo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+                    }
                 }
             }
-            repo.setFactory(this);
-            return repo;
         }
+        if (! repo.hasFactory()) {
+            synchronized (repoId(identifier)) {
+                if (! repo.hasFactory()) {
+                    repo.setFactory(this);
+                }
+            }
+        }
+        return repo;
     }
 
     private File dumpFile(String identifier) {

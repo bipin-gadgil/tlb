@@ -45,7 +45,7 @@ public class VersionedResourceTest {
         mockRepo = mock(SuiteTimeRepo.class);
         resource = new VersionedResource(context, request, mock(Response.class)) {
             @Override
-            protected EntryRepo getRepo(EntryRepoFactory repoFactory, String key) throws IOException, ClassNotFoundException {
+            protected EntryRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
                 return mockRepo;
             }
         };

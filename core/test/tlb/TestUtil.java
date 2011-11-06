@@ -83,16 +83,6 @@ public class TestUtil {
         throw new IllegalStateException("Failed to find a free port");
     }
 
-    public static List<SuiteLevelEntry> sortedList(final Collection<? extends SuiteLevelEntry> list) {
-        ArrayList<SuiteLevelEntry> entryList = new ArrayList<SuiteLevelEntry>(list);
-        Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
-            public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        return entryList;
-    }
-
     public static String convertToPlatformSpecificPath(String classRelPath) {
         return new File(classRelPath).getPath();
     }

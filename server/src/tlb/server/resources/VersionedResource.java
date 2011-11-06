@@ -6,6 +6,7 @@ import org.restlet.Context;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.resource.Representation;
+import tlb.server.repo.EntryRepo;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.Collection;
 /**
  * @understands accessing and listing out data from versioned repo
  */
-public abstract class VersionedResource extends TlbResource {
+public abstract class VersionedResource<T extends EntryRepo> extends TlbResource<T> {
     public VersionedResource(Context context, Request request, Response response) {
         super(context, request, response);
     }

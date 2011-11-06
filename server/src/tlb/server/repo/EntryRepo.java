@@ -18,15 +18,21 @@ public interface EntryRepo<T extends Entry> extends Serializable {
 
     String diskDump();
 
-    void load(final String fileContents);
+    void loadCopyFromDisk(final String fileContents);
+
+    void load(final String contents);
 
     void add(T entry);
 
     void setFactory(EntryRepoFactory factory);
 
+    boolean hasFactory();
+
     void setNamespace(String namespace);
 
     void setIdentifier(String type);
+
+    String getIdentifier();
 
     List<T> parse(String string);
 

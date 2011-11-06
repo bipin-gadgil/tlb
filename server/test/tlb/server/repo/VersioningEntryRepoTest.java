@@ -22,7 +22,6 @@ import static org.junit.matchers.JUnitMatchers.hasItem;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-import static tlb.TestUtil.sortedList;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
 import static tlb.server.repo.TestCaseRepo.TestCaseEntry.parseSingleEntry;
 
@@ -91,36 +90,36 @@ public class VersioningEntryRepoTest {
 
     @Test
     public void shouldReturnListAsAtTheTimeOfQueryingAVersion() throws ClassNotFoundException, IOException {
-        final List<SuiteLevelEntry> frozenCollection = sortedList(repo.list("foo"));
+        final List<TestCaseRepo.TestCaseEntry> frozenCollection = repo.sortedList("foo");
         assertThat(frozenCollection.size(), is(2));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
     }
 
     @Test
     public void shouldFreezeAVersionOnceCreated() throws ClassNotFoundException, IOException {
-        sortedList(repo.list("foo"));
+        repo.list("foo");
         repo.update(parseSingleEntry("shouldFoo#Foo"));
         repo.update(parseSingleEntry("shouldBaz#Quux"));
-        final List<SuiteLevelEntry> frozenCollection = sortedList(repo.list("foo"));
+        final List<TestCaseRepo.TestCaseEntry> frozenCollection = repo.sortedList("foo");
         assertThat(frozenCollection.size(), is(2));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
     }
 
     @Test
     public void shouldKeepVersionFrozenAcrossDumpAndReload() throws InterruptedException, ClassNotFoundException, IOException {
-        sortedList(repo.list("foo"));
+        repo.list("foo");
         repo.update(parseSingleEntry("shouldFoo#Foo"));
         repo.update(parseSingleEntry("shouldBaz#Quux"));
         final Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
         final TestCaseRepo newTestCaseRepo = createRepo(new EntryRepoFactory(env()));
-        final List<SuiteLevelEntry> frozenCollection = sortedList(newTestCaseRepo.list("foo"));
+        final List<TestCaseRepo.TestCaseEntry> frozenCollection = newTestCaseRepo.sortedList("foo");
         assertThat(frozenCollection.size(), is(2));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
-        assertThat(frozenCollection, hasItem((SuiteLevelEntry) new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
+        assertThat(frozenCollection, hasItem(new TestCaseRepo.TestCaseEntry("shouldBaz", "Baz")));
     }
 
     @Test
