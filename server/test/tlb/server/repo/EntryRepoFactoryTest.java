@@ -72,9 +72,13 @@ public class EntryRepoFactoryTest {
         SubsetSizeRepo subsetRepo = factory.createSubsetRepo("dev", LATEST_VERSION);
         SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
         SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
+        String version = "foo-bar";
+        SetRepo setRepo = factory.createUniversalSetRepo("dev", version);
+
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+        setRepo.load("bar.baz.Quux");
 
         factory.syncReposToDisk();
 
@@ -89,14 +93,16 @@ public class EntryRepoFactoryTest {
         subsetRepo.add(new SubsetSizeEntry(21));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Bang", 35));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
+        setRepo.load("quux.bar.Baz");
 
         factory.syncReposToDisk();
 
-        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(3));
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
 
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10", "21");
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25", "foo.bar.Bang: 35");
         assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
+        assertContentIs(EntryRepoFactory.name("dev", version, UNIVERSAL_SET), "quux.bar.Baz");
     }
 
     private void assertContentIs(final String fileName, String... str) throws IOException {
@@ -179,6 +185,10 @@ public class EntryRepoFactoryTest {
         subsetResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
         subsetResultRepo.update(new SuiteResultEntry("bar.baz.Quux", false));
 
+        String version = "foo-bar";
+        SetRepo setRepo = factory.createUniversalSetRepo("quux", version);
+        setRepo.load("foo/bar/Baz\nquux/bar/Baz\nfoo/baz/Quux");
+
         Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
@@ -188,6 +198,8 @@ public class EntryRepoFactoryTest {
         assertThat(otherFactoryInstance.createSuiteTimeRepo("bar", LATEST_VERSION).list(), hasItems(new SuiteTimeEntry("foo.bar.Baz", 10), new SuiteTimeEntry("bar.baz.Quux", 20)));
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list().size(), is(2));
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list(), hasItems(new SuiteResultEntry("foo.bar.Baz", true), new SuiteResultEntry("bar.baz.Quux", false)));
+        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version).list().size(), is(3));
+        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version).list(), hasItems(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("quux/bar/Baz"), new SuiteNameCountEntry("foo/baz/Quux")));
     }
 
     @Test
