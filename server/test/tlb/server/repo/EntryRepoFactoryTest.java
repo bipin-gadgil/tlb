@@ -47,7 +47,8 @@ public class EntryRepoFactoryTest {
         SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
         SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
         String version = "foo-bar";
-        SetRepo setRepo = factory.createUniversalSetRepo("dev", version);
+        String submoduleName = "module-name";
+        SetRepo setRepo = factory.createUniversalSetRepo("dev", version, submoduleName);
 
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
@@ -61,10 +62,10 @@ public class EntryRepoFactoryTest {
         assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
 
 
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10");
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25");
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
-        assertContentIs(EntryRepoFactory.name("dev", version, UNIVERSAL_SET), "foo/bar/Baz.quux");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("dev"), "10");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_TIME).getIdUnder("dev"), "foo.bar.Quux: 25");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_RESULT).getIdUnder("dev"), "foo.bar.Baz: true");
+        assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName).getIdUnder("dev"), "foo/bar/Baz.quux");
     }
 
     @Test
@@ -73,7 +74,8 @@ public class EntryRepoFactoryTest {
         SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
         SuiteResultRepo suiteResultRepo = factory.createSuiteResultRepo("dev", LATEST_VERSION);
         String version = "foo-bar";
-        SetRepo setRepo = factory.createUniversalSetRepo("dev", version);
+        String submoduleName = "submodule";
+        SetRepo setRepo = factory.createUniversalSetRepo("dev", version, submoduleName);
 
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
@@ -99,10 +101,10 @@ public class EntryRepoFactoryTest {
 
         assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
 
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUBSET_SIZE), "10", "21");
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_TIME), "foo.bar.Quux: 25", "foo.bar.Bang: 35");
-        assertContentIs(EntryRepoFactory.name("dev", LATEST_VERSION, SUITE_RESULT), "foo.bar.Baz: true");
-        assertContentIs(EntryRepoFactory.name("dev", version, UNIVERSAL_SET), "quux.bar.Baz");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("dev"), "10", "21");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_TIME).getIdUnder("dev"), "foo.bar.Quux: 25", "foo.bar.Bang: 35");
+        assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_RESULT).getIdUnder("dev"), "foo.bar.Baz: true");
+        assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName).getIdUnder("dev"), "quux.bar.Baz");
     }
 
     private void assertContentIs(final String fileName, String... str) throws IOException {
@@ -116,7 +118,7 @@ public class EntryRepoFactoryTest {
     @Test
     public void shouldPassFactoryAndNamespaceToEachRepo() throws ClassNotFoundException, IOException {
         final EntryRepo createdEntryRepo = mock(EntryRepo.class);
-        final EntryRepo repo = factory.findOrCreate("namespace", "old_version", "suite_time", new EntryRepoFactory.Creator<EntryRepo>() {
+        final EntryRepo repo = factory.findOrCreate("namespace", new EntryRepoFactory.VersionedNamespace("old_version", "suite_time"), new EntryRepoFactory.Creator<EntryRepo>() {
             public EntryRepo create() {
                 return createdEntryRepo;
             }
@@ -186,7 +188,8 @@ public class EntryRepoFactoryTest {
         subsetResultRepo.update(new SuiteResultEntry("bar.baz.Quux", false));
 
         String version = "foo-bar";
-        SetRepo setRepo = factory.createUniversalSetRepo("quux", version);
+        String submoduleName = "module-name";
+        SetRepo setRepo = factory.createUniversalSetRepo("quux", version, submoduleName);
         setRepo.load("foo/bar/Baz\nquux/bar/Baz\nfoo/baz/Quux");
 
         Thread exitHook = factory.exitHook();
@@ -198,8 +201,8 @@ public class EntryRepoFactoryTest {
         assertThat(otherFactoryInstance.createSuiteTimeRepo("bar", LATEST_VERSION).list(), hasItems(new SuiteTimeEntry("foo.bar.Baz", 10), new SuiteTimeEntry("bar.baz.Quux", 20)));
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list().size(), is(2));
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list(), hasItems(new SuiteResultEntry("foo.bar.Baz", true), new SuiteResultEntry("bar.baz.Quux", false)));
-        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version).list().size(), is(3));
-        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version).list(), hasItems(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("quux/bar/Baz"), new SuiteNameCountEntry("foo/baz/Quux")));
+        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list().size(), is(3));
+        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list(), hasItems(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("quux/bar/Baz"), new SuiteNameCountEntry("foo/baz/Quux")));
     }
 
     @Test
@@ -239,7 +242,7 @@ public class EntryRepoFactoryTest {
     public void shouldUseWorkingDirAsDiskStorageRootWhenNotGiven() throws IOException, ClassNotFoundException {
         final File workingDirStorage = new File(TlbConstants.Server.DEFAULT_TLB_DATA_DIR);
         workingDirStorage.mkdirs();
-        File file = new File(workingDirStorage, EntryRepoFactory.name("foo", LATEST_VERSION, SUBSET_SIZE));
+        File file = new File(workingDirStorage, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("foo"));
         FileUtils.writeStringToFile(file, "1\n2\n3\n");
         EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(new HashMap<String, String>()));
         SubsetSizeRepo repo = factory.createSubsetRepo("foo", LATEST_VERSION);
@@ -249,7 +252,7 @@ public class EntryRepoFactoryTest {
     @Test
     public void shouldLoadDiskDumpFromStorageRoot() throws IOException, ClassNotFoundException {
         baseDir.mkdirs();
-        File file = new File(baseDir, EntryRepoFactory.name("foo", LATEST_VERSION, SUBSET_SIZE));
+        File file = new File(baseDir, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("foo"));
         FileUtils.writeStringToFile(file, "1\n2\n3\n");
         SubsetSizeRepo repo = factory.createSubsetRepo("foo", LATEST_VERSION);
         assertThat(repo.list(), is((Collection<SubsetSizeEntry>) Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));
@@ -258,7 +261,7 @@ public class EntryRepoFactoryTest {
     @Test
     public void shouldNotLoadDiskDumpWhenUsingARepoThatIsAlreadyCreated() throws ClassNotFoundException, IOException {
         SubsetSizeRepo fooRepo = factory.createSubsetRepo("foo", LATEST_VERSION);
-        File file = new File(baseDir, EntryRepoFactory.name("foo", LATEST_VERSION, SUBSET_SIZE));
+        File file = new File(baseDir, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("foo"));
         ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(file));
         outStream.writeObject(new ArrayList<SubsetSizeEntry>(Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));
         outStream.close();
@@ -368,7 +371,7 @@ public class EntryRepoFactoryTest {
     }
 
     private EntryRepo findOrCreateRepo(final VersioningEntryRepo repo, String name) throws IOException, ClassNotFoundException {
-        return factory.findOrCreate(name, LATEST_VERSION, "foo_bar", new EntryRepoFactory.Creator<EntryRepo>() {
+        return factory.findOrCreate(name, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, "foo_bar"), new EntryRepoFactory.Creator<EntryRepo>() {
             public EntryRepo create() {
                 return repo;
             }

@@ -27,7 +27,7 @@ public class UpdateUniversalSetResource extends TlbResource<SetRepo> {
 
     @Override
     protected SetRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
-        return repoFactory.createUniversalSetRepo(namespace, strAttr(TlbConstants.Server.LISTING_VERSION));
+        return repoFactory.createUniversalSetRepo(namespace, strAttr(TlbConstants.Server.LISTING_VERSION), "module-name");
     }
 
     @Override

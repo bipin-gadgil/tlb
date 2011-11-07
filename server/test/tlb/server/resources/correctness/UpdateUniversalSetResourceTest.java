@@ -49,7 +49,7 @@ public class UpdateUniversalSetResourceTest {
         attributeMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "family_name");
         attributeMap.put(TlbConstants.Server.LISTING_VERSION, "version-string");
         when(request.getAttributes()).thenReturn(attributeMap);
-        when(repoFactory.createUniversalSetRepo("family_name", "version-string")).thenReturn(repo);
+        when(repoFactory.createUniversalSetRepo("family_name", "version-string", "module-name")).thenReturn(repo);
         response = mock(Response.class);
 
         representationGiven = null;

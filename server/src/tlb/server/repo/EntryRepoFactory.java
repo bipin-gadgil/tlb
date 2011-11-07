@@ -64,8 +64,106 @@ public class EntryRepoFactory implements Runnable {
         }
     }
 
+    public static abstract class IdentificationScheme {
+        private final String type;
+
+        protected IdentificationScheme(String type) {
+            this.type = type;
+        }
+
+        public String getIdUnder(String namespace) {
+            return escape(namespace) + DELIMITER + getIdWithoutNamespace() + DELIMITER + escape(type);
+        }
+
+        public abstract String getIdWithoutNamespace();
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            IdentificationScheme that = (IdentificationScheme) o;
+
+            if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return type != null ? type.hashCode() : 0;
+        }
+    }
+
+    public static class VersionedNamespace extends IdentificationScheme {
+        private final String version;
+
+        public VersionedNamespace(String version, String type) {
+            super(type);
+            this.version = version;
+        }
+
+        @Override
+        public String getIdWithoutNamespace() {
+            return escape(version);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            VersionedNamespace that = (VersionedNamespace) o;
+
+            if (version != null ? !version.equals(that.version) : that.version != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return version != null ? version.hashCode() : 0;
+        }
+    }
+
+    public static class SubmoduledUnderVersionedNamespace extends VersionedNamespace {
+        private final String submoduleName;
+
+        public SubmoduledUnderVersionedNamespace(String version, String type, String submoduleName) {
+            super(version, type);
+            this.submoduleName = submoduleName;
+        }
+
+        @Override
+        public String getIdWithoutNamespace() {
+            return super.getIdWithoutNamespace() + DELIMITER + escape(submoduleName);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+
+            SubmoduledUnderVersionedNamespace that = (SubmoduledUnderVersionedNamespace) o;
+
+            if (submoduleName != null ? !submoduleName.equals(that.submoduleName) : that.submoduleName != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + (submoduleName != null ? submoduleName.hashCode() : 0);
+            return result;
+        }
+    }
+
+
     public SuiteResultRepo createSuiteResultRepo(final String namespace, final String version) throws ClassNotFoundException, IOException {
-        return findOrCreate(namespace, version, SUITE_RESULT, new Creator<SuiteResultRepo>() {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUITE_RESULT), new Creator<SuiteResultRepo>() {
             public SuiteResultRepo create() {
                 return new SuiteResultRepo();
             }
@@ -73,7 +171,7 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public SuiteTimeRepo createSuiteTimeRepo(final String namespace, final String version) throws IOException {
-        return findOrCreate(namespace, version, SUITE_TIME, new Creator<SuiteTimeRepo>() {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUITE_TIME), new Creator<SuiteTimeRepo>() {
             public SuiteTimeRepo create() {
                 return new SuiteTimeRepo(timeProvider);
             }
@@ -81,23 +179,23 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException {
-        return findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUBSET_SIZE), new Creator<SubsetSizeRepo>() {
             public SubsetSizeRepo create() {
                 return new SubsetSizeRepo();
             }
         });
     }
 
-    public SetRepo createUniversalSetRepo(String namespace, String version) throws IOException {
-        return findOrCreate(namespace, version, UNIVERSAL_SET, new Creator<SetRepo>() {
+    public SetRepo createUniversalSetRepo(String namespace, String version, final String submoduleName) throws IOException {
+        return findOrCreate(namespace, new SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName), new Creator<SetRepo>() {
             public SetRepo create() {
                 return new SetRepo(timeProvider);
             }
         });
     }
 
-    <T extends EntryRepo> T findOrCreate(String namespace, String version, String type, Creator<T> creator) throws IOException {
-        String identifier = name(namespace, version, type);
+    <T extends EntryRepo> T findOrCreate(String namespace, IdentificationScheme idScheme, Creator<T> creator) throws IOException {
+        String identifier = idScheme.getIdUnder(namespace);
         T repo = (T) cache.get(identifier);
         if (repo == null) {
             synchronized (repoId(identifier)) {
@@ -129,10 +227,6 @@ public class EntryRepoFactory implements Runnable {
     private File dumpFile(String identifier) {
         new File(tlbStoreDir).mkdirs();
         return new File(tlbStoreDir, identifier);
-    }
-
-    public static String name(String namespace, String version, String type) {
-        return escape(namespace) + DELIMITER + escape(version) + DELIMITER + escape(type);
     }
 
     private static String escape(String str) {

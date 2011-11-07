@@ -90,7 +90,7 @@ public class TlbServerInitializerTest {
     public void shouldInitializeEntryRepoFactoryWithPresentWorkingDirectoryAsDiskStorageRoot() throws IOException, ClassNotFoundException {
         EntryRepoFactory factory = initializer.repoFactory();
         File dir = TestUtil.mkdirInPwd("tlb_store");
-        File file = new File(dir, EntryRepoFactory.name("foo", LATEST_VERSION, SUBSET_SIZE));
+        File file = new File(dir, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("foo"));
         List<SubsetSizeEntry> entries = writeEntriedTo(file);
         SubsetSizeRepo repo = factory.createSubsetRepo("foo", LATEST_VERSION);
         assertThat((List<SubsetSizeEntry>) repo.list(), is(entries));
@@ -112,7 +112,7 @@ public class TlbServerInitializerTest {
         systemEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, tmpDir);
         initializer = new TlbServerInitializer(new SystemEnvironment(systemEnv));
         EntryRepoFactory factory = initializer.repoFactory();
-        File file = new File(tmpDir, EntryRepoFactory.name("quux", LATEST_VERSION, SUBSET_SIZE));
+        File file = new File(tmpDir, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("quux"));
         writeEntriedTo(file);
         SubsetSizeRepo repo = factory.createSubsetRepo("quux", LATEST_VERSION);
         assertThat((List<SubsetSizeEntry>) repo.list(), is(Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));
@@ -120,8 +120,8 @@ public class TlbServerInitializerTest {
     
     @Test
     public void shouldEscapeTheEscapeCharInName() {
-        assertThat(EntryRepoFactory.name("foo", "bar", "baz"), is("foo_bar_baz"));
-        assertThat(EntryRepoFactory.name("fo_o", "b_ar_", "baz|"), is("fo__o_b__ar___baz|"));
+        assertThat(new EntryRepoFactory.VersionedNamespace("bar", "baz").getIdUnder("foo"), is("foo_bar_baz"));
+        assertThat(new EntryRepoFactory.VersionedNamespace("b_ar_", "baz|").getIdUnder("fo_o"), is("fo__o_b__ar___baz|"));
     }
 
     @Test

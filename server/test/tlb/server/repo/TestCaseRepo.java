@@ -77,7 +77,7 @@ public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry
 
     @Override
     public TestCaseRepo getSubRepo(String versionIdentifier) throws IOException {
-        return (TestCaseRepo) factory.findOrCreate(namespace, versionIdentifier, "test_case", new EntryRepoFactory.Creator<TestCaseRepo>() {
+        return (TestCaseRepo) factory.findOrCreate(namespace, new EntryRepoFactory.VersionedNamespace(versionIdentifier, "test_case"), new EntryRepoFactory.Creator<TestCaseRepo>() {
             public TestCaseRepo create() {
                 return new TestCaseRepo(new TimeProvider());
             }

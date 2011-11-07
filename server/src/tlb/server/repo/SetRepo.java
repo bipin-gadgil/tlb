@@ -17,7 +17,7 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
 
     @Override
     public VersioningEntryRepo<SuiteNameCountEntry> getSubRepo(String versionIdentifier) throws IOException {
-        return factory.createUniversalSetRepo(namespace, versionIdentifier);
+        return factory.createUniversalSetRepo(namespace, versionIdentifier, "module-name");
     }
 
     public List<SuiteNameCountEntry> parse(String string) {
