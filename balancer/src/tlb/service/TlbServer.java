@@ -1,7 +1,9 @@
 package tlb.service;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.util.EntityUtils;
 import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
@@ -11,6 +13,8 @@ import tlb.service.http.HttpAction;
 import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
@@ -72,26 +76,32 @@ public class TlbServer extends SmoothingServer {
         return Integer.parseInt(environment.val(new SystemEnvironment.EnvVar(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS)));
     }
 
-    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet) {
+    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
         StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : universalSet) {
             builder.append(suiteFile.dump());
         }
-        HttpResponse httpResponse = httpAction.doPost(validationUrl(TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET), builder.toString());
+        HttpResponse httpResponse = httpAction.doPost(validationUrl(TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName), builder.toString());
         int statusCode = httpResponse.getStatusLine().getStatusCode();
+        String responseBody = null;
+        try {
+            responseBody = EntityUtils.toString(httpResponse.getEntity());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         if (statusCode == HttpStatus.SC_CREATED) {
             return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
         } else if (statusCode == HttpStatus.SC_OK) {
-            return null;
+            return new ValidationResult(ValidationResult.Status.OK, "Universal set matched.");
         } else if (statusCode == HttpStatus.SC_CONFLICT) {
-            return null;
+            return new ValidationResult(ValidationResult.Status.FAILED, responseBody);
         } else {
             throw new IllegalStateException(String.format("Status %s for validation request not understood.", statusCode));
         }
     }
 
-    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet) {
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
         throw new UnsupportedOperationException("not implemented yet");
     }
 
@@ -104,8 +114,8 @@ public class TlbServer extends SmoothingServer {
         return builder.toString();
     }
 
-    private String validationUrl(String setType) {
-        return getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), setType);
+    private String validationUrl(String setType, String moduleName) {
+        return getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), setType, moduleName);
     }
 
     private String suiteResultUrl() {

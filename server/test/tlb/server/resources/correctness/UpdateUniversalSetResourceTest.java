@@ -36,6 +36,7 @@ public class UpdateUniversalSetResourceTest {
     private SetRepo repo;
     private Response response;
     private Representation representationGiven;
+    private HashMap<String,Object> reqAttrMap;
 
     @Before
     public void setUp() throws IOException {
@@ -45,11 +46,12 @@ public class UpdateUniversalSetResourceTest {
         repo = new SetRepo(new TimeProvider());
         repo.setIdentifier("foo-bar-baz");
         context.setAttributes(Collections.singletonMap(TlbConstants.Server.REPO_FACTORY, (Object) repoFactory));
-        HashMap<String, Object> attributeMap = new HashMap<String, Object>();
-        attributeMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "family_name");
-        attributeMap.put(TlbConstants.Server.LISTING_VERSION, "version-string");
-        when(request.getAttributes()).thenReturn(attributeMap);
-        when(repoFactory.createUniversalSetRepo("family_name", "version-string", "module-name")).thenReturn(repo);
+        reqAttrMap = new HashMap<String, Object>();
+        reqAttrMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "family_name");
+        reqAttrMap.put(TlbConstants.Server.LISTING_VERSION, "version-string");
+        reqAttrMap.put(TlbConstants.Server.MODULE_NAME, "my-module");
+        when(request.getAttributes()).thenReturn(reqAttrMap);
+        when(repoFactory.createUniversalSetRepo("family_name", "version-string", "my-module")).thenReturn(repo);
         response = mock(Response.class);
 
         representationGiven = null;
@@ -126,6 +128,28 @@ public class UpdateUniversalSetResourceTest {
         assertThat(representationGiven.getText(), is("Expected universal set was [bar.baz.Bang.class, baz.bang.Quux.class, foo.bar.Baz.class] but given [baz.bang.Quux.class, foo.bar.Baz.class]."));
     }
 
+    @Test
+    public void shouldCreateUniversalSetRepos_namespacedByDifferentModules_whenGivenTheListingByRespectiveFirstPartitions() throws ResourceException, IOException {
+        resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class"));
+        assertThat(repo.list().size(), is(3));
+        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("foo.bar.Baz.class"), new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.Quux.class")));
+        verify(response).setStatus(Status.SUCCESS_CREATED);
+
+        reset(response);
+
+        repo = new SetRepo(new TimeProvider());
+        repo.setIdentifier("foo-bar-quux");
+        reqAttrMap.put(TlbConstants.Server.MODULE_NAME, "my-other-module");
+        when(request.getAttributes()).thenReturn(reqAttrMap);
+        when(repoFactory.createUniversalSetRepo("family_name", "version-string", "my-other-module")).thenReturn(repo);
+        resource = new UpdateUniversalSetResource(context, request, response);
+
+        resource.acceptRepresentation(new StringRepresentation("bar.baz.Bang.class\nbaz.bang.SomeOther.class"));
+        assertThat(repo.list().size(), is(2));
+        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.SomeOther.class")));
+        verify(response).setStatus(Status.SUCCESS_CREATED);
+    }
+    
     private static class SuiteNameCountEntryComparator implements Comparator<SuiteNameCountEntry> {
         public int compare(SuiteNameCountEntry o1, SuiteNameCountEntry o2) {
             return o1.getName().compareTo(o2.getName());

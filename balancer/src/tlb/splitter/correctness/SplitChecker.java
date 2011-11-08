@@ -16,13 +16,13 @@ public abstract class SplitChecker implements TestSplitter {
     }
 
     public final List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> files, String moduleName) {
-        universalSet(files);
+        universalSet(files, moduleName);
         List<TlbSuiteFile> filteredFiles = splitter.filterSuites(files, moduleName);
-        subSet(filteredFiles);
+        subSet(filteredFiles, moduleName);
         return filteredFiles;
     }
 
-    abstract public void universalSet(List<TlbSuiteFile> fileResources);
+    abstract public void universalSet(List<TlbSuiteFile> fileResources, String moduleName);
 
-    abstract public void subSet(List<TlbSuiteFile> fileResources);
+    abstract public void subSet(List<TlbSuiteFile> fileResources, String moduleName);
 }

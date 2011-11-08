@@ -327,11 +327,11 @@ public class GoServer extends SmoothingServer {
         return pearJobs().size();
     }
 
-    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet) {
+    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
         throw new UnsupportedOperationException("not implemented yet");
     }
 
-    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet) {
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
         throw new UnsupportedOperationException("not implemented yet");
     }
 }

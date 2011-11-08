@@ -2,7 +2,6 @@ package tlb.splitter.correctness;
 
 import tlb.TlbSuiteFile;
 import tlb.splitter.TestSplitter;
-import tlb.utils.SystemEnvironment;
 
 import java.util.List;
 
@@ -15,10 +14,10 @@ public class NoOp extends SplitChecker {
     }
 
     @Override
-    public final void universalSet(List<TlbSuiteFile> fileResources) {
+    public final void universalSet(List<TlbSuiteFile> fileResources, String moduleName) {
     }
 
     @Override
-    public final void subSet(List<TlbSuiteFile> fileResources) {
+    public final void subSet(List<TlbSuiteFile> fileResources, String moduleName) {
     }
 }

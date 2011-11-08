@@ -16,7 +16,6 @@ import tlb.service.http.DefaultHttpAction;
 import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.hamcrest.core.Is.is;
@@ -226,23 +225,78 @@ public class TlbServerTest {
     }
 
     @Test
-    public void shouldPostUniversalSetToServer_ForFirstPartition() throws IllegalAccessException {
-        final String url = correctnessCheckUrl(TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET);
-
+    public void shouldPostUniversalSetToServer_underModuleNamespace_ForFirstPartition() throws IllegalAccessException {
         ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
         files.add(new TlbSuiteFileImpl("com.foo.Foo"));
         files.add(new TlbSuiteFileImpl("com.bar.Bar"));
         files.add(new TlbSuiteFileImpl("com.baz.Baz"));
         files.add(new TlbSuiteFileImpl("com.quux.Quux"));
 
-        ValidationResult validationResult = server.validateUniversalSet(files);
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        validationResult = server.validateUniversalSet(files, "bar-module");
 
         assertThat(validationResult.hasFailed(), is(false));
         assertThat(validationResult.getMessage(), is("First validation snapshot."));
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
     }
 
-    private String correctnessCheckUrl(String checkType) {
-        return String.format("http://localhost:%s/%s/%s/%s/%s/%s", jobName, TlbConstants.Server.EntryRepoFactory.CORRECTNESS_CHECK, jobVersion, totalPartitions, partitionNumber, checkType);
+    @Test
+    public void shouldReturnFailure_whenUniversalSetMismatches() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        files.remove(0);
+        incrementPartitionNumber();
+        validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(true));
+        assertThat(validationResult.getMessage(), is("Expected universal set was [com.bar.Bar, com.baz.Baz, com.foo.Foo, com.quux.Quux] but given [com.bar.Bar, com.baz.Baz, com.quux.Quux]."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldReturnFailure_whenUniversalSetMatchesVersionPostedByOtherPartitions() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        incrementPartitionNumber();
+
+        validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("Universal set matched."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.OK));
+    }
+
+    private void incrementPartitionNumber() {
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, String.valueOf(Integer.parseInt(partitionNumber) + 1));
+    }
+
+
+    private String correctnessCheckUrl(String checkType, String moduleName) {
+        return String.format("http://localhost:%s/%s/%s/%s/%s/%s", jobName, TlbConstants.Server.EntryRepoFactory.CORRECTNESS_CHECK, jobVersion, totalPartitions, partitionNumber, checkType, moduleName);
     }
 }

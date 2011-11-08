@@ -21,8 +21,8 @@ public class AbortOnFailure extends SplitChecker implements TalksToServer {
     }
 
     @Override
-    public void universalSet(List<TlbSuiteFile> fileResources) {
-        ValidationResult result = service.validateUniversalSet(fileResources);
+    public void universalSet(List<TlbSuiteFile> fileResources, String moduleName) {
+        ValidationResult result = service.validateUniversalSet(fileResources, moduleName);
         logger.warn(String.format("Split check result for universalSet: %s", result));
         if (result.hasFailed()) {
             throw new IllegalStateException(result.getMessage());
@@ -30,8 +30,8 @@ public class AbortOnFailure extends SplitChecker implements TalksToServer {
     }
 
     @Override
-    public void subSet(List<TlbSuiteFile> fileResources) {
-        ValidationResult result = service.validateSubSet(fileResources);
+    public void subSet(List<TlbSuiteFile> fileResources, String moduleName) {
+        ValidationResult result = service.validateSubSet(fileResources, moduleName);
         logger.warn(String.format("Split check result for subSet: %s", result));
         if (result.hasFailed()) {
             throw new IllegalStateException(result.getMessage());

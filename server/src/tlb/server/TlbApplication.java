@@ -31,8 +31,8 @@ public class TlbApplication extends Application {
         router.attach(String.format("/{%s}/%s", REQUEST_NAMESPACE, SUITE_TIME), SuiteTimeResource.class);
         router.attach(String.format("/{%s}/%s/{%s}", REQUEST_NAMESPACE, SUITE_TIME, LISTING_VERSION), VersionedSuiteTimeResource.class);
 
-        router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, UNIVERSAL_SET), UpdateUniversalSetResource.class);
-        router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, SUB_SET), UpdateSubsetResource.class);
+        router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, UNIVERSAL_SET, MODULE_NAME), UpdateUniversalSetResource.class);
+        router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, SUB_SET, MODULE_NAME), UpdateSubsetResource.class);
 
         return router;
     }

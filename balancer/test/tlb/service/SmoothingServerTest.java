@@ -164,11 +164,11 @@ public class SmoothingServerTest {
             return delegate.totalPartitions();
         }
 
-        public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet) {
+        public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
             throw new UnsupportedOperationException("not implemented yet");
         }
 
-        public ValidationResult validateSubSet(List<TlbSuiteFile> subSet) {
+        public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
             throw new UnsupportedOperationException("not implemented yet");
         }
     }

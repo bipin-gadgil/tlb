@@ -12,48 +12,48 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.hasItems;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class SplitCheckerTest {
-    private static final String moduleName = "module_baz";
 
     @Test
-    public void shouldExecuteBeforeAndAfterCallbackOnSplitCall() {
+    public void shouldCallCorrectnessCheckOperationsWithCorrespondingModuleName() {
         TestSplitter splitter = mock(TestSplitter.class);
 
-        final List<TlbSuiteFile> universalSet = new ArrayList<TlbSuiteFile>();
-        final List<TlbSuiteFile> subSet = new ArrayList<TlbSuiteFile>();
-        SplitChecker splitChecker = new SplitChecker(splitter) {
-            @Override
-            public void universalSet(List<TlbSuiteFile> fileResources) {
-                for (TlbSuiteFile fileResource : fileResources) {
-                    universalSet.add(fileResource);
-                }
-            }
-
-            @Override
-            public void subSet(List<TlbSuiteFile> fileResources) {
-                for (TlbSuiteFile fileResource : fileResources) {
-                    subSet.add(fileResource);
-                }
-            }
-        };
+        SplitChecker splitChecker = spy(new TestSplitChecker(splitter));
 
         List<TlbSuiteFile> given = new ArrayList<TlbSuiteFile>();
 
-        TlbSuiteFile foo = new TlbSuiteFileImpl("foo");
-        given.add(foo);
+        given.add(new TlbSuiteFileImpl("foo"));
         given.add(new TlbSuiteFileImpl("bar"));
-        TlbSuiteFile baz = new TlbSuiteFileImpl("baz");
-        given.add(baz);
+        given.add(new TlbSuiteFileImpl("baz"));
 
-        when(splitter.filterSuites(given, moduleName)).thenReturn(Arrays.asList(baz, foo));
+        when(splitter.filterSuites(given, "module_baz")).thenReturn(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("baz"), new TlbSuiteFileImpl("foo")));
 
-        List<TlbSuiteFile> returned = splitChecker.filterSuites(given, moduleName);
-        
-        assertThat(universalSet, is(given));
-        assertThat(subSet, is(Arrays.asList(baz, foo)));
-        assertThat(returned, is(Arrays.asList(baz, foo)));
+        assertThat(splitChecker.filterSuites(given, "module_baz"), is(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("baz"), new TlbSuiteFileImpl("foo"))));
+        verify(splitChecker).universalSet(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("foo"), new TlbSuiteFileImpl("bar"), new TlbSuiteFileImpl("baz")), "module_baz");
+        verify(splitChecker).subSet(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("baz"), new TlbSuiteFileImpl("foo")), "module_baz");
+
+        when(splitter.filterSuites(given, "foo_module")).thenReturn(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("bar"), new TlbSuiteFileImpl("baz")));
+
+        assertThat(splitChecker.filterSuites(given, "foo_module"), is(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("bar"), new TlbSuiteFileImpl("baz"))));
+        verify(splitChecker).universalSet(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("foo"), new TlbSuiteFileImpl("bar"), new TlbSuiteFileImpl("baz")), "foo_module");
+        verify(splitChecker).subSet(Arrays.asList((TlbSuiteFile) new TlbSuiteFileImpl("bar"), new TlbSuiteFileImpl("baz")), "foo_module");
+    }
+
+    private static class TestSplitChecker extends SplitChecker {
+        public TestSplitChecker(TestSplitter splitter) {
+            super(splitter);
+        }
+
+        @Override
+        public void universalSet(List<TlbSuiteFile> fileResources, String moduleName) {
+
+        }
+
+        @Override
+        public void subSet(List<TlbSuiteFile> fileResources, String moduleName) {
+
+        }
     }
 }

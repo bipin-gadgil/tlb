@@ -17,20 +17,19 @@ import static org.mockito.Mockito.*;
 
 public class AbortOnFailureTest {
 
-    private TestSplitter splitter;
     private AbortOnFailure checker;
 
     private TlbSuiteFile foo;
     private TlbSuiteFile bar;
     private TlbSuiteFile baz;
     private Server server;
+    private String moduleName = "foo_module";
 
     @Before
     public void setUp() {
-        splitter = mock(TestSplitter.class);
         server = mock(Server.class);
 
-        checker = new AbortOnFailure(splitter);
+        checker = new AbortOnFailure(mock(TestSplitter.class));
         checker.talksToServer(server);
 
         foo = new TlbSuiteFileImpl("foo");
@@ -41,46 +40,47 @@ public class AbortOnFailureTest {
     @Test
     public void shouldPostUniversalSetToServer() {
         List<TlbSuiteFile> given = Arrays.asList(foo, bar, baz);
-        when(server.validateUniversalSet(given)).thenReturn(new ValidationResult(ValidationResult.Status.OK));
-        checker.universalSet(given);
-        verify(server).validateUniversalSet(given);
+        when(server.validateUniversalSet(given, moduleName)).thenReturn(new ValidationResult(ValidationResult.Status.OK));
+        moduleName = moduleName;
+        checker.universalSet(given, moduleName);
+        verify(server).validateUniversalSet(given, moduleName);
         verifyNoMoreInteractions(server);
     }
 
     @Test
     public void shouldAbortExecution_OnUniversalSetValidationFailure() {
         List<TlbSuiteFile> given = Arrays.asList(foo, bar, baz);
-        when(server.validateUniversalSet(given)).thenReturn(new ValidationResult(ValidationResult.Status.FAILED, "Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
+        when(server.validateUniversalSet(given, moduleName)).thenReturn(new ValidationResult(ValidationResult.Status.FAILED, "Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         try {
-            checker.universalSet(given);
+            checker.universalSet(given, moduleName);
             fail("invalid check-result should have failed the call");
         } catch(IllegalStateException e) {
             assertThat(e.getMessage(), is("Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         }
-        verify(server).validateUniversalSet(given);
+        verify(server).validateUniversalSet(given, moduleName);
         verifyNoMoreInteractions(server);
     }
 
     @Test
     public void shouldPostSubsetToServer() {
         List<TlbSuiteFile> given = Arrays.asList(foo, bar, baz);
-        when(server.validateSubSet(given)).thenReturn(new ValidationResult(ValidationResult.Status.OK));
-        checker.subSet(given);
-        verify(server).validateSubSet(given);
+        when(server.validateSubSet(given, moduleName)).thenReturn(new ValidationResult(ValidationResult.Status.OK));
+        checker.subSet(given, moduleName);
+        verify(server).validateSubSet(given, moduleName);
         verifyNoMoreInteractions(server);
     }
     
     @Test
     public void shouldAbortExecution_OnSubSetValidationFailure() {
         List<TlbSuiteFile> given = Arrays.asList(foo, bar, baz);
-        when(server.validateSubSet(given)).thenReturn(new ValidationResult(ValidationResult.Status.FAILED, "Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
+        when(server.validateSubSet(given, moduleName)).thenReturn(new ValidationResult(ValidationResult.Status.FAILED, "Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         try {
-            checker.subSet(given);
+            checker.subSet(given, moduleName);
             fail("invalid check-result should have failed the call");
         } catch(IllegalStateException e) {
             assertThat(e.getMessage(), is("Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         }
-        verify(server).validateSubSet(given);
+        verify(server).validateSubSet(given, moduleName);
         verifyNoMoreInteractions(server);
     }
 }

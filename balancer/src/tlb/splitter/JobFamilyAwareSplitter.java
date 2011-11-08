@@ -34,7 +34,6 @@ public abstract class JobFamilyAwareSplitter extends AbstractTestSplitter implem
         super(env);
     }
 
-    @Override
     public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         logger.info(String.format("got total of %s files to balance", fileResources.size()));
 

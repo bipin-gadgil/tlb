@@ -29,7 +29,7 @@ public interface Server {
 
     int totalPartitions();
 
-    ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet);
+    ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName);
 
-    ValidationResult validateSubSet(List<TlbSuiteFile> subSet);
+    ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName);
 }
