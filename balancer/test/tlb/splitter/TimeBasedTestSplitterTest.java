@@ -28,6 +28,8 @@ public class TimeBasedTestSplitterTest {
     private Server server;
     private TestUtil.LogFixture logFixture;
 
+    private static final String moduleName = "module_quux";
+
     @Before
     public void setUp() throws Exception {
         server = mock(Server.class);
@@ -53,7 +55,7 @@ public class TimeBasedTestSplitterTest {
 
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, env);
         logFixture.startListening();
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, second, third)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, second, third)));
         logFixture.assertHeard("total jobs to distribute load [ 1 ]");
     }
 
@@ -73,11 +75,11 @@ public class TimeBasedTestSplitterTest {
         when(server.partitionNumber()).thenReturn(1);
 
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(second, first, third)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(second, first, third)));
 
         when(server.partitionNumber()).thenReturn(2);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(fourth, fifth)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(fourth, fifth)));
     }
 
     @Test
@@ -113,7 +115,7 @@ public class TimeBasedTestSplitterTest {
 
     private void assertAbortsForNoHistoricalTimeData(List<TlbSuiteFile> resources, TimeBasedTestSplitter criteria) {
         try {
-            criteria.filterSuites(resources);
+            criteria.filterSuites(resources, moduleName);
             fail("should have aborted, as no historical test time data was given");
         } catch (Exception e) {
             String message = "no historical test time data, aborting attempt to balance based on time";
@@ -137,19 +139,19 @@ public class TimeBasedTestSplitterTest {
 
         when(server.partitionNumber()).thenReturn(1);
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(second)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(second)));
 
         when(server.partitionNumber()).thenReturn(2);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(fourth)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(fourth)));
 
         when(server.partitionNumber()).thenReturn(3);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-3"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(fifth)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(fifth)));
 
         when(server.partitionNumber()).thenReturn(4);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-4"));
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, third)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, third)));
     }
 
     @Test
@@ -169,7 +171,7 @@ public class TimeBasedTestSplitterTest {
         when(server.partitionNumber()).thenReturn(1);
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
         logFixture.startListening();
-        List<TlbSuiteFile> filteredResources = criteria.filterSuites(resources);
+        List<TlbSuiteFile> filteredResources = criteria.filterSuites(resources, moduleName);
         logFixture.assertHeard("got total of 7 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("historical test time data has entries for 5 suites");
@@ -181,7 +183,7 @@ public class TimeBasedTestSplitterTest {
 
         when(server.partitionNumber()).thenReturn(2);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
-        filteredResources = criteria.filterSuites(resources);
+        filteredResources = criteria.filterSuites(resources, moduleName);
         logFixture.assertHeard("got total of 7 files to balance", 2);
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
         logFixture.assertHeard("historical test time data has entries for 5 suites", 2);
@@ -207,7 +209,7 @@ public class TimeBasedTestSplitterTest {
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
         logFixture.startListening();
 
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(second)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(second)));
         logFixture.assertHeard("got total of 3 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("historical test time data has entries for 5 suites");
@@ -218,7 +220,7 @@ public class TimeBasedTestSplitterTest {
         when(server.partitionNumber()).thenReturn(2);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
 
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, third)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, third)));
         logFixture.assertHeard("got total of 3 files to balance", 2);
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
         logFixture.assertHeard("historical test time data has entries for 5 suites", 2);

@@ -1,6 +1,5 @@
 package tlb.splitter.correctness;
 
-import org.hamcrest.core.Is;
 import org.junit.Test;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
@@ -8,17 +7,17 @@ import tlb.splitter.TestSplitter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.hasItems;
-import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SplitCheckerTest {
+    private static final String moduleName = "module_baz";
+
     @Test
     public void shouldExecuteBeforeAndAfterCallbackOnSplitCall() {
         TestSplitter splitter = mock(TestSplitter.class);
@@ -49,9 +48,9 @@ public class SplitCheckerTest {
         TlbSuiteFile baz = new TlbSuiteFileImpl("baz");
         given.add(baz);
 
-        when(splitter.filterSuites(given)).thenReturn(Arrays.asList(baz, foo));
+        when(splitter.filterSuites(given, moduleName)).thenReturn(Arrays.asList(baz, foo));
 
-        List<TlbSuiteFile> returned = splitChecker.filterSuites(given);
+        List<TlbSuiteFile> returned = splitChecker.filterSuites(given, moduleName);
         
         assertThat(universalSet, is(given));
         assertThat(subSet, is(Arrays.asList(baz, foo)));

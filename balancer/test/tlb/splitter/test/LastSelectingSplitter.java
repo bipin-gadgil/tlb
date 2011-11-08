@@ -12,7 +12,7 @@ public class LastSelectingSplitter extends AbstractTestSplitter {
         super(env);
     }
 
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         return Arrays.asList(fileResources.get(fileResources.size() - 1));
     }
 }

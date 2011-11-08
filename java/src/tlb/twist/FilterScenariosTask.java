@@ -2,6 +2,7 @@ package tlb.twist;
 
 import org.apache.tools.ant.*;
 
+import tlb.TlbConstants;
 import tlb.factory.TlbBalancerFactory;
 import tlb.splitter.AbstractTestSplitter;
 import tlb.utils.SystemEnvironment;
@@ -13,6 +14,7 @@ public class FilterScenariosTask extends Task {
     private final LoadBalancedTwistSuite suite;
     private String scenariosFolder;
     private String destinationFolder = DEFAULT_TWIST_LOCATION;
+    private String moduleName = TlbConstants.Balancer.DEFAULT_MODULE_NAME;
 
     //Needed for ant
     public FilterScenariosTask() {
@@ -29,7 +31,7 @@ public class FilterScenariosTask extends Task {
 
     @Override
     public void execute() throws BuildException {
-        suite.balance(scenariosFolder, destinationFolder);
+        suite.balance(scenariosFolder, destinationFolder, moduleName);
     }
 
     @Override
@@ -43,5 +45,9 @@ public class FilterScenariosTask extends Task {
 
     public void setDestinationFolder(String destinationFolder) {
         this.destinationFolder = destinationFolder;
+    }
+
+    public void setModuleName(String moduleName) {
+        this.moduleName = moduleName;
     }
 }

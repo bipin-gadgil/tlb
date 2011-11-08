@@ -1,16 +1,16 @@
 package tlb.balancer;
 
+import com.noelios.restlet.http.HttpConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Context;
-import org.restlet.data.MediaType;
-import org.restlet.data.Request;
-import org.restlet.data.Response;
+import org.restlet.data.*;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import org.restlet.util.WrapperResponse;
 import tlb.TestUtil;
+import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
@@ -37,36 +37,61 @@ public class BalancerResourceTest {
     protected Response response;
     protected Representation representation;
 
+    private HashMap<String,Object> attrs;
+
     @Before
     public void setUp() throws ClassNotFoundException, IOException {
         Context context = new Context();
+
         request = mock(Request.class);
+        attrs = new HashMap<String, Object>();
+        attrs.put(HttpConstants.ATTRIBUTE_HEADERS, new Form());
+        when(request.getAttributes()).thenReturn(attrs);
+
         criteria = mock(AbstractTestSplitter.class);
         orderer = mock(TestOrderer.class);
+
         final HashMap<String, Object> ctxMap = new HashMap<String, Object>();
         ctxMap.put(TlbClient.SPLITTER, criteria);
         ctxMap.put(TlbClient.ORDERER, orderer);
         context.setAttributes(ctxMap);
-        response = mock(Response.class);
+
         response = new WrapperResponse(mock(Response.class)) {
             @Override
             public void setEntity(Representation entity) {
                 representation = entity;
             }
         };
+
         balancerResource = new BalancerResource(context, request, response);
+
         logFixture = new TestUtil.LogFixture();
     }
 
     @Test
     public void shouldListFilteredAndOrderedSubsetOfTlbTestSuitesProvided() throws ResourceException, IOException {
-        when(criteria.filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class")))))
+        when(criteria.filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), "module_foo"))
+                .thenReturn(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))));
+        when(orderer.compare(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))).thenReturn(1);
+
+        attrs.put(HttpConstants.ATTRIBUTE_HEADERS, new Form(Arrays.asList(new Parameter(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, "module_foo"))));
+
+        balancerResource.acceptRepresentation(new StringRepresentation("foo/bar/Baz.class\nfoo/bar/Bang.class\nfoo/bar/Quux.class\n"));
+
+        verify(criteria).filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), "module_foo");
+        verify(orderer).compare(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"));
+        assertThat(representation.getText(), is("foo/bar/Quux.class\nfoo/bar/Baz.class\n"));
+    }
+
+    @Test
+    public void shouldListFilteredAndOrderedSubsetOfTlbTestSuitesProvided_WithDefaultModuleNameWhenNoneGiven() throws ResourceException, IOException {
+        when(criteria.filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), TlbConstants.Balancer.DEFAULT_MODULE_NAME))
                 .thenReturn(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))));
         when(orderer.compare(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))).thenReturn(1);
 
         balancerResource.acceptRepresentation(new StringRepresentation("foo/bar/Baz.class\nfoo/bar/Bang.class\nfoo/bar/Quux.class\n"));
 
-        verify(criteria).filterSuites(criteria.filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class")))));
+        verify(criteria).filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), TlbConstants.Balancer.DEFAULT_MODULE_NAME);
         verify(orderer).compare(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"));
         assertThat(representation.getText(), is("foo/bar/Quux.class\nfoo/bar/Baz.class\n"));
     }

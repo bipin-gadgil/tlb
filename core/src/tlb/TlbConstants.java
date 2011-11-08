@@ -40,6 +40,8 @@ public interface TlbConstants {
     public static interface Balancer {
         static final SystemEnvironment.EnvVar TLB_BALANCER_PORT = new SystemEnvironment.DefaultedEnvVar("TLB_BALANCER_PORT", "8019");
         static final String QUERY = "query";
+        static final String DEFAULT_MODULE_NAME = "default-module";
+        String TLB_MODULE_NAME_HEADER = "X-TLB-MODULE-NAME";
     }
 
     public static interface Correctness {

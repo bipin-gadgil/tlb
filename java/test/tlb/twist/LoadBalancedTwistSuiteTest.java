@@ -16,10 +16,13 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class LoadBalancedTwistSuiteTest {
+
+    private static final String moduleName = "module_foo";
 
     @After
     public void tearDown() throws IOException {
@@ -35,11 +38,11 @@ public class LoadBalancedTwistSuiteTest {
 
         List<TlbFileResource> resources = scenarioResource(folder, 1, 2);
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
-        when(criteria.filterSuites(any(List.class))).thenReturn(convertor.toTlbSuiteFiles(resources));
+        when(criteria.filterSuites(any(List.class), eq(moduleName))).thenReturn(convertor.toTlbSuiteFiles(resources));
 
         LoadBalancedTwistSuite suite = new LoadBalancedTwistSuite(criteria);
 
-        suite.balance(folder.getAbsolutePath(), "destination");
+        suite.balance(folder.getAbsolutePath(), "destination", moduleName);
 
         File destination = new File("destination");
         assertThat(destination.exists(), is(true));
@@ -55,11 +58,11 @@ public class LoadBalancedTwistSuiteTest {
         List<TlbFileResource> resources = scenarioResource(folder, 1, 2);
         scenarioCSV(folder, 1);
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
-        when(criteria.filterSuites(any(List.class))).thenReturn(convertor.toTlbSuiteFiles(resources));
+        when(criteria.filterSuites(any(List.class), eq(moduleName))).thenReturn(convertor.toTlbSuiteFiles(resources));
 
         LoadBalancedTwistSuite suite = new LoadBalancedTwistSuite(criteria);
 
-        suite.balance(folder.getAbsolutePath(), "destination");
+        suite.balance(folder.getAbsolutePath(), "destination", moduleName);
 
         File destination = new File("destination");
         assertThat(destination.exists(), is(true));
@@ -75,11 +78,11 @@ public class LoadBalancedTwistSuiteTest {
         List<TlbFileResource> resources = scenarioResource(folder, 1, 2);
         scenarioCSV(folder, 10);
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
-        when(criteria.filterSuites(any(List.class))).thenReturn(convertor.toTlbSuiteFiles(resources));
+        when(criteria.filterSuites(any(List.class), eq(moduleName))).thenReturn(convertor.toTlbSuiteFiles(resources));
 
         LoadBalancedTwistSuite suite = new LoadBalancedTwistSuite(criteria);
 
-        suite.balance(folder.getAbsolutePath(), "destination");
+        suite.balance(folder.getAbsolutePath(), "destination", moduleName);
 
         File destination = new File("destination");
         assertThat(destination.exists(), is(true));

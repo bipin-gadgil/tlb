@@ -31,13 +31,13 @@ public class LoadBalancedTwistSuite {
         this.criteria = criteria;
     }
 
-    public void balance(String scenariosFolder, String destinationLocation) {
+    public void balance(String scenariosFolder, String destinationLocation, final String moduleName) {
         File folder = new File(scenariosFolder);
         Iterator<File> collection = iterateFiles(folder, new String[] { "scn" }, false);
         List<TlbFileResource> resources = convertToTlbResource(collection);
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
         final List<TlbSuiteFile> suiteFiles = convertor.toTlbSuiteFiles(resources);
-        List<TlbFileResource> filtered = convertor.toTlbFileResources(criteria.filterSuites(suiteFiles));
+        List<TlbFileResource> filtered = convertor.toTlbFileResources(criteria.filterSuites(suiteFiles, moduleName));
         copyFilteredResources(destinationLocation, filtered);
         copyAssociatedCSVResources(folder, new File(destinationLocation));
     }

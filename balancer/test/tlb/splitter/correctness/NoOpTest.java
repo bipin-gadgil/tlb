@@ -11,7 +11,6 @@ import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,9 +27,9 @@ public class NoOpTest {
         given.add(bar);
         TlbSuiteFile baz = new TlbSuiteFileImpl("baz");
         given.add(baz);
-        when(splitter.filterSuites(given)).thenReturn(Arrays.asList(baz, bar));
+        when(splitter.filterSuites(given, "my-module")).thenReturn(Arrays.asList(baz, bar));
 
-        List<TlbSuiteFile> filtered = checker.filterSuites(given);
+        List<TlbSuiteFile> filtered = checker.filterSuites(given, "my-module");
 
         assertThat(filtered, is(Arrays.asList(baz, bar)));
     }

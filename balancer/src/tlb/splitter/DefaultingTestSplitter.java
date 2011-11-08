@@ -30,10 +30,10 @@ public class DefaultingTestSplitter extends AbstractTestSplitter {
         }
     }
 
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         for (TestSplitter criteria : criterion) {
             try {
-                List<TlbSuiteFile> subset = criteria.filterSuites(fileResources);
+                List<TlbSuiteFile> subset = criteria.filterSuites(fileResources, moduleName);
                 logger.info(String.format("Used %s to balance.", criteria.getClass().getCanonicalName()));
                 return subset;
             } catch (Exception e) {

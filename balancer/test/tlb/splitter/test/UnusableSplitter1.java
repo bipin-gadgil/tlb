@@ -11,7 +11,7 @@ public class UnusableSplitter1 extends AbstractTestSplitter {
         super(env);
     }
 
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         throw new RuntimeException("Unusable criteira #1 won't work!");
     }
 }

@@ -48,7 +48,7 @@ public class JobFamilyAwareSplitterTest {
         };
         criteria.talksToServer(toCruise);
         logFixture.startListening();
-        List<TlbSuiteFile> resources = criteria.filterSuites(new ArrayList<TlbSuiteFile>());
+        List<TlbSuiteFile> resources = criteria.filterSuites(new ArrayList<TlbSuiteFile>(), "module_bar");
         logFixture.assertHeard("got total of 0 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 3 ]");
         logFixture.assertHeard("assigned total of 2 files to [ build-1 ]");

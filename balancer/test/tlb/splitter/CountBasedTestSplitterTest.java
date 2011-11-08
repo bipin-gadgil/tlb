@@ -22,6 +22,8 @@ public class CountBasedTestSplitterTest {
     private Server server;
     private TestUtil.LogFixture logFixture;
 
+    private static final String moduleName = "module_foo";
+
     @Before
     public void setUp() throws Exception {
         server = mock(GoServer.class);
@@ -40,8 +42,9 @@ public class CountBasedTestSplitterTest {
         TlbSuiteFile third = new TlbSuiteFileImpl("third");
         List<TlbSuiteFile> resources = Arrays.asList(first, second, third);
 
-        CountBasedTestSplitter criteria = new CountBasedTestSplitter(server, env);
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, second, third)));
+        CountBasedTestSplitter countBasedTestSplitter = new CountBasedTestSplitter(server, env);
+        CountBasedTestSplitter criteria = countBasedTestSplitter;
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, second, third)));
     }
 
     @Test
@@ -57,7 +60,7 @@ public class CountBasedTestSplitterTest {
 
         CountBasedTestSplitter criteria = new CountBasedTestSplitter(server, env);
         logFixture.startListening();
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(first, second)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, second)));
         logFixture.assertHeard("got total of 5 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("count balancing to approximately 2 files per job with 1 extra file to bucket");
@@ -78,7 +81,7 @@ public class CountBasedTestSplitterTest {
 
         CountBasedTestSplitter criteria = new CountBasedTestSplitter(server, env);
         logFixture.startListening();
-        assertThat(criteria.filterSuites(resources), is(Arrays.asList(third, fourth, fifth)));
+        assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(third, fourth, fifth)));
         logFixture.assertHeard("got total of 5 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("count balancing to approximately 2 files per job with 1 extra file to bucket");
@@ -96,15 +99,15 @@ public class CountBasedTestSplitterTest {
         }
 
         logFixture.startListening();
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources(0, 1, 2)));
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources(0, 1, 2)));
         logFixture.assertHeard("count balancing to approximately 3 files per job with 2 extra file to bucket");
         logFixture.assertHeard("assigned total of 3 files to [ job-1 ]");
 
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(3, 4, 5, 6)));
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(3, 4, 5, 6)));
         logFixture.assertHeard("count balancing to approximately 3 files per job with 2 extra file to bucket", 2);
         logFixture.assertHeard("assigned total of 4 files to [ job-2 ]");
 
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(7, 8, 9, 10)));
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(7, 8, 9, 10)));
         logFixture.assertHeard("count balancing to approximately 3 files per job with 2 extra file to bucket", 3);
         logFixture.assertHeard("assigned total of 4 files to [ job-3 ]");
     }
@@ -116,10 +119,10 @@ public class CountBasedTestSplitterTest {
         List<TlbSuiteFile> resources = tlbFileResources(0, 1);
 
 
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources()));
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(0)));
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources()));
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(0)));
 
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(1)));
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(1)));
     }
 
     @Test
@@ -128,9 +131,9 @@ public class CountBasedTestSplitterTest {
 
         List<TlbSuiteFile> resources = tlbFileResources(0, 1, 2);
 
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources(0)));
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(1)));
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(2)));
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources(0)));
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(1)));
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(2)));
     }
 
     @Test//to assertain it really works as expected
@@ -143,19 +146,19 @@ public class CountBasedTestSplitterTest {
         }
         List<TlbSuiteFile> resources = tlbFileResources(fileNumbers);
 
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources(0, 1, 2, 3, 4))); //2/7
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources(0, 1, 2, 3, 4))); //2/7
 
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(5, 6, 7, 8, 9))); //4/7
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(5, 6, 7, 8, 9))); //4/7
 
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(10, 11, 12, 13, 14))); //6/7
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(10, 11, 12, 13, 14))); //6/7
 
-        assertThat(criteria("job-4", 4).filterSuites(resources), is(tlbFileResources(15, 16, 17, 18, 19, 20))); //1/7
+        assertThat(criteria("job-4", 4).filterSuites(resources, moduleName), is(tlbFileResources(15, 16, 17, 18, 19, 20))); //1/7
 
-        assertThat(criteria("job-5", 5).filterSuites(resources), is(tlbFileResources(21, 22, 23, 24, 25))); //3/7
+        assertThat(criteria("job-5", 5).filterSuites(resources, moduleName), is(tlbFileResources(21, 22, 23, 24, 25))); //3/7
 
-        assertThat(criteria("job-6", 6).filterSuites(resources), is(tlbFileResources(26, 27, 28, 29, 30))); //5/7
+        assertThat(criteria("job-6", 6).filterSuites(resources, moduleName), is(tlbFileResources(26, 27, 28, 29, 30))); //5/7
 
-        assertThat(criteria("job-7", 7).filterSuites(resources), is(tlbFileResources(31, 32, 33, 34, 35, 36))); //7/7
+        assertThat(criteria("job-7", 7).filterSuites(resources, moduleName), is(tlbFileResources(31, 32, 33, 34, 35, 36))); //7/7
     }
 
     @Test//to assertain it really works as expected
@@ -168,19 +171,19 @@ public class CountBasedTestSplitterTest {
         }
         List<TlbSuiteFile> resources = tlbFileResources(fileNumbers);
 
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources(0, 1, 2, 3, 4))); //6/7
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources(0, 1, 2, 3, 4))); //6/7
 
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(5, 6, 7, 8, 9, 10))); //12/7 = 5/7
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(5, 6, 7, 8, 9, 10))); //12/7 = 5/7
 
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(11, 12, 13, 14, 15, 16))); //18/7 = 4/7
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(11, 12, 13, 14, 15, 16))); //18/7 = 4/7
 
-        assertThat(criteria("job-4", 4).filterSuites(resources), is(tlbFileResources(17, 18, 19, 20, 21, 22))); //24/7 = 3/7
+        assertThat(criteria("job-4", 4).filterSuites(resources, moduleName), is(tlbFileResources(17, 18, 19, 20, 21, 22))); //24/7 = 3/7
 
-        assertThat(criteria("job-5", 5).filterSuites(resources), is(tlbFileResources(23, 24, 25, 26, 27, 28))); //30/7 = 2/7
+        assertThat(criteria("job-5", 5).filterSuites(resources, moduleName), is(tlbFileResources(23, 24, 25, 26, 27, 28))); //30/7 = 2/7
 
-        assertThat(criteria("job-6", 6).filterSuites(resources), is(tlbFileResources(29, 30, 31, 32, 33, 34))); //36/7 = 1/7
+        assertThat(criteria("job-6", 6).filterSuites(resources, moduleName), is(tlbFileResources(29, 30, 31, 32, 33, 34))); //36/7 = 1/7
 
-        assertThat(criteria("job-7", 7).filterSuites(resources), is(tlbFileResources(35, 36, 37, 38, 39, 40))); //42/7 = 7/7
+        assertThat(criteria("job-7", 7).filterSuites(resources, moduleName), is(tlbFileResources(35, 36, 37, 38, 39, 40))); //42/7 = 7/7
     }
 
     @Test//to assertain it really works as expected
@@ -193,17 +196,17 @@ public class CountBasedTestSplitterTest {
         }
         List<TlbSuiteFile> resources = tlbFileResources(fileNumbers);
 
-        assertThat(criteria("job-1", 1).filterSuites(resources), is(tlbFileResources(0, 1, 2, 3, 4, 5)));
+        assertThat(criteria("job-1", 1).filterSuites(resources, moduleName), is(tlbFileResources(0, 1, 2, 3, 4, 5)));
 
-        assertThat(criteria("job-2", 2).filterSuites(resources), is(tlbFileResources(6, 7, 8, 9, 10, 11)));
+        assertThat(criteria("job-2", 2).filterSuites(resources, moduleName), is(tlbFileResources(6, 7, 8, 9, 10, 11)));
 
-        assertThat(criteria("job-3", 3).filterSuites(resources), is(tlbFileResources(12, 13, 14, 15, 16, 17)));
+        assertThat(criteria("job-3", 3).filterSuites(resources, moduleName), is(tlbFileResources(12, 13, 14, 15, 16, 17)));
 
-        assertThat(criteria("job-4", 4).filterSuites(resources), is(tlbFileResources(18, 19, 20, 21, 22, 23)));
+        assertThat(criteria("job-4", 4).filterSuites(resources, moduleName), is(tlbFileResources(18, 19, 20, 21, 22, 23)));
 
-        assertThat(criteria("job-5", 5).filterSuites(resources), is(tlbFileResources(24, 25, 26, 27, 28, 29)));
+        assertThat(criteria("job-5", 5).filterSuites(resources, moduleName), is(tlbFileResources(24, 25, 26, 27, 28, 29)));
 
-        assertThat(criteria("job-6", 6).filterSuites(resources), is(tlbFileResources(30, 31,  32, 33, 34, 35)));
+        assertThat(criteria("job-6", 6).filterSuites(resources, moduleName), is(tlbFileResources(30, 31,  32, 33, 34, 35)));
     }
 
     private CountBasedTestSplitter criteria(String jobName, int partitionNumber) {

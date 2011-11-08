@@ -15,9 +15,9 @@ public abstract class SplitChecker implements TestSplitter {
         this.splitter = splitter;
     }
 
-    public final List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> files) {
+    public final List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> files, String moduleName) {
         universalSet(files);
-        List<TlbSuiteFile> filteredFiles = splitter.filterSuites(files);
+        List<TlbSuiteFile> filteredFiles = splitter.filterSuites(files, moduleName);
         subSet(filteredFiles);
         return filteredFiles;
     }
