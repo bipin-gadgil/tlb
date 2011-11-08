@@ -21,11 +21,6 @@ public class TlbEntryRepository {
 
     public TlbEntryRepository(final File file) {
         this.file = file;
-        try {
-            FileUtils.forceDeleteOnExit(repoLocation());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void appendLine(String line) {
