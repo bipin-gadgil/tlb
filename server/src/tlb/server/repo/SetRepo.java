@@ -41,6 +41,11 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
         return new Match(true);
     }
 
+    @Override
+    public void update(SuiteNameCountEntry record) {
+        throw new UnsupportedOperationException("not allowed on this type of repository");
+    }
+
     public static class Match {
         public final boolean matched;
         public final String message;
