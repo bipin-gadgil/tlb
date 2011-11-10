@@ -291,6 +291,19 @@ public class TlbServerTest {
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.OK));
     }
 
+    @Test
+    public void shouldBlowWhenUniversalSetForSubsetDoesNotExist() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+
+        ValidationResult validationResult = server.validateSubSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(true));
+        assertThat(validationResult.getMessage(), is("Universal set for given job-name, job-version and module-name combination doesn't exist."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
     private void incrementPartitionNumber() {
         clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, String.valueOf(Integer.parseInt(partitionNumber) + 1));
     }

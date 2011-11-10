@@ -39,14 +39,14 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public void purge(String identifier) throws IOException {
-        synchronized (repoId(identifier)) {
+        synchronized (mutex(identifier)) {
             cache.remove(identifier);
             File file = dumpFile(identifier);
             if (file.exists()) FileUtils.forceDelete(file);
         }
     }
 
-    public static String repoId(String identifier) {
+    public static String mutex(String identifier) {
         return identifier.intern();
     }
 
@@ -198,7 +198,7 @@ public class EntryRepoFactory implements Runnable {
         String identifier = idScheme.getIdUnder(namespace);
         T repo = (T) cache.get(identifier);
         if (repo == null) {
-            synchronized (repoId(identifier)) {
+            synchronized (mutex(identifier)) {
                 repo = (T) cache.get(identifier);
                 if (repo == null) {
                     repo = creator.create();
@@ -215,7 +215,7 @@ public class EntryRepoFactory implements Runnable {
             }
         }
         if (! repo.hasFactory()) {
-            synchronized (repoId(identifier)) {
+            synchronized (mutex(identifier)) {
                 if (! repo.hasFactory()) {
                     repo.setFactory(this);
                 }
@@ -249,7 +249,7 @@ public class EntryRepoFactory implements Runnable {
                 //don't care about a couple entries not being persisted(at teardown), as client is capable of balancing on averages(treat like new suites)
                 EntryRepo entryRepo = cache.get(identifier);
                 if (entryRepo != null) {
-                    synchronized (repoId(identifier)) {
+                    synchronized (mutex(identifier)) {
                         entryRepo = cache.get(identifier);
                         if (entryRepo != null && entryRepo.isDirty()) {
                             writer = new FileWriter(dumpFile(identifier));

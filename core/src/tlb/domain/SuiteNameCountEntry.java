@@ -2,6 +2,7 @@ package tlb.domain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -75,5 +76,23 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
     @Override
     public int hashCode() {
         return name != null ? name.hashCode() : 0;
+    }
+
+    public void pickedBySubset() {
+        count = 0;
+    }
+
+    public boolean isUnused() {
+        return count == 1;
+    }
+
+    public void usedBy(int partitionNumber, int totalPartitions) {
+        count--;
+    }
+
+    public static class SuiteNameCountEntryComparator implements Comparator<SuiteNameCountEntry> {
+        public int compare(SuiteNameCountEntry o1, SuiteNameCountEntry o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
     }
 }

@@ -96,8 +96,8 @@ public class UpdateUniversalSetResourceTest {
 
         List<SuiteNameCountEntry> listAfter2ndPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
 
-        Collections.sort(listBefore2ndPartitionPosting, new SuiteNameCountEntryComparator());
-        Collections.sort(listAfter2ndPartitionPosting, new SuiteNameCountEntryComparator());
+        Collections.sort(listBefore2ndPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listAfter2ndPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
         for (int i = 0; i < listBefore2ndPartitionPosting.size(); i++) {
              assertThat(listBefore2ndPartitionPosting.get(i), sameInstance(listAfter2ndPartitionPosting.get(i)));
         }//assert nothing changed in server's copy
@@ -118,8 +118,8 @@ public class UpdateUniversalSetResourceTest {
 
         List<SuiteNameCountEntry> listAfterBadPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
 
-        Collections.sort(listBeforeBadPartitionPosting, new SuiteNameCountEntryComparator());
-        Collections.sort(listAfterBadPartitionPosting, new SuiteNameCountEntryComparator());
+        Collections.sort(listBeforeBadPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listAfterBadPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
         for (int i = 0; i < listBeforeBadPartitionPosting.size(); i++) {
              assertThat(listBeforeBadPartitionPosting.get(i), sameInstance(listAfterBadPartitionPosting.get(i)));
         }
@@ -148,11 +148,5 @@ public class UpdateUniversalSetResourceTest {
         assertThat(repo.list().size(), is(2));
         assertThat(repo.list(), hasItems(new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.SomeOther.class")));
         verify(response).setStatus(Status.SUCCESS_CREATED);
-    }
-    
-    private static class SuiteNameCountEntryComparator implements Comparator<SuiteNameCountEntry> {
-        public int compare(SuiteNameCountEntry o1, SuiteNameCountEntry o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
     }
 }

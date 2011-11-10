@@ -7,33 +7,24 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
-import tlb.TlbConstants;
 import tlb.domain.Entry;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
-import tlb.server.resources.TlbResource;
 
 import java.io.IOException;
 
 /**
  * @understands maintaining universal set for correctness checks
  */
-public class UpdateUniversalSetResource extends TlbResource<SetRepo> {
+public class UpdateUniversalSetResource extends SetResource {
     public UpdateUniversalSetResource(Context context, Request request, Response response) {
         super(context, request, response);
-        setModifiable(false);
-        setReadable(false);
-    }
-
-    @Override
-    protected SetRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
-        return repoFactory.createUniversalSetRepo(namespace, strAttr(TlbConstants.Server.LISTING_VERSION), strAttr(TlbConstants.Server.MODULE_NAME));
     }
 
     @Override
     public void acceptRepresentation(Representation entity) throws ResourceException {
         if (! repo.isPrimed()) {
-            synchronized (EntryRepoFactory.repoId(repo.getIdentifier())) {
+            synchronized (EntryRepoFactory.mutex(repo.getIdentifier())) {
                 if (! repo.isPrimed()) {
                     repo.load(reqPayload(entity));
                     getResponse().setStatus(Status.SUCCESS_CREATED);
@@ -41,8 +32,8 @@ public class UpdateUniversalSetResource extends TlbResource<SetRepo> {
                 }
             }
         }
-        SetRepo.Match match = repo.tryMatching(reqPayload(entity));
-        if (match.matched) {
+        SetRepo.OperationResult match = repo.tryMatching(reqPayload(entity));
+        if (match.success) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
             getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);
@@ -50,23 +41,9 @@ public class UpdateUniversalSetResource extends TlbResource<SetRepo> {
         }
     }
 
-    private String reqPayload(Representation entity) {
-        String text = null;
-        try {
-            text = entity.getText();
-        } catch (IOException e) {
-            //TODO: figure out what we have been doing in other resources
-        }
-        return text;
-    }
-
     @Override
     protected Entry parseEntry(Representation entity) throws IOException {
         throw new UnsupportedOperationException("not implemented yet");
     }
 
-    @Override
-    public boolean allowPost() {
-        return true;
-    }
 }

@@ -1,6 +1,5 @@
 package tlb.service;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
@@ -13,7 +12,6 @@ import tlb.service.http.HttpAction;
 import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -76,12 +74,50 @@ public class TlbServer extends SmoothingServer {
         return Integer.parseInt(environment.val(new SystemEnvironment.EnvVar(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS)));
     }
 
+    private static class RemoteValidationResponse {
+        final int status;
+        final String body;
+
+        RemoteValidationResponse(int status, String body) {
+            this.status = status;
+            this.body = body;
+        }
+    }
+
     public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
+        RemoteValidationResponse resp = correctnessCall(universalSet, moduleName, TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET);
+
+        if (resp.status == HttpStatus.SC_CREATED) {
+            return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
+        } else if (resp.status == HttpStatus.SC_OK) {
+            return new ValidationResult(ValidationResult.Status.OK, "Universal set matched.");
+        } else if (resp.status == HttpStatus.SC_CONFLICT) {
+            return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
+        } else {
+            throw new IllegalStateException(String.format("Status %s for validation request not understood.", resp.status));
+        }
+    }
+
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
+        RemoteValidationResponse resp = correctnessCall(subSet, moduleName, TlbConstants.Server.EntryRepoFactory.SUB_SET);
+
+        if (resp.status == HttpStatus.SC_NOT_ACCEPTABLE) {
+            return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
+        } else if (resp.status == HttpStatus.SC_OK) {
+            return new ValidationResult(ValidationResult.Status.OK, "Universal set matched.");
+        } else if (resp.status == HttpStatus.SC_CONFLICT) {
+            return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
+        } else {
+            throw new IllegalStateException(String.format("Status %s for validation request not understood.", resp.status));
+        }
+    }
+
+    private RemoteValidationResponse correctnessCall(List<TlbSuiteFile> set, String moduleName, final String setType) {
         StringBuilder builder = new StringBuilder();
-        for (TlbSuiteFile suiteFile : universalSet) {
+        for (TlbSuiteFile suiteFile : set) {
             builder.append(suiteFile.dump());
         }
-        HttpResponse httpResponse = httpAction.doPost(validationUrl(TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName), builder.toString());
+        HttpResponse httpResponse = httpAction.doPost(validationUrl(setType, moduleName), builder.toString());
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         String responseBody = null;
         try {
@@ -89,20 +125,15 @@ public class TlbServer extends SmoothingServer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        if (statusCode == HttpStatus.SC_CREATED) {
-            return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
-        } else if (statusCode == HttpStatus.SC_OK) {
-            return new ValidationResult(ValidationResult.Status.OK, "Universal set matched.");
-        } else if (statusCode == HttpStatus.SC_CONFLICT) {
-            return new ValidationResult(ValidationResult.Status.FAILED, responseBody);
-        } else {
-            throw new IllegalStateException(String.format("Status %s for validation request not understood.", statusCode));
-        }
+        return new RemoteValidationResponse(statusCode, responseBody);
     }
 
-    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
-        throw new UnsupportedOperationException("not implemented yet");
+    private HttpResponse callCorrectnessCheck(List<TlbSuiteFile> universalSet, String moduleName, final String setType) {
+        StringBuilder builder = new StringBuilder();
+        for (TlbSuiteFile suiteFile : universalSet) {
+            builder.append(suiteFile.dump());
+        }
+        return httpAction.doPost(validationUrl(setType, moduleName), builder.toString());
     }
 
     private String getUrl(String... parts) {

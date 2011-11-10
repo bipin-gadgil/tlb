@@ -29,7 +29,7 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         List<T> entryList = new ArrayList<T>(list);
         Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
             public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
-                return o1.getName().compareTo(o2.getName());
+                return getKey(o1).compareTo(getKey(o2));
             }
         });
         return entryList;
@@ -40,8 +40,12 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
     }
 
     public synchronized void update(T record) {
-        suiteData.put(record.getName(), record);
+        suiteData.put(getKey(record), record);
         dirty = true;
+    }
+
+    protected static String getKey(SuiteLevelEntry record) {
+        return record.getName();
     }
 
     public final void add(T entry) {
@@ -90,7 +94,7 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
     public void load(String contents) {
         suiteData.clear();
         for (T entry : parse(contents)) {
-            suiteData.put(entry.getName(), entry);
+            suiteData.put(getKey(entry), entry);
         }
         dirty = true;
     }
