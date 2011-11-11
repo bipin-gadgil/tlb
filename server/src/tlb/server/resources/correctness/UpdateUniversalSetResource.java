@@ -7,11 +7,8 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
-import tlb.domain.Entry;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
-
-import java.io.IOException;
 
 /**
  * @understands maintaining universal set for correctness checks
@@ -37,7 +34,7 @@ public class UpdateUniversalSetResource extends SetResource {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
             getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);
-            getResponse().setEntity(new StringRepresentation(match.message));
+            getResponse().setEntity(new StringRepresentation(match.getMessage()));
         }
     }
 }

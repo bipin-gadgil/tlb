@@ -264,7 +264,7 @@ public class TlbServerTest {
         validationResult = server.validateUniversalSet(files, "foo-module");
 
         assertThat(validationResult.hasFailed(), is(true));
-        assertThat(validationResult.getMessage(), is("Expected universal set was [com.bar.Bar, com.baz.Baz, com.foo.Foo, com.quux.Quux] but given [com.bar.Bar, com.baz.Baz, com.quux.Quux]."));
+        assertThat(validationResult.getMessage(), is("Expected universal set was [com.bar.Bar, com.baz.Baz, com.foo.Foo, com.quux.Quux] but given [com.bar.Bar, com.baz.Baz, com.quux.Quux].\n"));
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
     }
 

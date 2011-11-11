@@ -79,41 +79,56 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
             occurrenceCount.remove(nonRepeatedKey);
         }
 
-        boolean success = unknownSuites.isEmpty() && occurrenceCount.isEmpty();
-        if (! success) {
-            StringBuilder builder = new StringBuilder();
-            if (! unknownSuites.isEmpty()) {
-                Collections.sort(unknownSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-                builder.append(String.format("- Found %s unknown(not present in universal set) suite(s) named: %s.\n", unknownSuites.size(), unknownSuites));
-            }
-            if (! occurrenceCount.isEmpty()) {
-                ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(occurrenceCount.entrySet());
-                Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
-                    public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
-                        return o1.getKey().compareTo(o2.getKey());
-                    }
-                });
-                builder.append(String.format("- Found more than one occurrence of %s suite(s) named: %s\n", occurrenceCount.size(), occurrenceCount));
-            }
-            List<SuiteNameCountEntry> univSet = sortedList();
-            Collections.sort(subsetSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-            builder.append(String.format("Had total of %s suites named %s in partition %s of %s.\nCorresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
-            return new OperationResult(false, builder.toString());
+        if (unknownSuites.isEmpty() && occurrenceCount.isEmpty()) {
+            return new OperationResult(true);
         }
-        return new OperationResult(true);
+
+        OperationResult failureResult = new OperationResult(false);
+        if (!unknownSuites.isEmpty()) {
+            Collections.sort(unknownSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+            failureResult.append(String.format("- Found %s unknown(not present in universal set) suite(s) named: %s.", unknownSuites.size(), unknownSuites));
+        }
+        if (!occurrenceCount.isEmpty()) {
+            ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(occurrenceCount.entrySet());
+            Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+                public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+                    return o1.getKey().compareTo(o2.getKey());
+                }
+            });
+            failureResult.append(String.format("- Found more than one occurrence of %s suite(s) named: %s.", occurrenceCount.size(), occurrenceCount));
+        }
+        List<SuiteNameCountEntry> univSet = sortedList();
+        Collections.sort(subsetSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        failureResult.append(String.format("Had total of %s suites named %s in partition %s of %s. Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
+
+        return failureResult;
     }
 
     public static class OperationResult {
         public final boolean success;
-        public final String message;
+        private final List<String> messages;
 
         public OperationResult(boolean success) {
-            this(success, null);
+            this.success = success;
+            this.messages = new ArrayList<String>();
         }
 
         public OperationResult(boolean success, String message) {
-            this.success = success;
-            this.message = message;
+            this(success);
+            this.messages.add(message);
+        }
+
+        public String getMessage() {
+            StringBuilder strBldr = new StringBuilder();
+            for (String message : messages) {
+                strBldr.append(message).append("\n");
+            }
+            return strBldr.toString();
+        }
+
+
+        public void append(String message) {
+            messages.add(message);
         }
     }
 }

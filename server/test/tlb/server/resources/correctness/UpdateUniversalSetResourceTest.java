@@ -125,7 +125,7 @@ public class UpdateUniversalSetResourceTest {
         }
 
         verify(response).setStatus(Status.CLIENT_ERROR_CONFLICT);
-        assertThat(representationGiven.getText(), is("Expected universal set was [bar.baz.Bang.class, baz.bang.Quux.class, foo.bar.Baz.class] but given [baz.bang.Quux.class, foo.bar.Baz.class]."));
+        assertThat(representationGiven.getText(), is("Expected universal set was [bar.baz.Bang.class, baz.bang.Quux.class, foo.bar.Baz.class] but given [baz.bang.Quux.class, foo.bar.Baz.class].\n"));
     }
 
     @Test
