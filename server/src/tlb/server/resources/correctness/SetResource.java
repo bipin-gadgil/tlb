@@ -8,6 +8,7 @@ import tlb.TlbConstants;
 import tlb.domain.Entry;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
+import tlb.server.resources.SimpleCRUResource;
 import tlb.server.resources.TlbResource;
 
 import java.io.IOException;
@@ -15,7 +16,9 @@ import java.io.IOException;
 /**
  * @understands common features of a resource dealing with immutable sets of suites
  */
-public abstract class SetResource extends TlbResource<SetRepo> {
+public abstract class SetResource extends TlbResource {
+    protected SetRepo universalSetRepo;
+
     public SetResource(Context context, Request request, Response response) {
         super(context, request, response);
         setModifiable(false);
@@ -23,8 +26,12 @@ public abstract class SetResource extends TlbResource<SetRepo> {
     }
 
     @Override
-    protected SetRepo getRepo(EntryRepoFactory repoFactory, String namespace) throws IOException, ClassNotFoundException {
-        return repoFactory.createUniversalSetRepo(namespace, strAttr(TlbConstants.Server.LISTING_VERSION), strAttr(TlbConstants.Server.MODULE_NAME));
+    protected void createRepos() throws IOException, ClassNotFoundException {
+        universalSetRepo = repoFactory().createUniversalSetRepo(reqNamespace(), reqVersion(), reqModuleName());
+    }
+
+    private String reqModuleName() {
+        return strAttr(TlbConstants.Server.MODULE_NAME);
     }
 
     protected String reqPayload(Representation entity) {
@@ -36,12 +43,6 @@ public abstract class SetResource extends TlbResource<SetRepo> {
         }
         return text;
     }
-
-    @Override
-    protected Entry parseEntry(Representation entity) throws IOException {
-        throw new UnsupportedOperationException("not implemented yet");
-    }
-
 
     @Override
     public boolean allowPost() {

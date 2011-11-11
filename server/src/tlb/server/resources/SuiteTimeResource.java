@@ -2,7 +2,6 @@ package tlb.server.resources;
 
 import tlb.domain.Entry;
 import tlb.domain.SuiteTimeEntry;
-import tlb.server.repo.EntryRepo;
 import tlb.server.repo.EntryRepoFactory;
 import org.restlet.Context;
 import org.restlet.data.Request;
@@ -15,7 +14,7 @@ import java.io.IOException;
 /**
  * @understands run time of suite reported by job
  */
-public class SuiteTimeResource extends TlbResource<SuiteTimeRepo> {
+public class SuiteTimeResource extends SimpleCRUResource<SuiteTimeRepo> {
     public SuiteTimeResource(Context context, Request request, Response response) {
         super(context, request, response);
     }

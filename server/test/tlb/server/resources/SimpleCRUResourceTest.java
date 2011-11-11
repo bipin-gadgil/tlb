@@ -15,7 +15,6 @@ import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.domain.Entry;
 import tlb.domain.SubsetSizeEntry;
-import tlb.server.repo.EntryRepo;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SubsetSizeRepo;
 
@@ -30,8 +29,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class TlbResourceTest {
-    private TlbResource tlbResource;
+public class SimpleCRUResourceTest {
+    private SimpleCRUResource simpleCRUResource;
     private Context context;
     private EntryRepoFactory repoFactory;
     private Request request;
@@ -39,8 +38,8 @@ public class TlbResourceTest {
     private SubsetSizeRepo repo;
     private TestUtil.LogFixture logFixture;
 
-    static class TestTlbResource extends TlbResource<SubsetSizeRepo> {
-        public TestTlbResource(Context context, Request request, Response response) {
+    static class TestSimpleCRUResource extends SimpleCRUResource<SubsetSizeRepo> {
+        public TestSimpleCRUResource(Context context, Request request, Response response) {
             super(context, request, response);
         }
 
@@ -67,19 +66,19 @@ public class TlbResourceTest {
         attributeMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "identifier");
         when(request.getAttributes()).thenReturn(attributeMap);
         when(repoFactory.createSubsetRepo("identifier", EntryRepoFactory.LATEST_VERSION)).thenReturn(repo);
-        tlbResource = new TestTlbResource(context, request, mock(Response.class));
+        simpleCRUResource = new TestSimpleCRUResource(context, request, mock(Response.class));
         logFixture = new TestUtil.LogFixture();
     }
 
     @Test
     public void shouldAcceptPlainText() {
-        assertThat(tlbResource.getVariants().get(0).getMediaType(), is(MediaType.TEXT_PLAIN));
+        assertThat(simpleCRUResource.getVariants().get(0).getMediaType(), is(MediaType.TEXT_PLAIN));
     }
 
     @Test
     public void shouldRenderAllRecordsForGivenNamespace() throws ResourceException, IOException {
         when(repo.list()).thenReturn(Arrays.asList(new SubsetSizeEntry(10), new SubsetSizeEntry(12), new SubsetSizeEntry(15)));
-        Representation actualRepresentation = tlbResource.represent(new Variant(MediaType.TEXT_PLAIN));
+        Representation actualRepresentation = simpleCRUResource.represent(new Variant(MediaType.TEXT_PLAIN));
         assertThat(actualRepresentation.getText(), is("10\n12\n15\n"));
         verify(repo).list();
     }
@@ -89,7 +88,7 @@ public class TlbResourceTest {
         @SuppressWarnings({"ThrowableInstanceNeverThrown"}) final RuntimeException listingException = new RuntimeException("test exception");
         when(repo.list()).thenThrow(listingException);
         try {
-            tlbResource.represent(new Variant(MediaType.TEXT_PLAIN));
+            simpleCRUResource.represent(new Variant(MediaType.TEXT_PLAIN));
             fail("list exception should have been propagated");
         } catch(Exception e) {
             assertThat((RuntimeException) e.getCause(), sameInstance(listingException));
@@ -99,7 +98,7 @@ public class TlbResourceTest {
     @Test
     public void shouldAddRecords() throws ResourceException {
         StringRepresentation representation = new StringRepresentation("14");
-        tlbResource.acceptRepresentation(representation);
+        simpleCRUResource.acceptRepresentation(representation);
         verify(repo).add(new SubsetSizeEntry(14));
     }
     
@@ -110,7 +109,7 @@ public class TlbResourceTest {
         when(representation.getText()).thenThrow(exception);
         logFixture.startListening();
         try {
-            tlbResource.acceptRepresentation(representation);
+            simpleCRUResource.acceptRepresentation(representation);
             fail("should have propagated exception");
         } catch (Exception e) {
             assertThat((IOException) e.getCause(), sameInstance(exception));
@@ -127,7 +126,7 @@ public class TlbResourceTest {
         when(representation.getText()).thenThrow(exception);
         logFixture.startListening();
         try {
-            tlbResource.storeRepresentation(representation);
+            simpleCRUResource.storeRepresentation(representation);
             fail("should have propagated exception");
         } catch (Exception e) {
             assertThat((IOException) e.getCause(), sameInstance(exception));
@@ -140,13 +139,13 @@ public class TlbResourceTest {
     @Test
     public void shouldUpdateRecords() throws ResourceException {
         StringRepresentation representation = new StringRepresentation("14");
-        tlbResource.storeRepresentation(representation);
+        simpleCRUResource.storeRepresentation(representation);
         verify(repo).update(new SubsetSizeEntry(14));
     }
 
     @Test
     public void shouldSupportTextPlain() {
-        assertThat(tlbResource.getVariants().get(0).getMediaType(), is(MediaType.TEXT_PLAIN));
+        assertThat(simpleCRUResource.getVariants().get(0).getMediaType(), is(MediaType.TEXT_PLAIN));
     }
 
     @Test
@@ -156,13 +155,13 @@ public class TlbResourceTest {
         context.setAttributes(Collections.singletonMap(TlbConstants.Server.REPO_FACTORY, (Object) repoFactory));
         logFixture.startListening();
         try {
-            tlbResource = new TestTlbResource(context, request, mock(Response.class));
+            simpleCRUResource = new TestSimpleCRUResource(context, request, mock(Response.class));
             fail("should have bubbled up exception");
         } catch (Exception e) {
             assertThat(e.getMessage(), is("java.io.IOException: test exception"));
         }
         logFixture.stopListening();
         logFixture.assertHeardException(new IOException("test exception"));
-        logFixture.assertHeard("Failed to get repo for 'identifier'");
+        logFixture.assertHeard("Failed to get repo for '/quux/foo/bar'");
     }
 }

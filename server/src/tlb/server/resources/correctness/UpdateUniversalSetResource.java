@@ -23,16 +23,16 @@ public class UpdateUniversalSetResource extends SetResource {
 
     @Override
     public void acceptRepresentation(Representation entity) throws ResourceException {
-        if (! repo.isPrimed()) {
-            synchronized (EntryRepoFactory.mutex(repo.getIdentifier())) {
-                if (! repo.isPrimed()) {
-                    repo.load(reqPayload(entity));
+        if (! universalSetRepo.isPrimed()) {
+            synchronized (EntryRepoFactory.mutex(universalSetRepo.getIdentifier())) {
+                if (! universalSetRepo.isPrimed()) {
+                    universalSetRepo.load(reqPayload(entity));
                     getResponse().setStatus(Status.SUCCESS_CREATED);
                     return;
                 }
             }
         }
-        SetRepo.OperationResult match = repo.tryMatching(reqPayload(entity));
+        SetRepo.OperationResult match = universalSetRepo.tryMatching(reqPayload(entity));
         if (match.success) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
@@ -40,10 +40,4 @@ public class UpdateUniversalSetResource extends SetResource {
             getResponse().setEntity(new StringRepresentation(match.message));
         }
     }
-
-    @Override
-    protected Entry parseEntry(Representation entity) throws IOException {
-        throw new UnsupportedOperationException("not implemented yet");
-    }
-
 }

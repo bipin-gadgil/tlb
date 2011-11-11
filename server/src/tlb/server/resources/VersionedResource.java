@@ -1,6 +1,5 @@
 package tlb.server.resources;
 
-import tlb.TlbConstants;
 import tlb.domain.Entry;
 import org.restlet.Context;
 import org.restlet.data.Request;
@@ -14,7 +13,7 @@ import java.util.Collection;
 /**
  * @understands accessing and listing out data from versioned repo
  */
-public abstract class VersionedResource<T extends EntryRepo> extends TlbResource<T> {
+public abstract class VersionedResource<T extends EntryRepo> extends SimpleCRUResource<T> {
     public VersionedResource(Context context, Request request, Response response) {
         super(context, request, response);
     }
@@ -36,6 +35,6 @@ public abstract class VersionedResource<T extends EntryRepo> extends TlbResource
 
     @Override
     protected Collection getListing() throws IOException, ClassNotFoundException {
-        return repo.list(strAttr(TlbConstants.Server.LISTING_VERSION));
+        return repo.list(reqVersion());
     }
 }

@@ -25,7 +25,7 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
         return sortedListFor(list());
     }
 
-    protected static <T extends SuiteLevelEntry> List<T> sortedListFor(Collection<T> list) {
+    public static <T extends SuiteLevelEntry> List<T> sortedListFor(Collection<T> list) {
         List<T> entryList = new ArrayList<T>(list);
         Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
             public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
