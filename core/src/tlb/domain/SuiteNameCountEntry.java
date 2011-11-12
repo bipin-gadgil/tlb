@@ -4,16 +4,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @understands a single element of a Set of test-suites
  */
 public class SuiteNameCountEntry implements SuiteLevelEntry {
+    public static final Pattern SUITE_SET_ENTRY_STRING = Pattern.compile("(.*?)(:\\s*(\\d+)/(\\d+))?");
+
     private final String name;
     private PartitionIdentifier partitionIdentifier;
 
     public SuiteNameCountEntry(String name) {
+        this(name, null);
+    }
+
+    public SuiteNameCountEntry(String name, PartitionIdentifier partitionIdentifier) {
         this.name = name;
+        this.partitionIdentifier = partitionIdentifier;
     }
 
     public String getName() {
@@ -45,16 +54,22 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
     }
 
     public static SuiteNameCountEntry parseSingleEntry(String singleEntryString) {
-        return new SuiteNameCountEntry(singleEntryString.trim());
+        Matcher matcher = SUITE_SET_ENTRY_STRING.matcher(singleEntryString);
+        if (matcher.matches()) {
+            PartitionIdentifier partitionIdentifier = null;
+            if (matcher.group(2) != null) {
+                partitionIdentifier = new PartitionIdentifier(Integer.parseInt(matcher.group(3)), Integer.parseInt(matcher.group(4)));
+            }
+            return new SuiteNameCountEntry(matcher.group(1), partitionIdentifier);
+        } else {
+            throw new IllegalArgumentException(String.format("failed to parse '%s' as %s", singleEntryString, SuiteNameCountEntry.class.getSimpleName()));
+        }
     }
 
     @Override
     public String toString() {
-        return name;
-    }
+        return isUsedByAnyPartition() ? String.format("%s: %s", name, partitionIdentifier) : name;
 
-    public short getCount() {
-        return (short) (partitionIdentifier == null ? 1 : 0);
     }
 
     @Override
@@ -74,7 +89,11 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
     }
 
     public boolean isUsedByPartitionOtherThan(PartitionIdentifier partitionIdentifier) {
-        return !(this.partitionIdentifier == null || this.partitionIdentifier.equals(partitionIdentifier));
+        return isUsedByAnyPartition() && !this.partitionIdentifier.equals(partitionIdentifier);
+    }
+
+    public boolean isUsedByAnyPartition() {
+        return this.partitionIdentifier != null;
     }
 
     public void markUsedBy(final PartitionIdentifier partitionIdentifier) {

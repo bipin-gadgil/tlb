@@ -26,7 +26,7 @@ public class SetRepoTest {
         List<SuiteNameCountEntry> parsedList = repo.parse("foo/bar/Baz\nbaz/bang/Quux\nhello/World");
         assertThat(parsedList, is(Arrays.asList(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("baz/bang/Quux"), new SuiteNameCountEntry("hello/World"))));
         for (SuiteNameCountEntry suiteNameCountEntry : parsedList) {
-            assertThat(suiteNameCountEntry.getCount(), is((short) 1));
+            assertThat(suiteNameCountEntry.isUsedByAnyPartition(), is(false));
         }
     }
 

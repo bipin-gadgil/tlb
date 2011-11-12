@@ -95,9 +95,9 @@ public class UpdateSubsetResourceTest {
         for (int i = 0; i < listBefore.size(); i++) {
             assertThat(listBefore.get(i), sameInstance(listAfter.get(i)));
         }
-        assertThat(listAfter.get(0).getCount(), is((short) 0));
-        assertThat(listAfter.get(1).getCount(), is((short) 1));
-        assertThat(listAfter.get(2).getCount(), is((short) 0));
+        assertThat(listAfter.get(0).isUsedByAnyPartition(), is(true));
+        assertThat(listAfter.get(1).isUsedByAnyPartition(), is(false));
+        assertThat(listAfter.get(2).isUsedByAnyPartition(), is(true));
 
         verify(response).setStatus(Status.SUCCESS_OK);
         assertThat(representationGiven, is(nullValue()));
