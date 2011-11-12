@@ -49,7 +49,7 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
     public OperationResult usedBySubset(String suiteNames, int partitionNumber, int totalPartitions) {
         List<SuiteNameCountEntry> unknownSuites = new ArrayList<SuiteNameCountEntry>();
         Map<String, Integer> occurrenceCount = new HashMap<String, Integer>();
-        Map<String, SuiteNameCountEntry.PartitionIdentifier> alreadySelectedByOtherPartitions = new HashMap<String, SuiteNameCountEntry.PartitionIdentifier>();
+        List<SuiteNameCountEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNameCountEntry>();
         List<SuiteNameCountEntry> subsetSuites = parse(suiteNames);
         for (SuiteNameCountEntry subsetEntry : subsetSuites) {
             SuiteNameCountEntry persistentEntry = suiteData.get(getKey(subsetEntry));
@@ -58,7 +58,7 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
                 synchronized (EntryRepoFactory.mutex(getIdentifier() + key)) {
                     SuiteNameCountEntry.PartitionIdentifier partitionIdentifier = new SuiteNameCountEntry.PartitionIdentifier(partitionNumber, totalPartitions);
                     if (persistentEntry.isUsedByPartitionOtherThan(partitionIdentifier)) {
-                        alreadySelectedByOtherPartitions.put(key, persistentEntry.getPartitionIdentifier());
+                        alreadySelectedByOtherPartitions.add(persistentEntry);
                     } else {
                         persistentEntry.markUsedBy(partitionIdentifier);
                     }
@@ -72,7 +72,7 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
         return computeResult(partitionNumber, totalPartitions, unknownSuites, occurrenceCount, alreadySelectedByOtherPartitions, subsetSuites);
     }
 
-    private OperationResult computeResult(int partitionNumber, int totalPartitions, List<SuiteNameCountEntry> unknownSuites, Map<String, Integer> occurrenceCount, Map<String, SuiteNameCountEntry.PartitionIdentifier> alreadySelectedByOtherPartitions, List<SuiteNameCountEntry> subsetSuites) {
+    private OperationResult computeResult(int partitionNumber, int totalPartitions, List<SuiteNameCountEntry> unknownSuites, Map<String, Integer> occurrenceCount, List<SuiteNameCountEntry> alreadySelectedByOtherPartitions, List<SuiteNameCountEntry> subsetSuites) {
         ArrayList<String> nonRepeatedOccurrenceCountKeys = new ArrayList<String>();
         for (Map.Entry<String, Integer> occurrenceCountEntry : occurrenceCount.entrySet()) {
             if (occurrenceCountEntry.getValue() == 1) {

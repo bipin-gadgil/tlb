@@ -102,7 +102,7 @@ public class SubsetCorrectnessCheckerTest {
 
         result = checker.reportSubset("bar/baz/Quux\nhello/World\nfoo/Quux", 1, 3);
         assertThat(result.success, is(false));
-        assertThat(result.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 1/3. Suites {bar/baz/Quux=2/3, foo/Quux=3/3} have already been selected for running by other partitions.\nHad total of 3 suites named [bar/baz/Quux, foo/Quux, hello/World] in partition 1 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux: 2/3, foo/Quux: 3/3, foo/bar/Baz: 2/3, hello/World: 1/3].\n"));
+        assertThat(result.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 1/3. Suites [bar/baz/Quux: 2/3, foo/Quux: 3/3] have already been selected for running by other partitions.\nHad total of 3 suites named [bar/baz/Quux, foo/Quux, hello/World] in partition 1 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux: 2/3, foo/Quux: 3/3, foo/bar/Baz: 2/3, hello/World: 1/3].\n"));
         List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = SuiteEntryRepo.sortedListFor(repo.list());
 
         SuiteNameCountEntry bar_baz_Quux = sortedEntriesAfterSubsetPost.get(0);
