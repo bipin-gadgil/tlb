@@ -100,4 +100,36 @@ public class SubsetCorrectnessCheckerTest {
         assertThat(hello_World.getName(), is("hello/World"));
         assertThat(hello_World.getCount(), is((short) 1));
     }
+    
+    @Test
+    public void shouldFailWhenTwoDifferentSubsetsTryToRunTheSameTest() {
+        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+
+        SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nbar/baz/Quux", 2, 3);
+        assertThat(result.success, is(true));
+
+        result = checker.reportSubset("foo/Quux", 3, 3);
+        assertThat(result.success, is(true));
+
+        result = checker.reportSubset("bar/baz/Quux\nhello/World\nfoo/Quux", 1, 3);
+        assertThat(result.success, is(false));
+        assertThat(result.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 1/3. Suites {bar/baz/Quux=2/3, foo/Quux=3/3} have already been selected for running by other partitions.\nHad total of 3 suites named [bar/baz/Quux, foo/Quux, hello/World] in partition 1 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux, foo/Quux, foo/bar/Baz, hello/World].\n"));
+        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = SuiteEntryRepo.sortedListFor(repo.list());
+
+        SuiteNameCountEntry bar_baz_Quux = sortedEntriesAfterSubsetPost.get(0);
+        assertThat(bar_baz_Quux.getName(), is("bar/baz/Quux"));
+        assertThat(bar_baz_Quux.getCount(), is((short) 0));
+
+        SuiteNameCountEntry foo_Quux = sortedEntriesAfterSubsetPost.get(1);
+        assertThat(foo_Quux.getName(), is("foo/Quux"));
+        assertThat(foo_Quux.getCount(), is((short) 0));
+
+        SuiteNameCountEntry foo_bar_Baz = sortedEntriesAfterSubsetPost.get(2);
+        assertThat(foo_bar_Baz.getName(), is("foo/bar/Baz"));
+        assertThat(foo_bar_Baz.getCount(), is((short) 0));
+
+        SuiteNameCountEntry hello_World = sortedEntriesAfterSubsetPost.get(3);
+        assertThat(hello_World.getName(), is("hello/World"));
+        assertThat(hello_World.getCount(), is((short) 0));
+    }
 }

@@ -68,16 +68,4 @@ public class SuiteNameCountEntryTest {
         SuiteNameCountEntry countEntry = new SuiteNameCountEntry("foo.bar.Baz");
         assertThat(countEntry.toString(), is("foo.bar.Baz"));
     }
-    
-    @Test
-    public void shouldDecrementCountAsUsed() {
-        SuiteNameCountEntry countEntry = new SuiteNameCountEntry("foo.bar.Baz");
-        assertThat(countEntry.getCount(), is((short) 1));
-        assertThat(countEntry.decrementCount(), is(true));
-        assertThat(countEntry.getCount(), is((short) 0));
-        assertThat(countEntry.decrementCount(), is(false));
-        assertThat(countEntry.getCount(), is((short) -1));
-        assertThat(countEntry.decrementCount(), is(false));
-        assertThat(countEntry.getCount(), is((short) -2));
-    }
 }

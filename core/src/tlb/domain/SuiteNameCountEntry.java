@@ -10,11 +10,10 @@ import java.util.List;
  */
 public class SuiteNameCountEntry implements SuiteLevelEntry {
     private final String name;
-    private volatile short count;
+    private PartitionIdentifier partitionIdentifier;
 
     public SuiteNameCountEntry(String name) {
         this.name = name;
-        this.count = 1;
     }
 
     public String getName() {
@@ -55,11 +54,7 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
     }
 
     public short getCount() {
-        return count;
-    }
-
-    public synchronized boolean decrementCount() {
-        return --count >= 0;
+        return (short) (partitionIdentifier == null ? 1 : 0);
     }
 
     @Override
@@ -78,21 +73,56 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
         return name != null ? name.hashCode() : 0;
     }
 
-    public void pickedBySubset() {
-        count = 0;
+    public boolean isUsedByPartitionOtherThan(PartitionIdentifier partitionIdentifier) {
+        return !(this.partitionIdentifier == null || this.partitionIdentifier.equals(partitionIdentifier));
     }
 
-    public boolean isUnused() {
-        return count == 1;
+    public void markUsedBy(final PartitionIdentifier partitionIdentifier) {
+        this.partitionIdentifier = partitionIdentifier;
     }
 
-    public void usedBy(int partitionNumber, int totalPartitions) {
-        count--;
+    public PartitionIdentifier getPartitionIdentifier() {
+        return partitionIdentifier;
     }
 
     public static class SuiteNameCountEntryComparator implements Comparator<SuiteNameCountEntry> {
         public int compare(SuiteNameCountEntry o1, SuiteNameCountEntry o2) {
             return o1.getName().compareTo(o2.getName());
+        }
+    }
+
+    public static final class PartitionIdentifier {
+        public final int partitionNumber;
+        public final int totalPartitions;
+
+        public PartitionIdentifier(int partitionNumber, int totalPartitions) {
+            this.partitionNumber = partitionNumber;
+            this.totalPartitions = totalPartitions;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s/%s", partitionNumber, totalPartitions);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            PartitionIdentifier that = (PartitionIdentifier) o;
+
+            if (partitionNumber != that.partitionNumber) return false;
+            if (totalPartitions != that.totalPartitions) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = partitionNumber;
+            result = 31 * result + totalPartitions;
+            return result;
         }
     }
 }
