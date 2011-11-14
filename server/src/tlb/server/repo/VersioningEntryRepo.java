@@ -1,6 +1,6 @@
 package tlb.server.repo;
 
-import tlb.domain.SuiteLevelEntry;
+import tlb.domain.NamedEntry;
 import tlb.domain.TimeProvider;
 
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * @understands versions of entry list
  */
-public abstract class VersioningEntryRepo<T extends SuiteLevelEntry> extends SuiteEntryRepo<T> {
+public abstract class VersioningEntryRepo<T extends NamedEntry> extends NamedEntryRepo<T> {
     private boolean loadedData = false;
     private Map<String, VersioningEntryRepo<T>> versions;
     private final TimeProvider timeProvider;

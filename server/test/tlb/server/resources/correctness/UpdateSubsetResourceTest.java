@@ -13,7 +13,6 @@ import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import tlb.TlbConstants;
 import tlb.domain.SuiteNameCountEntry;
-import tlb.domain.TimeProvider;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
 
@@ -45,7 +44,7 @@ public class UpdateSubsetResourceTest {
         context = new Context();
         request = mock(Request.class);
         repoFactory = mock(EntryRepoFactory.class);
-        repo = new SetRepo(new TimeProvider());
+        repo = new SetRepo();
         repo.setIdentifier("foo-bar-baz");
         context.setAttributes(Collections.singletonMap(TlbConstants.Server.REPO_FACTORY, (Object) repoFactory));
         reqAttrMap = new HashMap<String, Object>();

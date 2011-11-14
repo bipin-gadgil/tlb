@@ -7,7 +7,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
-import tlb.domain.SuiteLevelEntry;
 import tlb.utils.SystemEnvironment;
 
 import java.io.File;

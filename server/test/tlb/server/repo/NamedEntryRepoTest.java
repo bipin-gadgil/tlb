@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SuiteLevelEntry;
+import tlb.domain.NamedEntry;
 import tlb.domain.TimeProvider;
 import tlb.utils.SystemEnvironment;
 
@@ -19,7 +19,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static tlb.server.repo.TestCaseRepo.TestCaseEntry.parseSingleEntry;
 
-public class SuiteEntryRepoTest {
+public class NamedEntryRepoTest {
 
     private TestCaseRepo testCaseRepo;
 
@@ -31,9 +31,9 @@ public class SuiteEntryRepoTest {
     @Test
     public void shouldStoreAttributesFactorySets() throws ClassNotFoundException, IOException {
         final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTempFolder().getAbsolutePath())));
-        final SuiteEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<SuiteEntryRepo>() {
-            public SuiteEntryRepo create() {
-                return new SuiteEntryRepo<TestCaseRepo.TestCaseEntry>() {
+        final NamedEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<NamedEntryRepo>() {
+            public NamedEntryRepo create() {
+                return new NamedEntryRepo<TestCaseRepo.TestCaseEntry>() {
                     public Collection<TestCaseRepo.TestCaseEntry> list(String version) throws IOException, ClassNotFoundException {
                         return null;
                     }
@@ -143,7 +143,7 @@ public class SuiteEntryRepoTest {
         assertThat(list.iterator().next(), is(new TestCaseRepo.TestCaseEntry("foo", "bar")));
     }
 
-    private <T extends SuiteLevelEntry> List<T> listOf(T... entries) {
+    private <T extends NamedEntry> List<T> listOf(T... entries) {
         ArrayList<T> list = new ArrayList<T>();
         for (T entry : entries) {
             list.add(entry);

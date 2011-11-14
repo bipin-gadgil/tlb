@@ -189,7 +189,7 @@ public class EntryRepoFactory implements Runnable {
     public SetRepo createUniversalSetRepo(String namespace, String version, final String submoduleName) throws IOException {
         return findOrCreate(namespace, new SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName), new Creator<SetRepo>() {
             public SetRepo create() {
-                return new SetRepo(timeProvider);
+                return new SetRepo();
             }
         });
     }

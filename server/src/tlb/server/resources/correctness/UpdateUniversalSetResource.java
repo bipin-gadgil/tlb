@@ -30,7 +30,7 @@ public class UpdateUniversalSetResource extends SetResource {
             }
         }
         SetRepo.OperationResult match = universalSetRepo.tryMatching(reqPayload(entity));
-        if (match.success) {
+        if (match.isSuccess()) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
             getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);

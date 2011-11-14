@@ -1,7 +1,7 @@
 package tlb.server.repo;
 
+import tlb.domain.PartitionIdentifier;
 import tlb.domain.SuiteNameCountEntry;
-import tlb.domain.TimeProvider;
 
 import java.io.IOException;
 import java.util.*;
@@ -9,15 +9,9 @@ import java.util.*;
 /**
  * @understands storing subset of test-suite names
  */
-public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
+public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
 
-    public SetRepo(TimeProvider timeProvider) {
-        super(timeProvider);
-    }
-
-    @Override
-    public VersioningEntryRepo<SuiteNameCountEntry> getSubRepo(String versionIdentifier) throws IOException {
-        return factory.createUniversalSetRepo(namespace, versionIdentifier, "module-name");
+    public SetRepo() {
     }
 
     public List<SuiteNameCountEntry> parse(String string) {
@@ -25,7 +19,7 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
     }
 
     public boolean isPrimed() {
-        return suiteData.size() > 0;
+        return nameToEntry.size() > 0;
     }
 
     public OperationResult tryMatching(String list) {
@@ -41,6 +35,10 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
         return new OperationResult(true);
     }
 
+    public Collection<SuiteNameCountEntry> list(String version) throws IOException, ClassNotFoundException {
+        return nameToEntry.values();
+    }
+
     @Override
     public void update(SuiteNameCountEntry record) {
         throw new UnsupportedOperationException("not allowed on this type of repository");
@@ -52,11 +50,11 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
         List<SuiteNameCountEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNameCountEntry>();
         List<SuiteNameCountEntry> subsetSuites = parse(suiteNames);
         for (SuiteNameCountEntry subsetEntry : subsetSuites) {
-            SuiteNameCountEntry persistentEntry = suiteData.get(getKey(subsetEntry));
+            SuiteNameCountEntry persistentEntry = nameToEntry.get(getKey(subsetEntry));
             if (persistentEntry != null) {
                 String key = getKey(persistentEntry);
                 synchronized (EntryRepoFactory.mutex(getIdentifier() + key)) {
-                    SuiteNameCountEntry.PartitionIdentifier partitionIdentifier = new SuiteNameCountEntry.PartitionIdentifier(partitionNumber, totalPartitions);
+                    PartitionIdentifier partitionIdentifier = new PartitionIdentifier(partitionNumber, totalPartitions);
                     if (persistentEntry.isUsedByPartitionOtherThan(partitionIdentifier)) {
                         alreadySelectedByOtherPartitions.add(persistentEntry);
                     } else {
@@ -83,25 +81,21 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
             occurrenceCount.remove(nonRepeatedKey);
         }
 
-        if (unknownSuites.isEmpty() && occurrenceCount.isEmpty() && alreadySelectedByOtherPartitions.isEmpty()) {
-            return new OperationResult(true);
-        }
-
-        OperationResult failureResult = new OperationResult(false);
+        OperationResult failureResult = new OperationResult(unknownSuites.isEmpty() && occurrenceCount.isEmpty() && alreadySelectedByOtherPartitions.isEmpty());
         if (!alreadySelectedByOtherPartitions.isEmpty()) {
-            failureResult.append(String.format("- Mutual exclusion of test-suites across splits violated by partition %s/%s. Suites %s have already been selected for running by other partitions.", partitionNumber, totalPartitions, alreadySelectedByOtherPartitions));
+            failureResult.appendErrorDescription(String.format("Mutual exclusion of test-suites across splits violated by partition %s/%s. Suites %s have already been selected for running by other partitions.", partitionNumber, totalPartitions, alreadySelectedByOtherPartitions));
         }
 
         if (!unknownSuites.isEmpty()) {
             Collections.sort(unknownSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-            failureResult.append(String.format("- Found %s unknown(not present in universal set) suite(s) named: %s.", unknownSuites.size(), unknownSuites));
+            failureResult.appendErrorDescription(String.format("Found %s unknown(not present in universal set) suite(s) named: %s.", unknownSuites.size(), unknownSuites));
         }
         if (!occurrenceCount.isEmpty()) {
-            failureResult.append(String.format("- Found more than one occurrence of %s suite(s) named: %s.", occurrenceCount.size(), occurrenceCount));
+            failureResult.appendErrorDescription(String.format("Found more than one occurrence of %s suite(s) named: %s.", occurrenceCount.size(), occurrenceCount));
         }
         List<SuiteNameCountEntry> univSet = sortedList();
         Collections.sort(subsetSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-        failureResult.append(String.format("Had total of %s suites named %s in partition %s of %s. Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
+        failureResult.appendContext(String.format("Had total of %s suites named %s in partition %s of %s. Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
 
         return failureResult;
     }
@@ -117,12 +111,14 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
     }
 
     public static class OperationResult {
-        public final boolean success;
+        private boolean success;
         private final List<String> messages;
+        private final List<String> context;
 
         public OperationResult(boolean success) {
             this.success = success;
             this.messages = new ArrayList<String>();
+            this.context = new ArrayList<String>();
         }
 
         public OperationResult(boolean success, String message) {
@@ -132,15 +128,33 @@ public class SetRepo extends VersioningEntryRepo<SuiteNameCountEntry> {
 
         public String getMessage() {
             StringBuilder strBldr = new StringBuilder();
-            for (String message : messages) {
-                strBldr.append(message).append("\n");
-            }
+            appendMessageCollection(strBldr, messages);
+            appendMessageCollection(strBldr, context);
             return strBldr.toString();
         }
 
+        private void appendMessageCollection(StringBuilder strBldr, final List<String> messages) {
+            for (String message : messages) {
+                strBldr.append(message).append("\n");
+            }
+        }
 
-        public void append(String message) {
-            messages.add(message);
+        public void appendErrorDescription(String message) {
+            messages.add("- " + message);
+        }
+
+        public void appendContext(String message) {
+            context.add(message);
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            if (this.success && this.success != success) {
+                this.success = false;
+            }
         }
     }
 }

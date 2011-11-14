@@ -20,8 +20,8 @@ public class SuiteNameCountEntryTest {
     public static void assertInUse(SuiteNameCountEntry entry, final String name, int partitionNumber, int otherPartitionNumber, final int totalPartitions) {
         assertThat(entry.getName(), CoreMatchers.is(name));
         assertThat(entry.isUsedByAnyPartition(), CoreMatchers.is(true));
-        assertThat(entry.isUsedByPartitionOtherThan(new SuiteNameCountEntry.PartitionIdentifier(partitionNumber, totalPartitions)), CoreMatchers.is(false));
-        assertThat(entry.isUsedByPartitionOtherThan(new SuiteNameCountEntry.PartitionIdentifier(otherPartitionNumber, totalPartitions)), CoreMatchers.is(true));
+        assertThat(entry.isUsedByPartitionOtherThan(new PartitionIdentifier(partitionNumber, totalPartitions)), CoreMatchers.is(false));
+        assertThat(entry.isUsedByPartitionOtherThan(new PartitionIdentifier(otherPartitionNumber, totalPartitions)), CoreMatchers.is(true));
     }
 
     //no point repeating count tests, randomly choose any entry, and assume others are the same
@@ -60,7 +60,7 @@ public class SuiteNameCountEntryTest {
         List<SuiteNameCountEntry> list = new ArrayList<SuiteNameCountEntry>();
         list.add(new SuiteNameCountEntry("com.thoughtworks.foo.FooBarTest"));
         SuiteNameCountEntry usedEntry = new SuiteNameCountEntry("com.thoughtworks.hello.HelloWorldTest");
-        usedEntry.markUsedBy(new SuiteNameCountEntry.PartitionIdentifier(2, 4));
+        usedEntry.markUsedBy(new PartitionIdentifier(2, 4));
         list.add(usedEntry);
         list.add(new SuiteNameCountEntry("com.thoughtworks.quux.QuuxTest"));
         assertThat(SuiteNameCountEntry.dump(list), is("com.thoughtworks.foo.FooBarTest\ncom.thoughtworks.hello.HelloWorldTest: 2/4\ncom.thoughtworks.quux.QuuxTest\n"));
@@ -84,7 +84,7 @@ public class SuiteNameCountEntryTest {
         assertThat(countEntry.toString(), is("foo.bar.Baz"));
 
         countEntry = new SuiteNameCountEntry("foo.bar.Quux");
-        countEntry.markUsedBy(new SuiteNameCountEntry.PartitionIdentifier(1, 2));
+        countEntry.markUsedBy(new PartitionIdentifier(1, 2));
         assertThat(countEntry.toString(), is("foo.bar.Quux: 1/2"));
     }
 }

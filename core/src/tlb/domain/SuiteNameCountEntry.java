@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 /**
  * @understands a single element of a Set of test-suites
  */
-public class SuiteNameCountEntry implements SuiteLevelEntry {
+public class SuiteNameCountEntry implements NamedEntry {
     public static final Pattern SUITE_SET_ENTRY_STRING = Pattern.compile("(.*?)(:\\s*(\\d+)/(\\d+))?");
 
     private final String name;
@@ -110,38 +110,4 @@ public class SuiteNameCountEntry implements SuiteLevelEntry {
         }
     }
 
-    public static final class PartitionIdentifier {
-        public final int partitionNumber;
-        public final int totalPartitions;
-
-        public PartitionIdentifier(int partitionNumber, int totalPartitions) {
-            this.partitionNumber = partitionNumber;
-            this.totalPartitions = totalPartitions;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("%s/%s", partitionNumber, totalPartitions);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            PartitionIdentifier that = (PartitionIdentifier) o;
-
-            if (partitionNumber != that.partitionNumber) return false;
-            if (totalPartitions != that.totalPartitions) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = partitionNumber;
-            result = 31 * result + totalPartitions;
-            return result;
-        }
-    }
 }

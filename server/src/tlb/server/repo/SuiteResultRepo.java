@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @understands storage and retrival of suite results for suites
  */
-public class SuiteResultRepo extends SuiteEntryRepo<SuiteResultEntry> {
+public class SuiteResultRepo extends NamedEntryRepo<SuiteResultEntry> {
 
     public Collection<SuiteResultEntry> list(String version) throws IOException, ClassNotFoundException {
         throw new UnsupportedOperationException("versioning not allowed");

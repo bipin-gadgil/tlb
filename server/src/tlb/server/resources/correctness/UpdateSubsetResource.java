@@ -8,6 +8,7 @@ import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import tlb.domain.SuiteNameCountEntry;
+import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.model.SubsetCorrectnessChecker;
 
@@ -28,7 +29,7 @@ public class UpdateSubsetResource extends SetResource {
     @Override
     protected void createRepos() throws IOException, ClassNotFoundException {
         super.createRepos();
-        subsetCorrectnessChecker = new SubsetCorrectnessChecker(universalSetRepo);
+        subsetCorrectnessChecker = new SubsetCorrectnessChecker(universalSetRepo, new PartitionRecordRepo());
     }
 
     @Override

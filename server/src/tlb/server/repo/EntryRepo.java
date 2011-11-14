@@ -12,8 +12,6 @@ import java.util.List;
 public interface EntryRepo<T extends Entry> extends Serializable {
     Collection<T> list();
 
-    Collection<T> list(String version) throws IOException, ClassNotFoundException;
-
     void update(T entry);
 
     String diskDump();

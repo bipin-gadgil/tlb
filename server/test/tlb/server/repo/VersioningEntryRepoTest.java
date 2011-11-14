@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.mockito.internal.verification.Times;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SuiteLevelEntry;
 import tlb.domain.TimeProvider;
 import tlb.utils.SystemEnvironment;
 

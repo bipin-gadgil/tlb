@@ -3,7 +3,6 @@ package tlb.server.repo;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.domain.SuiteNameCountEntry;
-import tlb.domain.TimeProvider;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +17,7 @@ public class SetRepoTest {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SetRepo(new TimeProvider());
+        repo = new SetRepo();
     }
 
     @Test

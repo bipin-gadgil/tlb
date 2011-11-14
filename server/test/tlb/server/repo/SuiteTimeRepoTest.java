@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SuiteLevelEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.utils.SystemEnvironment;
 

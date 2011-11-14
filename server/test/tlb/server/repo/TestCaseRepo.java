@@ -1,6 +1,6 @@
 package tlb.server.repo;
 
-import tlb.domain.SuiteLevelEntry;
+import tlb.domain.NamedEntry;
 import tlb.domain.TimeProvider;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry
         return TestCaseEntry.parse(string);
     }
 
-    public static class TestCaseEntry implements SuiteLevelEntry {
+    public static class TestCaseEntry implements NamedEntry {
         private final String testName;
         private final String suiteName;
 

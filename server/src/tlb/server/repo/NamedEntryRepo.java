@@ -1,34 +1,33 @@
 package tlb.server.repo;
 
-import tlb.domain.SuiteLevelEntry;
+import tlb.domain.NamedEntry;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @understands persistence and retrieval of suite based data
  */
-public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements EntryRepo<T> {
-    protected volatile Map<String, T> suiteData;
+public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<T> {
+    protected volatile Map<String, T> nameToEntry;
     protected String namespace;
     transient protected EntryRepoFactory factory;
     protected volatile String identifier;
     private volatile boolean dirty;
 
-    public SuiteEntryRepo() {
+    public NamedEntryRepo() {
         super();
-        suiteData = new ConcurrentHashMap<String, T>();
+        nameToEntry = new ConcurrentHashMap<String, T>();
     }
 
     public List<T> sortedList() {
         return sortedListFor(list());
     }
 
-    public static <T extends SuiteLevelEntry> List<T> sortedListFor(Collection<T> list) {
+    public static <T extends NamedEntry> List<T> sortedListFor(Collection<T> list) {
         List<T> entryList = new ArrayList<T>(list);
-        Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
-            public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
+        Collections.sort(entryList, new Comparator<NamedEntry>() {
+            public int compare(NamedEntry o1, NamedEntry o2) {
                 return getKey(o1).compareTo(getKey(o2));
             }
         });
@@ -36,15 +35,15 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
     }
 
     public Collection<T> list() {
-        return suiteData.values();
+        return nameToEntry.values();
     }
 
     public synchronized void update(T record) {
-        suiteData.put(getKey(record), record);
+        nameToEntry.put(getKey(record), record);
         dirty = true;
     }
 
-    protected static String getKey(SuiteLevelEntry record) {
+    protected static String getKey(NamedEntry record) {
         return record.getName();
     }
 
@@ -79,7 +78,7 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
 
     public synchronized final String diskDump() {
         StringBuilder dumpBuffer = new StringBuilder();
-        for (T entry : suiteData.values()) {
+        for (T entry : nameToEntry.values()) {
             dumpBuffer.append(entry.dump());
         }
         dirty = false;
@@ -92,9 +91,9 @@ public abstract class SuiteEntryRepo<T extends SuiteLevelEntry> implements Entry
     }
 
     public void load(String contents) {
-        suiteData.clear();
+        nameToEntry.clear();
         for (T entry : parse(contents)) {
-            suiteData.put(getKey(entry), entry);
+            nameToEntry.put(getKey(entry), entry);
         }
         dirty = true;
     }

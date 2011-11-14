@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * @understands time talken to execute a test suite
  */
-public class SuiteTimeEntry implements SuiteLevelEntry {
+public class SuiteTimeEntry implements NamedEntry {
     private String name;
     private long time;
     public static final Pattern SUITE_TIME_STRING = Pattern.compile("(.*?):\\s*(\\d+)");
