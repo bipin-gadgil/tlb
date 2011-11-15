@@ -61,8 +61,8 @@ public class TlbApplicationTest {
     @Test
     public void shouldHaveAn_updateUniversalSet_RouteForCorrectnessCheck() {
         HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
-        assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/{total_jobs}/{job_number}/universal_set/{module_name}"));
-        Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/{total_jobs}/{job_number}/universal_set/{module_name}");
+        assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/universal_set/{module_name}"));
+        Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/universal_set/{module_name}");
         assertThat(((Finder)restlet).getTargetClass().getName(), is(UpdateUniversalSetResource.class.getName()));
     }
 

@@ -85,7 +85,7 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessCall(universalSet, moduleName, TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET);
+        RemoteValidationResponse resp = correctnessCall(universalSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_CREATED) {
             return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
@@ -99,7 +99,7 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessCall(subSet, moduleName, TlbConstants.Server.EntryRepoFactory.SUB_SET);
+        RemoteValidationResponse resp = correctnessCall(subSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), TlbConstants.Server.EntryRepoFactory.SUB_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_NOT_ACCEPTABLE) {
             return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
@@ -112,12 +112,12 @@ public class TlbServer extends SmoothingServer {
         }
     }
 
-    private RemoteValidationResponse correctnessCall(List<TlbSuiteFile> set, String moduleName, final String setType) {
+    private RemoteValidationResponse correctnessCall(List<TlbSuiteFile> set, final String url) {
         StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : set) {
             builder.append(suiteFile.dump());
         }
-        HttpResponse httpResponse = httpAction.doPost(validationUrl(setType, moduleName), builder.toString());
+        HttpResponse httpResponse = httpAction.doPost(url, builder.toString());
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         String responseBody = null;
         try {
@@ -128,14 +128,6 @@ public class TlbServer extends SmoothingServer {
         return new RemoteValidationResponse(statusCode, responseBody);
     }
 
-    private HttpResponse callCorrectnessCheck(List<TlbSuiteFile> universalSet, String moduleName, final String setType) {
-        StringBuilder builder = new StringBuilder();
-        for (TlbSuiteFile suiteFile : universalSet) {
-            builder.append(suiteFile.dump());
-        }
-        return httpAction.doPost(validationUrl(setType, moduleName), builder.toString());
-    }
-
     private String getUrl(String... parts) {
         final StringBuilder builder = new StringBuilder();
         builder.append(environment.val(new SystemEnvironment.EnvVar(TLB_BASE_URL)));
@@ -143,10 +135,6 @@ public class TlbServer extends SmoothingServer {
             builder.append("/").append(part);
         }
         return builder.toString();
-    }
-
-    private String validationUrl(String setType, String moduleName) {
-        return getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), setType, moduleName);
     }
 
     private String suiteResultUrl() {

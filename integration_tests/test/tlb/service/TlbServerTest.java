@@ -415,7 +415,6 @@ public class TlbServerTest {
         clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, String.valueOf(Integer.parseInt(partitionNumber) + 1));
     }
 
-
     private String correctnessCheckUrl(String checkType, String moduleName) {
         return String.format("http://localhost:%s/%s/%s/%s/%s/%s", jobName, TlbConstants.Server.EntryRepoFactory.CORRECTNESS_CHECK, jobVersion, totalPartitions, partitionNumber, checkType, moduleName);
     }
