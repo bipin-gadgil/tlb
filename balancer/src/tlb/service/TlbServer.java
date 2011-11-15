@@ -104,7 +104,7 @@ public class TlbServer extends SmoothingServer {
         if (resp.status == HttpStatus.SC_NOT_ACCEPTABLE) {
             return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
         } else if (resp.status == HttpStatus.SC_OK) {
-            return new ValidationResult(ValidationResult.Status.OK, "Universal set matched.");
+            return new ValidationResult(ValidationResult.Status.OK, "Subset found consistent.");
         } else if (resp.status == HttpStatus.SC_CONFLICT) {
             return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
         } else {

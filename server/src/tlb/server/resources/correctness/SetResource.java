@@ -30,7 +30,7 @@ public abstract class SetResource extends TlbResource {
         universalSetRepo = repoFactory().createUniversalSetRepo(reqNamespace(), reqVersion(), reqModuleName());
     }
 
-    private String reqModuleName() {
+    protected String reqModuleName() {
         return strAttr(TlbConstants.Server.MODULE_NAME);
     }
 

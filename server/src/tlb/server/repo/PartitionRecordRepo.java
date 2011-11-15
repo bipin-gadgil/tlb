@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
     public void subsetReceivedFromPartition(PartitionIdentifier partitionIdentifier) {
-        nameToEntry.put(getKey(partitionIdentifier), partitionIdentifier);
+        update(partitionIdentifier);
     }
 
     public boolean allSubsetsReceived(SetRepo.OperationResult operationResult) {

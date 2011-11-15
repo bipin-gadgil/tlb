@@ -49,23 +49,26 @@ public class EntryRepoFactoryTest {
         String version = "foo-bar";
         String submoduleName = "module-name";
         SetRepo setRepo = factory.createUniversalSetRepo("dev", version, submoduleName);
+        PartitionRecordRepo partitionRepo = factory.createPartitionRecordRepo("dev", version, submoduleName);
 
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
         setRepo.load("foo/bar/Baz.quux");
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
 
         assertThat("No files should exist as sync on this factory has never been called.", baseDir.list().length, is(0));
 
         factory.syncReposToDisk();
 
-        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
-
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(5));
 
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("dev"), "10");
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_TIME).getIdUnder("dev"), "foo.bar.Quux: 25");
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_RESULT).getIdUnder("dev"), "foo.bar.Baz: true");
         assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName).getIdUnder("dev"), "foo/bar/Baz.quux");
+        assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, PARTITION_RECORD, submoduleName).getIdUnder("dev"), "2/3", "1/3");
     }
 
     @Test
@@ -76,11 +79,13 @@ public class EntryRepoFactoryTest {
         String version = "foo-bar";
         String submoduleName = "submodule";
         SetRepo setRepo = factory.createUniversalSetRepo("dev", version, submoduleName);
+        PartitionRecordRepo partitionRepo = factory.createPartitionRecordRepo("dev", version, submoduleName);
 
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
         setRepo.load("bar.baz.Quux");
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
 
         factory.syncReposToDisk();
 
@@ -96,15 +101,17 @@ public class EntryRepoFactoryTest {
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Bang", 35));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
         setRepo.load("quux.bar.Baz");
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
 
         factory.syncReposToDisk();
 
-        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(4));
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(5));
 
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("dev"), "10", "21");
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_TIME).getIdUnder("dev"), "foo.bar.Quux: 25", "foo.bar.Bang: 35");
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_RESULT).getIdUnder("dev"), "foo.bar.Baz: true");
         assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName).getIdUnder("dev"), "quux.bar.Baz");
+        assertContentIs(new EntryRepoFactory.SubmoduledUnderVersionedNamespace(version, PARTITION_RECORD, submoduleName).getIdUnder("dev"), "2/3", "1/3");
     }
 
     private void assertContentIs(final String fileName, String... str) throws IOException {
@@ -192,6 +199,10 @@ public class EntryRepoFactoryTest {
         SetRepo setRepo = factory.createUniversalSetRepo("quux", version, submoduleName);
         setRepo.load("foo/bar/Baz\nquux/bar/Baz\nfoo/baz/Quux");
 
+        PartitionRecordRepo partitionRepo = factory.createPartitionRecordRepo("quux", version, submoduleName);
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 2));
+        partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(2, 2));
+
         Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
@@ -203,6 +214,8 @@ public class EntryRepoFactoryTest {
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list(), hasItems(new SuiteResultEntry("foo.bar.Baz", true), new SuiteResultEntry("bar.baz.Quux", false)));
         assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list().size(), is(3));
         assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list(), hasItems(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("quux/bar/Baz"), new SuiteNameCountEntry("foo/baz/Quux")));
+        assertThat(otherFactoryInstance.createPartitionRecordRepo("quux", version, submoduleName).list().size(), is(2));
+        assertThat(otherFactoryInstance.createPartitionRecordRepo("quux", version, submoduleName).list(), hasItems(new PartitionIdentifier(1, 2), new PartitionIdentifier(2, 2)));
     }
 
     @Test

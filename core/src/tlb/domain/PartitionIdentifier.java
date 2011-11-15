@@ -50,7 +50,7 @@ public final class PartitionIdentifier implements NamedEntry {
     }
 
     public String dump() {
-        throw new UnsupportedOperationException("not implemented yet");
+        return toString() + "\n";
     }
 
     public static List<PartitionIdentifier> parse(String partitionIdsString) {

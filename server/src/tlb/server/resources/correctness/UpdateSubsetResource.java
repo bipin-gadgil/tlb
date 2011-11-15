@@ -7,12 +7,16 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
+import tlb.TlbConstants;
 import tlb.domain.SuiteNameCountEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.model.SubsetCorrectnessChecker;
 
 import java.io.IOException;
+
+import static tlb.TlbConstants.Server.JOB_NUMBER;
+import static tlb.TlbConstants.Server.TOTAL_JOBS;
 
 /**
  * @understands checking subsets against universal set data for correctness
@@ -29,7 +33,8 @@ public class UpdateSubsetResource extends SetResource {
     @Override
     protected void createRepos() throws IOException, ClassNotFoundException {
         super.createRepos();
-        subsetCorrectnessChecker = new SubsetCorrectnessChecker(universalSetRepo, new PartitionRecordRepo());
+        PartitionRecordRepo partitionRecordRepo = repoFactory().createPartitionRecordRepo(reqNamespace(), reqVersion(), reqModuleName());
+        subsetCorrectnessChecker = new SubsetCorrectnessChecker(universalSetRepo, partitionRecordRepo);
     }
 
     @Override
@@ -39,7 +44,12 @@ public class UpdateSubsetResource extends SetResource {
             getResponse().setEntity(new StringRepresentation("Universal set for given job-name, job-version and module-name combination doesn't exist."));
             return;
         }
-        SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(reqPayload(entity), 1, 2);
-        getResponse().setStatus(Status.SUCCESS_OK);
+        SetRepo.OperationResult result = subsetCorrectnessChecker.reportSubset(reqPayload(entity), Integer.parseInt(strAttr(JOB_NUMBER)), Integer.parseInt(strAttr(TOTAL_JOBS)));
+        if (result.isSuccess()) {
+            getResponse().setStatus(Status.SUCCESS_OK);
+        } else {
+            getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);
+            getResponse().setEntity(new StringRepresentation(result.getMessage()));
+        }
     }
 }

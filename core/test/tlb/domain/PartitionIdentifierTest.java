@@ -2,6 +2,7 @@ package tlb.domain;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,5 +47,17 @@ public class PartitionIdentifierTest {
             assertThat(e.getMessage(), is("failed to parse '2/A' as " + PartitionIdentifier.class.getSimpleName()));
         }
         assertThat(parsed, is(nullValue()));
+    }
+
+    @Test
+    public void shouldDumpStringFromEntry() {
+        assertThat(new PartitionIdentifier(2, 4).dump(), is("2/4\n"));
+        assertThat(new PartitionIdentifier(1, 3).dump(), is("1/3\n"));
+    }
+
+    @Test
+    public void shouldReturnDumpAsToString() {
+        PartitionIdentifier entry = new PartitionIdentifier(2, 3);
+        assertThat(entry.toString(), is("2/3"));
     }
 }

@@ -194,6 +194,14 @@ public class EntryRepoFactory implements Runnable {
         });
     }
 
+    public PartitionRecordRepo createPartitionRecordRepo(String namespace, String version, String submoduleName) throws IOException {
+        return findOrCreate(namespace, new SubmoduledUnderVersionedNamespace(version, PARTITION_RECORD, submoduleName), new Creator<PartitionRecordRepo>() {
+            public PartitionRecordRepo create() {
+                return new PartitionRecordRepo();
+            }
+        });
+    }
+
     <T extends EntryRepo> T findOrCreate(String namespace, IdentificationScheme idScheme, Creator<T> creator) throws IOException {
         String identifier = idScheme.getIdUnder(namespace);
         T repo = (T) cache.get(identifier);

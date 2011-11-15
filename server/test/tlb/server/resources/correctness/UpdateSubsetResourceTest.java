@@ -14,6 +14,7 @@ import org.restlet.resource.StringRepresentation;
 import tlb.TlbConstants;
 import tlb.domain.SuiteNameCountEntry;
 import tlb.server.repo.EntryRepoFactory;
+import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 
 import java.io.IOException;
@@ -38,6 +39,7 @@ public class UpdateSubsetResourceTest {
     private Response response;
     private Representation representationGiven;
     private HashMap<String, Object> reqAttrMap;
+    private PartitionRecordRepo partitionRecordRepo;
 
     @Before
     public void setUp() throws IOException {
@@ -51,8 +53,12 @@ public class UpdateSubsetResourceTest {
         reqAttrMap.put(TlbConstants.Server.REQUEST_NAMESPACE, "family_name");
         reqAttrMap.put(TlbConstants.Server.LISTING_VERSION, "version-string");
         reqAttrMap.put(TlbConstants.Server.MODULE_NAME, "my-module");
+        reqAttrMap.put(TlbConstants.Server.JOB_NUMBER, "2");
+        reqAttrMap.put(TlbConstants.Server.TOTAL_JOBS, "3");
         when(request.getAttributes()).thenReturn(reqAttrMap);
         when(repoFactory.createUniversalSetRepo("family_name", "version-string", "my-module")).thenReturn(repo);
+        partitionRecordRepo = new PartitionRecordRepo();
+        when(repoFactory.createPartitionRecordRepo("family_name", "version-string", "my-module")).thenReturn(partitionRecordRepo);
         response = mock(Response.class);
 
         representationGiven = null;
