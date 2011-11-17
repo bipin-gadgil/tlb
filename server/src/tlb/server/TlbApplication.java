@@ -7,6 +7,7 @@ import org.restlet.Router;
 import tlb.server.resources.*;
 import tlb.server.resources.correctness.UpdateSubsetResource;
 import tlb.server.resources.correctness.UpdateUniversalSetResource;
+import tlb.server.resources.correctness.VerifyPartitionCompletenessResource;
 
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 import static tlb.TlbConstants.Server.*;
@@ -33,6 +34,8 @@ public class TlbApplication extends Application {
 
         router.attach(String.format("/{%s}/%s/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, UNIVERSAL_SET, MODULE_NAME), UpdateUniversalSetResource.class);
         router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, SUB_SET, MODULE_NAME), UpdateSubsetResource.class);
+
+        router.attach(String.format("/{%s}/%s/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, VERIFY_PARTITION_COMPLETENESS, MODULE_NAME), VerifyPartitionCompletenessResource.class);
 
         return router;
     }

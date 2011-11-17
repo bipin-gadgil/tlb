@@ -18,4 +18,6 @@ public interface HttpAction {
     String post(String url, String data);
 
     HttpResponse doPost(String url, String data);
+
+    HttpResponse doGet(String url);
 }

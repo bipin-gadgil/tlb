@@ -63,6 +63,7 @@ public interface TlbConstants {
         static final SystemEnvironment.EnvVar TLB_SYNC_TO_DISK_INTERVAL_IN_MINS = new SystemEnvironment.DefaultedEnvVar("TLB_SYNC_TO_DISK_INTERVAL_IN_MINS", "60");
 
         static final String MODULE_NAME = "module_name";
+        static final String VERIFY_PARTITION_COMPLETENESS = "verify_partition_completeness";
 
         public static interface EntryRepoFactory {
             static final String SUBSET_SIZE = "subset_size";

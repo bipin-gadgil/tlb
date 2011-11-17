@@ -23,7 +23,7 @@ public class SubsetCorrectnessChecker {
     public SetRepo.OperationResult reportSubset(String subsetSuites, int partitionNumber, int totalPartitions) {
         SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(subsetSuites, partitionNumber, totalPartitions);
         partitionRecordRepo.subsetReceivedFromPartition(new PartitionIdentifier(partitionNumber, totalPartitions));
-        if (partitionRecordRepo.allSubsetsReceived(operationResult)) {
+        if (partitionRecordRepo.allSubsetsReceivedWithConsistentConfiguration(operationResult)) {
             List<SuiteNameCountEntry> unassignedSuites = new ArrayList<SuiteNameCountEntry>();
             for (SuiteNameCountEntry persistentEntry : universalSetRepo.list()) {
                 if (! persistentEntry.isUsedByAnyPartition()) {

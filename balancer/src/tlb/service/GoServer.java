@@ -334,4 +334,8 @@ public class GoServer extends SmoothingServer {
     public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
         throw new UnsupportedOperationException("not implemented yet");
     }
+
+    public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
 }

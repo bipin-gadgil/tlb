@@ -30,20 +30,6 @@ public abstract class SetResource extends TlbResource {
         universalSetRepo = repoFactory().createUniversalSetRepo(reqNamespace(), reqVersion(), reqModuleName());
     }
 
-    protected String reqModuleName() {
-        return strAttr(TlbConstants.Server.MODULE_NAME);
-    }
-
-    protected String reqPayload(Representation entity) {
-        String text = null;
-        try {
-            text = entity.getText();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return text;
-    }
-
     @Override
     public boolean allowPost() {
         return true;

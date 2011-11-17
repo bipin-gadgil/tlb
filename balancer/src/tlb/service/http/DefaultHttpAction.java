@@ -103,8 +103,12 @@ public class DefaultHttpAction implements HttpAction {
     }
 
     public String get(String url) {
-        HttpGet httpget = new HttpGet(url);
-        return executeMethod(httpget);
+        return responseString(url, doGet(url));
+    }
+
+    public HttpResponse doGet(String url) {
+        HttpGet httpGet = new HttpGet(url);
+        return execute(httpGet);
     }
 
     public String post(String url, Map<String,String> data) {

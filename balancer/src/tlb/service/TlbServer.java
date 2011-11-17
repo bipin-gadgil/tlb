@@ -85,7 +85,7 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessCall(universalSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName));
+        RemoteValidationResponse resp = correctnessPost(universalSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_CREATED) {
             return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
@@ -99,7 +99,7 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessCall(subSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), TlbConstants.Server.EntryRepoFactory.SUB_SET, moduleName));
+        RemoteValidationResponse resp = correctnessPost(subSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), TlbConstants.Server.EntryRepoFactory.SUB_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_NOT_ACCEPTABLE) {
             return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
@@ -112,12 +112,29 @@ public class TlbServer extends SmoothingServer {
         }
     }
 
-    private RemoteValidationResponse correctnessCall(List<TlbSuiteFile> set, final String url) {
+    public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
+        HttpResponse httpResponse = httpAction.doGet(getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.VERIFY_PARTITION_COMPLETENESS, moduleName));
+        RemoteValidationResponse resp = validationResponse(httpResponse);
+
+        if (resp.status == HttpStatus.SC_EXPECTATION_FAILED) {
+            return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
+        } else if (resp.status == HttpStatus.SC_OK) {
+            return new ValidationResult(ValidationResult.Status.OK, resp.body);
+        } else {
+            throw new IllegalStateException(String.format("Status %s for validation request not understood.", resp.status));
+        }
+    }
+
+    private RemoteValidationResponse correctnessPost(List<TlbSuiteFile> set, final String url) {
         StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : set) {
             builder.append(suiteFile.dump());
         }
         HttpResponse httpResponse = httpAction.doPost(url, builder.toString());
+        return validationResponse(httpResponse);
+    }
+
+    private RemoteValidationResponse validationResponse(HttpResponse httpResponse) {
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         String responseBody = null;
         try {

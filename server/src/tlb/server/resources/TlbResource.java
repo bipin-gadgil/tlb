@@ -5,6 +5,7 @@ import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
+import org.restlet.resource.Representation;
 import org.restlet.resource.Resource;
 import org.restlet.resource.Variant;
 import tlb.TlbConstants;
@@ -53,5 +54,19 @@ public abstract class TlbResource extends Resource {
 
     protected String reqVersion() {
         return strAttr(LISTING_VERSION);
+    }
+
+    protected String reqModuleName() {
+        return strAttr(TlbConstants.Server.MODULE_NAME);
+    }
+
+    protected String reqPayload(Representation entity) {
+        String text = null;
+        try {
+            text = entity.getText();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return text;
     }
 }
