@@ -495,27 +495,34 @@
         </copy>
     </target>
 
-    <target name="test.count_balanced" depends="merge.test.dirs">
+    <target name="-typedef.tlb.classes">
         <typedef name="lbfs" classname="tlb.ant.LoadBalancedFileSet" classpathref="all.classpath"/>
+        <typedef name="assertAllPartitionsExecuted" classname="tlb.ant.CheckMissingPartitions" classpathref="all.classpath"/>
+    </target>
+
+    <target name="test.count_balanced" depends="merge.test.dirs, -typedef.tlb.classes">
         <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" haltonerror="true" showoutput="true" fork="true">
             <classpath refid="all.classpath"/>
             <batchtest todir="${dog-fooding.reports.target.dir}">
-                <lbfs dir="${all.tests.dir}" includes="**/*Test.class"/>
+                <lbfs dir="${all.tests.dir}" includes="**/*Test.class" moduleName="all"/>
                 <formatter type="plain"/>
             </batchtest>
         </junit>
     </target>
 
-    <target name="test.time_balanced" depends="merge.test.dirs">
-        <typedef name="lbfs" classname="tlb.ant.LoadBalancedFileSet" classpathref="all.classpath"/>
+    <target name="test.time_balanced" depends="merge.test.dirs, -typedef.tlb.classes">
         <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" haltonerror="true" showoutput="true" fork="true">
             <classpath refid="all.classpath"/>
             <batchtest todir="${dog-fooding.reports.target.dir}">
-                <lbfs dir="${all.tests.dir}" includes="**/*Test.class"/>
+                <lbfs dir="${all.tests.dir}" includes="**/*Test.class" moduleName="all"/>
                 <formatter classname="tlb.ant.JunitDataRecorder"/>
                 <formatter type="plain"/>
             </batchtest>
         </junit>
+    </target>
+
+    <target name="assert.all.partitions.executed" depends="-typedef.tlb.classes">
+        <assertAllPartitionsExecuted moduleNames="all"/>
     </target>
 
     <target name="all" depends="clean, test, package"/>
