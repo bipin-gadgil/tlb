@@ -1,7 +1,7 @@
 package tlb.server.repo;
 
 import tlb.domain.PartitionIdentifier;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 
 import java.io.IOException;
 import java.util.*;
@@ -9,13 +9,13 @@ import java.util.*;
 /**
  * @understands storing subset of test-suite names
  */
-public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
+public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
 
     public SetRepo() {
     }
 
-    public List<SuiteNameCountEntry> parse(String string) {
-        return SuiteNameCountEntry.parse(string);
+    public List<SuiteNamePartitionEntry> parse(String string) {
+        return SuiteNamePartitionEntry.parse(string);
     }
 
     public boolean isPrimed() {
@@ -23,11 +23,11 @@ public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
     }
 
     public OperationResult tryMatching(String list) {
-        List<SuiteNameCountEntry> givenList = sortedListFor(parse(list));
-        List<SuiteNameCountEntry> serverCopy = sortedList();
+        List<SuiteNamePartitionEntry> givenList = sortedListFor(parse(list));
+        List<SuiteNamePartitionEntry> serverCopy = sortedList();
 
         for (int i = 0; i < serverCopy.size(); i++) {
-            SuiteNameCountEntry entry = serverCopy.get(i);
+            SuiteNamePartitionEntry entry = serverCopy.get(i);
             if (! entry.equals(givenList.get(i))) {
                 return new OperationResult(false, String.format("Expected universal set was %s but given %s.", serverCopy, givenList));
             }
@@ -35,22 +35,22 @@ public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
         return new OperationResult(true);
     }
 
-    public Collection<SuiteNameCountEntry> list(String version) throws IOException, ClassNotFoundException {
+    public Collection<SuiteNamePartitionEntry> list(String version) throws IOException, ClassNotFoundException {
         return nameToEntry.values();
     }
 
     @Override
-    public void update(SuiteNameCountEntry record) {
+    public void update(SuiteNamePartitionEntry record) {
         throw new UnsupportedOperationException("not allowed on this type of repository");
     }
 
     public OperationResult usedBySubset(String suiteNames, int partitionNumber, int totalPartitions) {
-        List<SuiteNameCountEntry> unknownSuites = new ArrayList<SuiteNameCountEntry>();
+        List<SuiteNamePartitionEntry> unknownSuites = new ArrayList<SuiteNamePartitionEntry>();
         Map<String, Integer> occurrenceCount = new HashMap<String, Integer>();
-        List<SuiteNameCountEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNameCountEntry>();
-        List<SuiteNameCountEntry> subsetSuites = parse(suiteNames);
-        for (SuiteNameCountEntry subsetEntry : subsetSuites) {
-            SuiteNameCountEntry persistentEntry = nameToEntry.get(getKey(subsetEntry));
+        List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNamePartitionEntry>();
+        List<SuiteNamePartitionEntry> subsetSuites = parse(suiteNames);
+        for (SuiteNamePartitionEntry subsetEntry : subsetSuites) {
+            SuiteNamePartitionEntry persistentEntry = nameToEntry.get(getKey(subsetEntry));
             if (persistentEntry != null) {
                 String key = getKey(persistentEntry);
                 synchronized (EntryRepoFactory.mutex(getIdentifier() + key)) {
@@ -70,7 +70,7 @@ public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
         return computeResult(partitionNumber, totalPartitions, unknownSuites, occurrenceCount, alreadySelectedByOtherPartitions, subsetSuites);
     }
 
-    private OperationResult computeResult(int partitionNumber, int totalPartitions, List<SuiteNameCountEntry> unknownSuites, Map<String, Integer> occurrenceCount, List<SuiteNameCountEntry> alreadySelectedByOtherPartitions, List<SuiteNameCountEntry> subsetSuites) {
+    private OperationResult computeResult(int partitionNumber, int totalPartitions, List<SuiteNamePartitionEntry> unknownSuites, Map<String, Integer> occurrenceCount, List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions, List<SuiteNamePartitionEntry> subsetSuites) {
         ArrayList<String> nonRepeatedOccurrenceCountKeys = new ArrayList<String>();
         for (Map.Entry<String, Integer> occurrenceCountEntry : occurrenceCount.entrySet()) {
             if (occurrenceCountEntry.getValue() == 1) {
@@ -87,14 +87,14 @@ public class SetRepo extends NamedEntryRepo<SuiteNameCountEntry> {
         }
 
         if (!unknownSuites.isEmpty()) {
-            Collections.sort(unknownSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+            Collections.sort(unknownSuites, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
             failureResult.appendErrorDescription(String.format("Found %s unknown(not present in universal set) suite(s) named: %s.", unknownSuites.size(), unknownSuites));
         }
         if (!occurrenceCount.isEmpty()) {
             failureResult.appendErrorDescription(String.format("Found more than one occurrence of %s suite(s) named: %s.", occurrenceCount.size(), occurrenceCount));
         }
-        List<SuiteNameCountEntry> univSet = sortedList();
-        Collections.sort(subsetSuites, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        List<SuiteNamePartitionEntry> univSet = sortedList();
+        Collections.sort(subsetSuites, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
         failureResult.appendContext(String.format("Had total of %s suites named %s in partition %s of %s. Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
 
         return failureResult;

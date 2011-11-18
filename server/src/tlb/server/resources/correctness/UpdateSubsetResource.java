@@ -7,8 +7,7 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
-import tlb.TlbConstants;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.model.SubsetCorrectnessChecker;
@@ -23,7 +22,7 @@ import static tlb.TlbConstants.Server.TOTAL_JOBS;
  */
 public class UpdateSubsetResource extends SetResource {
 
-    public static final SuiteNameCountEntry.SuiteNameCountEntryComparator NAME_ENTRY_COMPARATOR = new SuiteNameCountEntry.SuiteNameCountEntryComparator();
+    public static final SuiteNamePartitionEntry.SuiteNameCountEntryComparator NAME_ENTRY_COMPARATOR = new SuiteNamePartitionEntry.SuiteNameCountEntryComparator();
     private SubsetCorrectnessChecker subsetCorrectnessChecker;
 
     public UpdateSubsetResource(Context context, Request request, Response response) {

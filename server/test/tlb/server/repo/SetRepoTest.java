@@ -2,7 +2,7 @@ package tlb.server.repo;
 
 import org.junit.Before;
 import org.junit.Test;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,10 +22,10 @@ public class SetRepoTest {
 
     @Test
     public void shouldUnderstandParsingMultipleEntries() {
-        List<SuiteNameCountEntry> parsedList = repo.parse("foo/bar/Baz\nbaz/bang/Quux\nhello/World");
-        assertThat(parsedList, is(Arrays.asList(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("baz/bang/Quux"), new SuiteNameCountEntry("hello/World"))));
-        for (SuiteNameCountEntry suiteNameCountEntry : parsedList) {
-            assertThat(suiteNameCountEntry.isUsedByAnyPartition(), is(false));
+        List<SuiteNamePartitionEntry> parsedList = repo.parse("foo/bar/Baz\nbaz/bang/Quux\nhello/World");
+        assertThat(parsedList, is(Arrays.asList(new SuiteNamePartitionEntry("foo/bar/Baz"), new SuiteNamePartitionEntry("baz/bang/Quux"), new SuiteNamePartitionEntry("hello/World"))));
+        for (SuiteNamePartitionEntry suiteNamePartitionEntry : parsedList) {
+            assertThat(suiteNamePartitionEntry.isUsedByAnyPartition(), is(false));
         }
     }
 
@@ -40,6 +40,6 @@ public class SetRepoTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void shouldNotAllowUpdate() {
-        repo.update(new SuiteNameCountEntry("foo"));
+        repo.update(new SuiteNamePartitionEntry("foo"));
     }
 }

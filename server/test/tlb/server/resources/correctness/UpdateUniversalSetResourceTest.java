@@ -12,7 +12,7 @@ import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import tlb.TlbConstants;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
 
@@ -78,7 +78,7 @@ public class UpdateUniversalSetResourceTest {
     public void shouldCreateUniversalSetRepo_whenGivenTheListingByFirstPartition() throws ResourceException, IOException {
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class"));
         assertThat(repo.list().size(), is(3));
-        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("foo.bar.Baz.class"), new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.Quux.class")));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("foo.bar.Baz.class"), new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.Quux.class")));
         verify(response).setStatus(Status.SUCCESS_CREATED);
     }
 
@@ -86,17 +86,17 @@ public class UpdateUniversalSetResourceTest {
     public void shouldMatchUniversalSetRepo_whenGivenTheListingByAnyPartitionAfterFirst() throws ResourceException, IOException {
         String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
         repo.load(suites);
-        List<SuiteNameCountEntry> listBefore2ndPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listBefore2ndPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class\nbar.baz.Bang.class"));
 
         assertThat(repo.list().size(), is(3));
-        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("foo.bar.Baz.class"), new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.Quux.class")));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("foo.bar.Baz.class"), new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.Quux.class")));
 
-        List<SuiteNameCountEntry> listAfter2ndPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listAfter2ndPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
-        Collections.sort(listBefore2ndPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-        Collections.sort(listAfter2ndPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listBefore2ndPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listAfter2ndPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
         for (int i = 0; i < listBefore2ndPartitionPosting.size(); i++) {
              assertThat(listBefore2ndPartitionPosting.get(i), sameInstance(listAfter2ndPartitionPosting.get(i)));
         }//assert nothing changed in server's copy
@@ -108,17 +108,17 @@ public class UpdateUniversalSetResourceTest {
     public void shouldGenerateError_whenUniversalSetRepoIsNotMatched_ForAnyPartitionAfterFirst() throws ResourceException, IOException {
         String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
         repo.load(suites);
-        List<SuiteNameCountEntry> listBeforeBadPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listBeforeBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class"));
 
         assertThat(repo.list().size(), is(3));
-        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("foo.bar.Baz.class"), new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.Quux.class")));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("foo.bar.Baz.class"), new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.Quux.class")));
 
-        List<SuiteNameCountEntry> listAfterBadPartitionPosting = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listAfterBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
-        Collections.sort(listBeforeBadPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
-        Collections.sort(listAfterBadPartitionPosting, new SuiteNameCountEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listBeforeBadPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listAfterBadPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
         for (int i = 0; i < listBeforeBadPartitionPosting.size(); i++) {
              assertThat(listBeforeBadPartitionPosting.get(i), sameInstance(listAfterBadPartitionPosting.get(i)));
         }
@@ -131,7 +131,7 @@ public class UpdateUniversalSetResourceTest {
     public void shouldCreateUniversalSetRepos_namespacedByDifferentModules_whenGivenTheListingByRespectiveFirstPartitions() throws ResourceException, IOException {
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class"));
         assertThat(repo.list().size(), is(3));
-        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("foo.bar.Baz.class"), new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.Quux.class")));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("foo.bar.Baz.class"), new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.Quux.class")));
         verify(response).setStatus(Status.SUCCESS_CREATED);
 
         reset(response);
@@ -145,7 +145,7 @@ public class UpdateUniversalSetResourceTest {
 
         resource.acceptRepresentation(new StringRepresentation("bar.baz.Bang.class\nbaz.bang.SomeOther.class"));
         assertThat(repo.list().size(), is(2));
-        assertThat(repo.list(), hasItems(new SuiteNameCountEntry("bar.baz.Bang.class"), new SuiteNameCountEntry("baz.bang.SomeOther.class")));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.SomeOther.class")));
         verify(response).setStatus(Status.SUCCESS_CREATED);
     }
 }

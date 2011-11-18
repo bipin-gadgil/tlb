@@ -10,17 +10,17 @@ import java.util.regex.Pattern;
 /**
  * @understands a single element of a Set of test-suites
  */
-public class SuiteNameCountEntry implements NamedEntry {
+public class SuiteNamePartitionEntry implements NamedEntry {
     public static final Pattern SUITE_SET_ENTRY_STRING = Pattern.compile("(.*?)(:\\s*(\\d+)/(\\d+))?");
 
     private final String name;
     private PartitionIdentifier partitionIdentifier;
 
-    public SuiteNameCountEntry(String name) {
+    public SuiteNamePartitionEntry(String name) {
         this(name, null);
     }
 
-    public SuiteNameCountEntry(String name, PartitionIdentifier partitionIdentifier) {
+    public SuiteNamePartitionEntry(String name, PartitionIdentifier partitionIdentifier) {
         this.name = name;
         this.partitionIdentifier = partitionIdentifier;
     }
@@ -33,36 +33,36 @@ public class SuiteNameCountEntry implements NamedEntry {
         return toString() + "\n";
     }
 
-    public static List<SuiteNameCountEntry> parse(String suiteNamesString) {
+    public static List<SuiteNamePartitionEntry> parse(String suiteNamesString) {
         return parse(Arrays.asList(suiteNamesString.split("\n")));
     }
 
-    public static List<SuiteNameCountEntry> parse(List<String> listOfStrings) {
-        List<SuiteNameCountEntry> parsed = new ArrayList<SuiteNameCountEntry>();
+    public static List<SuiteNamePartitionEntry> parse(List<String> listOfStrings) {
+        List<SuiteNamePartitionEntry> parsed = new ArrayList<SuiteNamePartitionEntry>();
         for (String entryString : listOfStrings) {
             if (entryString.trim().length() > 0) parsed.add(parseSingleEntry(entryString));
         }
         return parsed;
     }
 
-    public static String dump(List<SuiteNameCountEntry> countEntries) {
+    public static String dump(List<SuiteNamePartitionEntry> partitionEntries) {
         StringBuilder buffer = new StringBuilder();
-        for (Entry entry : countEntries) {
+        for (Entry entry : partitionEntries) {
             buffer.append(entry.dump());
         }
         return buffer.toString();
     }
 
-    public static SuiteNameCountEntry parseSingleEntry(String singleEntryString) {
+    public static SuiteNamePartitionEntry parseSingleEntry(String singleEntryString) {
         Matcher matcher = SUITE_SET_ENTRY_STRING.matcher(singleEntryString);
         if (matcher.matches()) {
             PartitionIdentifier partitionIdentifier = null;
             if (matcher.group(2) != null) {
                 partitionIdentifier = new PartitionIdentifier(Integer.parseInt(matcher.group(3)), Integer.parseInt(matcher.group(4)));
             }
-            return new SuiteNameCountEntry(matcher.group(1), partitionIdentifier);
+            return new SuiteNamePartitionEntry(matcher.group(1), partitionIdentifier);
         } else {
-            throw new IllegalArgumentException(String.format("failed to parse '%s' as %s", singleEntryString, SuiteNameCountEntry.class.getSimpleName()));
+            throw new IllegalArgumentException(String.format("failed to parse '%s' as %s", singleEntryString, SuiteNamePartitionEntry.class.getSimpleName()));
         }
     }
 
@@ -77,7 +77,7 @@ public class SuiteNameCountEntry implements NamedEntry {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SuiteNameCountEntry that = (SuiteNameCountEntry) o;
+        SuiteNamePartitionEntry that = (SuiteNamePartitionEntry) o;
 
         return !(name != null ? !name.equals(that.name) : that.name != null);
 
@@ -104,8 +104,8 @@ public class SuiteNameCountEntry implements NamedEntry {
         return partitionIdentifier;
     }
 
-    public static class SuiteNameCountEntryComparator implements Comparator<SuiteNameCountEntry> {
-        public int compare(SuiteNameCountEntry o1, SuiteNameCountEntry o2) {
+    public static class SuiteNameCountEntryComparator implements Comparator<SuiteNamePartitionEntry> {
+        public int compare(SuiteNamePartitionEntry o1, SuiteNamePartitionEntry o2) {
             return o1.getName().compareTo(o2.getName());
         }
     }

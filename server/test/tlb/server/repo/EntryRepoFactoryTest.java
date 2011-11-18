@@ -213,7 +213,7 @@ public class EntryRepoFactoryTest {
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list().size(), is(2));
         assertThat(otherFactoryInstance.createSuiteResultRepo("baz", LATEST_VERSION).list(), hasItems(new SuiteResultEntry("foo.bar.Baz", true), new SuiteResultEntry("bar.baz.Quux", false)));
         assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list().size(), is(3));
-        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list(), hasItems(new SuiteNameCountEntry("foo/bar/Baz"), new SuiteNameCountEntry("quux/bar/Baz"), new SuiteNameCountEntry("foo/baz/Quux")));
+        assertThat(otherFactoryInstance.createUniversalSetRepo("quux", version, submoduleName).list(), hasItems(new SuiteNamePartitionEntry("foo/bar/Baz"), new SuiteNamePartitionEntry("quux/bar/Baz"), new SuiteNamePartitionEntry("foo/baz/Quux")));
         assertThat(otherFactoryInstance.createPartitionRecordRepo("quux", version, submoduleName).list().size(), is(2));
         assertThat(otherFactoryInstance.createPartitionRecordRepo("quux", version, submoduleName).list(), hasItems(new PartitionIdentifier(1, 2), new PartitionIdentifier(2, 2)));
     }

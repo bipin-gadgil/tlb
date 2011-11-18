@@ -12,7 +12,7 @@ import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import tlb.TlbConstants;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
@@ -93,9 +93,9 @@ public class UpdateSubsetResourceTest {
     @Test
     public void shouldUpdateUniversalSetRepoSuiteCounts_forSuitesConsumedByASubset() throws ResourceException, IOException {
         repo.load("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class");
-        List<SuiteNameCountEntry> listBefore = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listBefore = new ArrayList<SuiteNamePartitionEntry>(repo.list());
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class"));
-        List<SuiteNameCountEntry> listAfter = new ArrayList<SuiteNameCountEntry>(repo.list());
+        List<SuiteNamePartitionEntry> listAfter = new ArrayList<SuiteNamePartitionEntry>(repo.list());
         assertThat(listAfter.size(), is(3));
         for (int i = 0; i < listBefore.size(); i++) {
             assertThat(listBefore.get(i), sameInstance(listAfter.get(i)));

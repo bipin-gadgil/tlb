@@ -328,14 +328,14 @@ public class GoServer extends SmoothingServer {
     }
 
     public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
-        throw new UnsupportedOperationException("not implemented yet");
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
     }
 
     public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
-        throw new UnsupportedOperationException("not implemented yet");
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
     }
 
     public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
-        throw new UnsupportedOperationException("not implemented yet");
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
     }
 }

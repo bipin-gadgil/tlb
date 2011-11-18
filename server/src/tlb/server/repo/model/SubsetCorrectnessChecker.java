@@ -1,7 +1,7 @@
 package tlb.server.repo.model;
 
 import tlb.domain.PartitionIdentifier;
-import tlb.domain.SuiteNameCountEntry;
+import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 
@@ -24,8 +24,8 @@ public class SubsetCorrectnessChecker {
         SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(subsetSuites, partitionNumber, totalPartitions);
         partitionRecordRepo.subsetReceivedFromPartition(new PartitionIdentifier(partitionNumber, totalPartitions));
         if (partitionRecordRepo.allSubsetsReceivedWithConsistentConfiguration(operationResult)) {
-            List<SuiteNameCountEntry> unassignedSuites = new ArrayList<SuiteNameCountEntry>();
-            for (SuiteNameCountEntry persistentEntry : universalSetRepo.list()) {
+            List<SuiteNamePartitionEntry> unassignedSuites = new ArrayList<SuiteNamePartitionEntry>();
+            for (SuiteNamePartitionEntry persistentEntry : universalSetRepo.list()) {
                 if (! persistentEntry.isUsedByAnyPartition()) {
                     unassignedSuites.add(persistentEntry);
                 }

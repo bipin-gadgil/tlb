@@ -2,8 +2,8 @@ package tlb.server.repo.model;
 
 import org.junit.Before;
 import org.junit.Test;
-import tlb.domain.SuiteNameCountEntry;
-import tlb.domain.SuiteNameCountEntryTest;
+import tlb.domain.SuiteNamePartitionEntry;
+import tlb.domain.SuiteNamePartitionEntryTest;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.NamedEntryRepo;
@@ -29,15 +29,15 @@ public class SubsetCorrectnessCheckerTest {
         SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nfoo/Quux", 2, 10);
         assertThat(result.isSuccess(), is(true));
 
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 3, 10);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 3, 10);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 10);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 10);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
     }
 
     @Test
@@ -47,15 +47,15 @@ public class SubsetCorrectnessCheckerTest {
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Found 3 unknown(not present in universal set) suite(s) named: [foo/Bar, hell/Yeah, hell/o/World].\nHad total of 5 suites named [foo/Bar, foo/Quux, foo/bar/Baz, hell/Yeah, hell/o/World] in partition 1 of 2. Corresponding universal set had a total of 4 suites named [bar/baz/Quux, foo/Quux: 1/2, foo/bar/Baz: 1/2, hello/World].\n"));
 
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 1, 2, 2);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 1, 2, 2);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 1, 2, 2);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 1, 2, 2);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
     }
 
     @Test
@@ -65,15 +65,15 @@ public class SubsetCorrectnessCheckerTest {
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Found more than one occurrence of 2 suite(s) named: {foo/bar/Baz=2, foo/Quux=3}.\nHad total of 5 suites named [foo/Quux, foo/Quux, foo/Quux, foo/bar/Baz, foo/bar/Baz] in partition 2 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux, foo/Quux: 2/3, foo/bar/Baz: 2/3, hello/World].\n"));
 
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 1, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 1, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 1, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 1, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
     }
     
     @Test
@@ -89,15 +89,15 @@ public class SubsetCorrectnessCheckerTest {
         result = checker.reportSubset("bar/baz/Quux\nhello/World\nfoo/Quux", 1, 3);
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 1/3. Suites [bar/baz/Quux: 2/3, foo/Quux: 3/3] have already been selected for running by other partitions.\nHad total of 3 suites named [bar/baz/Quux, foo/Quux, hello/World] in partition 1 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux: 2/3, foo/Quux: 3/3, foo/bar/Baz: 2/3, hello/World: 1/3].\n"));
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 1, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 1, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 3, 2, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 3, 2, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World", 1, 2, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World", 1, 2, 3);
     }
     
     @Test
@@ -107,15 +107,15 @@ public class SubsetCorrectnessCheckerTest {
         SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nbar/baz/Quux", 2, 3);
         assertThat(result.isSuccess(), is(true));
 
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
 
 
         result = checker.reportSubset("foo/bar/Baz\nfoo/Quux", 2, 3); //second call from the same partition
@@ -123,13 +123,13 @@ public class SubsetCorrectnessCheckerTest {
 
         sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(1), "foo/Quux", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/bar/Baz", 2, 3, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
     }
 
     @Test
@@ -146,16 +146,16 @@ public class SubsetCorrectnessCheckerTest {
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Collective exhaustion of tests violated with none of the 3 partition picked running suites: [baz/bar/Foo, foo/bar/Baz]. Failing partition 1 as this is the last one to execute.\nHad total of 1 suites named [hello/World] in partition 1 of 3. Corresponding universal set had a total of 5 suites named [bar/baz/Quux: 2/3, baz/bar/Foo, foo/Quux: 3/3, foo/bar/Baz, hello/World: 1/3].\n"));
 
-        List<SuiteNameCountEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
+        List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 1, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(0), "bar/baz/Quux", 2, 1, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(1), "baz/bar/Foo");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(1), "baz/bar/Foo");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/Quux", 3, 2, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(2), "foo/Quux", 3, 2, 3);
 
-        SuiteNameCountEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "foo/bar/Baz");
+        SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "foo/bar/Baz");
 
-        SuiteNameCountEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(4), "hello/World", 1, 2, 3);
+        SuiteNamePartitionEntryTest.assertInUse(sortedEntriesAfterSubsetPost.get(4), "hello/World", 1, 2, 3);
     }
 }
