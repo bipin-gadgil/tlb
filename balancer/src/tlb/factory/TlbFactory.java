@@ -35,11 +35,11 @@ public class TlbFactory<T> {
             return (T) defaultValue;
         }
         try {
-            Class<?> criteriaClass = Class.forName(klassName);
-            if(!klass.isAssignableFrom(criteriaClass)) {
-                throw new IllegalArgumentException("Class '" + klassName + "' is-not/does-not-implement '" + klass + "'");
+            Class<?> klass = Class.forName(klassName);
+            if(!this.klass.isAssignableFrom(klass)) {
+                throw new IllegalArgumentException("Class '" + klassName + "' is-not/does-not-implement '" + this.klass + "'");
             }
-            return getInstance((Class<? extends T>) criteriaClass, environment, args);
+            return getInstance((Class<? extends T>) klass, environment, args);
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Unable to locate class '" + klassName + "'");
         }

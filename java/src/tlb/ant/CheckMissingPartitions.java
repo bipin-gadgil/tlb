@@ -3,6 +3,7 @@ package tlb.ant;
 import org.apache.tools.ant.AntTypeDefinition;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
+import tlb.TlbConstants;
 import tlb.factory.TlbFactory;
 import tlb.service.Server;
 import tlb.splitter.correctness.ValidationResult;
@@ -34,6 +35,9 @@ public class CheckMissingPartitions extends Task {
     @Override
     public void execute() throws BuildException {
         StringBuilder validationErrors = new StringBuilder();
+        if (moduleNames.isEmpty()) {
+            moduleNames.add(TlbConstants.Balancer.DEFAULT_MODULE_NAME);
+        }
         for (String moduleName : moduleNames) {
             ValidationResult validationResult = talkToService.verifyAllPartitionsExecutedFor(moduleName);
             if (validationResult.hasFailed()) {

@@ -3,6 +3,7 @@ package tlb.ant;
 import org.apache.tools.ant.BuildException;
 import org.junit.Before;
 import org.junit.Test;
+import tlb.TlbConstants;
 import tlb.service.Server;
 import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
@@ -41,20 +42,15 @@ public class CheckMissingPartitionsTest {
     
     @Test
     public void shouldFailTheTaskIfAllPartitionsHaveNotExecutedForAModule() {
-        when(server.verifyAllPartitionsExecutedFor("foo")).thenReturn(new ValidationResult(ValidationResult.Status.OK, ""));
-        when(server.verifyAllPartitionsExecutedFor("bar")).thenReturn(new ValidationResult(ValidationResult.Status.FAILED, "Partition(s) [2/3] didn't execute for module 'bar' in version 'world' of job-name 'hello'."));
-        task.setModuleNames("foo, bar");
-        String exceptionMessage = null;
-        try {
-            task.execute();
-            fail("should not finish validation check successfully when one of the partitions has not run.");
-        } catch (BuildException e) {
-            exceptionMessage = e.getMessage();
-        }
-        verify(server).verifyAllPartitionsExecutedFor("foo");
-        verify(server).verifyAllPartitionsExecutedFor("bar");
-        assertThat(exceptionMessage, is("Partition(s) [2/3] didn't execute for module 'bar' in version 'world' of job-name 'hello'.\n\n"));
+        when(server.verifyAllPartitionsExecutedFor(TlbConstants.Balancer.DEFAULT_MODULE_NAME)).thenReturn(new ValidationResult(ValidationResult.Status.OK, ""));
+        task.execute();
+        verify(server).verifyAllPartitionsExecutedFor(TlbConstants.Balancer.DEFAULT_MODULE_NAME);
         verifyNoMoreInteractions(server);
+    }
+
+    @Test
+    public void shouldUseDefaultModuleNameIfNoneGiven() {
+
     }
 
 }
