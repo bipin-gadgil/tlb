@@ -2,6 +2,7 @@ package tlb.server.repo;
 
 import org.apache.log4j.Logger;
 import tlb.TlbConstants;
+import tlb.domain.RepoCreatedTimeEntry;
 import tlb.domain.TimeProvider;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
@@ -18,11 +19,13 @@ public class EntryRepoFactory implements Runnable {
     public static final String DELIMITER = "_";
     public static final String LATEST_VERSION = "LATEST";
     private static final Logger logger = Logger.getLogger(EntryRepoFactory.class.getName());
+    public static final String ERF_NAMESPACE = "tlb-erf";
 
     //private final Map<String, EntryRepo> repos;
     private final String tlbStoreDir;
     private final TimeProvider timeProvider;
     private Cache<EntryRepo> cache;
+    private final RepoLedger repoLedger;
 
     static interface Creator<T> {
         T create();
@@ -36,6 +39,15 @@ public class EntryRepoFactory implements Runnable {
         this.tlbStoreDir = tlbStoreDir.getAbsolutePath();
         this.cache = new Cache<EntryRepo>();
         this.timeProvider = timeProvider;
+        try {
+            this.repoLedger = findOrCreate(ERF_NAMESPACE, new VersionedNamespace(LATEST_VERSION, "REPO_LEDGER"), new Creator<RepoLedger>() {
+                public RepoLedger create() {
+                    return new RepoLedger();
+                }
+            }, null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void purge(String identifier) throws IOException {
@@ -221,6 +233,9 @@ public class EntryRepoFactory implements Runnable {
                     } else if (primeFrom != null) {
                         T primingVersion = findOrCreate(namespace, primeFrom, creator, null);
                         repo.load(primingVersion.dump());
+                    }
+                    if (! (repo instanceof RepoLedger)) {
+                        repoLedger.update(new RepoCreatedTimeEntry(identifier, timeProvider.now().getTime()));
                     }
                 }
             }

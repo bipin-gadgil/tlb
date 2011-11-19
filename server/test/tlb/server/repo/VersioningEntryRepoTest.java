@@ -2,6 +2,7 @@ package tlb.server.repo;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.internal.verification.Times;
 import tlb.TestUtil;
 import tlb.TlbConstants;
@@ -57,29 +58,29 @@ public class VersioningEntryRepoTest {
         versionedRepo.setFactory(factory);
         versionedRepo.setNamespace("foo");
         versionedRepo.setIdentifier("foo|1.1|test_case");
-        when(factory.findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), null)).thenReturn(versionedRepo);
+        when(factory.findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), any(EntryRepoFactory.IdentificationScheme.class))).thenReturn(versionedRepo);
         repo.list("1.1");
-        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), null);
+        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), any(EntryRepoFactory.IdentificationScheme.class));
         //when not too old, doesn't get killed
         stubTime(timeProvider, new GregorianCalendar(2010, 6, 7, 0, 35, 14));
         repo.purgeOldVersions(1);
         verify(factory, never()).purge("foo|1.1|test_case");
         repo.list("1.1");
-        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), null);
+        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), any(EntryRepoFactory.IdentificationScheme.class));
 
         //when not too old, doesn't get killed
         stubTime(timeProvider, new GregorianCalendar(2010, 6, 8, 0, 35, 14));
         repo.purgeOldVersions(2);
         verify(factory, never()).purge("foo|1.1|test_case");
         repo.list("1.1");
-        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), null);
+        verify(factory, new Times(1)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), any(EntryRepoFactory.IdentificationScheme.class));
 
         //when too old, does get removed
         stubTime(timeProvider, new GregorianCalendar(2010, 6, 7, 0, 35, 16));
         repo.purgeOldVersions(1);
         verify(factory).purge("foo|1.1|test_case");
         repo.list("1.1");
-        verify(factory, new Times(2)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), null);
+        verify(factory, new Times(2)).findOrCreate(eq("foo"), eq(new EntryRepoFactory.VersionedNamespace("1.1", "test_case")), any(EntryRepoFactory.Creator.class), any(EntryRepoFactory.IdentificationScheme.class));
     }
 
     private void stubTime(TimeProvider timeProvider, GregorianCalendar cal) {

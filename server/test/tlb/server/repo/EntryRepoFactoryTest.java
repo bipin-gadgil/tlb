@@ -21,12 +21,14 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 import static org.mockito.Mockito.*;
 import static tlb.TestUtil.deref;
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
+import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
 
 public class EntryRepoFactoryTest {
     private EntryRepoFactory factory;
     private File baseDir;
     private TestUtil.LogFixture logFixture;
+    private TimeProvider timeProvider;
 
     private SystemEnvironment env() {
         final HashMap<String, String> env = new HashMap<String, String>();
@@ -37,7 +39,9 @@ public class EntryRepoFactoryTest {
     @Before
     public void setUp() throws Exception {
         baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
-        factory = new EntryRepoFactory(env());
+        timeProvider = mock(TimeProvider.class);
+        when(timeProvider.now()).thenReturn(new Date());
+        factory = new EntryRepoFactory(baseDir, timeProvider);
         logFixture = new TestUtil.LogFixture();
     }
 
@@ -62,7 +66,7 @@ public class EntryRepoFactoryTest {
 
         factory.syncReposToDisk();
 
-        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(5));
+        assertThat("Files should exist as sync on this factory has been called.", baseDir.list().length, is(6));//repo ledger is there as well
 
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("dev"), "10");
         assertContentIs(new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUITE_TIME).getIdUnder("dev"), "foo.bar.Quux: 25");
@@ -189,6 +193,36 @@ public class EntryRepoFactoryTest {
         assertThat(suiteTimeRepo, is(SuiteTimeRepo.class));
         assertThat(factory.createSuiteResultRepo("dev", LATEST_VERSION), sameInstance(suiteResultRepo));
         assertThat(suiteResultRepo, is(SuiteResultRepo.class));
+    }
+
+    @Test
+    public void shouldKeepRecordOfAllReposCreated() throws IllegalAccessException, IOException, ClassNotFoundException {
+        RepoLedger reposLedger = (RepoLedger) TestUtil.deref("repoLedger", factory);
+        assertThat(reposLedger.list().size(), is(0));
+        when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 6, 42));
+        factory.createSuiteTimeRepo("name-time-1", "version-time-1");
+        when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 7, 0));
+        factory.createSuiteTimeRepo("name-time-2", "version-time-2");
+        factory.createSuiteResultRepo("name-result", "version-result");
+        factory.createSubsetRepo("name-size", "version-size");
+        when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 8, 0));
+        factory.createPartitionRecordRepo("name-partitions", "version-partitions", "module-name");
+        factory.createUniversalSetRepo("name-partitions", "version-partitions", "module-name");
+
+        assertThat(reposLedger.list().size(), is(8));
+
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-1", SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-2", SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-result", SUITE_RESULT, "name-result"), new Date(111, 10, 19, 7, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-size", SUBSET_SIZE, "name-size"), new Date(111, 10, 19, 7, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", UNIVERSAL_SET, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", PARTITION_RECORD, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime())));
+    }
+
+    private String getIdStr(final String version, final String type, final String namespace) {
+        return new EntryRepoFactory.VersionedNamespace(version, type).getIdUnder(namespace);
     }
 
     @Test
@@ -438,7 +472,7 @@ public class EntryRepoFactoryTest {
         factory.createSuiteTimeRepo("foo", LATEST_VERSION);
         Cache<EntryRepo> repos = (Cache<EntryRepo>) deref("cache", factory);
         List<String> keys = repos.keys();
-        assertThat(keys.size(), is(1));
+        assertThat(keys.size(), is(1 + 1));//repoLedger
         String fooKey = keys.get(0);
         repos.clear();
         try {
