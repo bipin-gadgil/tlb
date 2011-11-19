@@ -81,7 +81,7 @@ public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry
             public TestCaseRepo create() {
                 return new TestCaseRepo(new TimeProvider());
             }
-        });
+        }, null);
     }
 
     public String getNamespace() {

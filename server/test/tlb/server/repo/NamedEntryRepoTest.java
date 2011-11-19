@@ -43,7 +43,7 @@ public class NamedEntryRepoTest {
                     }
                 };
             }
-        });
+        }, null);
         assertThat(entryRepo.factory, sameInstance(factory));
         assertThat(entryRepo.namespace, is("name_space"));
         assertThat(entryRepo.identifier, is("name__space_version_type"));

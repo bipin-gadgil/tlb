@@ -38,11 +38,16 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
     }
 
     public synchronized String diskDump() {
+        String dumpStr = dump();
+        dirty = false;
+        return dumpStr;
+    }
+
+    public synchronized String dump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (SubsetSizeEntry entry : entries) {
             dumpBuffer.append(entry.dump());
         }
-        dirty = false;
         return dumpBuffer.toString();
     }
 

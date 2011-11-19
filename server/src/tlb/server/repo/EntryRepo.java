@@ -16,6 +16,8 @@ public interface EntryRepo<T extends Entry> extends Serializable {
 
     String diskDump();
 
+    String dump();
+
     void loadCopyFromDisk(final String fileContents);
 
     void load(final String contents);

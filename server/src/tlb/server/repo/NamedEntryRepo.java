@@ -77,11 +77,16 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
     }
 
     public synchronized final String diskDump() {
+        String dumpStr = dump();
+        dirty = false;
+        return dumpStr;
+    }
+
+    public synchronized final String dump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (T entry : nameToEntry.values()) {
             dumpBuffer.append(entry.dump());
         }
-        dirty = false;
         return dumpBuffer.toString();
     }
 

@@ -129,11 +129,53 @@ public class EntryRepoFactoryTest {
             public EntryRepo create() {
                 return createdEntryRepo;
             }
-        });
+        }, null);
         assertThat(repo, sameInstance(createdEntryRepo));
         verify(createdEntryRepo).setFactory(factory);
         verify(createdEntryRepo).setNamespace("namespace");
         verify(createdEntryRepo).setIdentifier("namespace_old__version_suite__time");
+    }
+
+    @Test
+    public void shouldPrimeRepoFromGivenIdentifierWhenNotPrimed() throws ClassNotFoundException, IOException, InterruptedException {
+        SuiteTimeRepo suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
+        suiteTimeRepo.update(new SuiteTimeEntry("foo/Bar", 10l));
+        suiteTimeRepo.update(new SuiteTimeEntry("bar/Baz", 20l));
+
+        SuiteTimeRepo repoSnapshot = factory.createSuiteTimeRepo("dev", "snapshot");
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("foo/Bar", 10l)));
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("bar/Baz", 20l)));
+        assertThat(repoSnapshot.list().size(), is(2));
+
+        suiteTimeRepo.update(new SuiteTimeEntry("baz/Quux", 30l));
+        suiteTimeRepo.update(new SuiteTimeEntry("foo/Bar", 15l));
+        assertThat(suiteTimeRepo.list().size(), is(3));
+
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("foo/Bar", 10l)));
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("bar/Baz", 20l)));
+        assertThat(repoSnapshot.list().size(), is(2));
+
+        repoSnapshot = factory.createSuiteTimeRepo("dev", "snapshot");//again, should not re-prime this time
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("foo/Bar", 10l)));
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("bar/Baz", 20l)));
+        assertThat(repoSnapshot.list().size(), is(2));
+
+        Thread exitHook = factory.exitHook();
+        exitHook.start();
+        exitHook.join();
+
+        factory.getRepos().clear();//dropped the cache, load from disk
+
+        repoSnapshot = factory.createSuiteTimeRepo("dev", "snapshot");//once again, should not re-prime this time, should load from file
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("foo/Bar", 10l)));
+        assertThat(repoSnapshot.list(), hasItem(new SuiteTimeEntry("bar/Baz", 20l)));
+        assertThat(repoSnapshot.list().size(), is(2));
+
+        suiteTimeRepo = factory.createSuiteTimeRepo("dev", LATEST_VERSION);
+        suiteTimeRepo.update(new SuiteTimeEntry("foo/Bar", 15l));
+        suiteTimeRepo.update(new SuiteTimeEntry("bar/Baz", 20l));
+        suiteTimeRepo.update(new SuiteTimeEntry("baz/Quux", 30l));
+        assertThat(suiteTimeRepo.list().size(), is(3));
     }
 
     @Test
@@ -388,7 +430,7 @@ public class EntryRepoFactoryTest {
             public EntryRepo create() {
                 return repo;
             }
-        });
+        }, null);
     }
 
     @Test

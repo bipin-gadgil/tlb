@@ -167,7 +167,7 @@ public class EntryRepoFactory implements Runnable {
             public SuiteResultRepo create() {
                 return new SuiteResultRepo();
             }
-        });
+        }, null);
     }
 
     public SuiteTimeRepo createSuiteTimeRepo(final String namespace, final String version) throws IOException {
@@ -175,7 +175,7 @@ public class EntryRepoFactory implements Runnable {
             public SuiteTimeRepo create() {
                 return new SuiteTimeRepo(timeProvider);
             }
-        });
+        }, new VersionedNamespace(LATEST_VERSION, SUITE_TIME));
     }
 
     public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException {
@@ -183,7 +183,7 @@ public class EntryRepoFactory implements Runnable {
             public SubsetSizeRepo create() {
                 return new SubsetSizeRepo();
             }
-        });
+        }, null);
     }
 
     public SetRepo createUniversalSetRepo(String namespace, String version, final String submoduleName) throws IOException {
@@ -191,7 +191,7 @@ public class EntryRepoFactory implements Runnable {
             public SetRepo create() {
                 return new SetRepo();
             }
-        });
+        }, null);
     }
 
     public PartitionRecordRepo createPartitionRecordRepo(String namespace, String version, String submoduleName) throws IOException {
@@ -199,10 +199,10 @@ public class EntryRepoFactory implements Runnable {
             public PartitionRecordRepo create() {
                 return new PartitionRecordRepo();
             }
-        });
+        }, null);
     }
 
-    <T extends EntryRepo> T findOrCreate(String namespace, IdentificationScheme idScheme, Creator<T> creator) throws IOException {
+    <T extends EntryRepo> T findOrCreate(String namespace, IdentificationScheme idScheme, Creator<T> creator, IdentificationScheme primeFrom) throws IOException {
         String identifier = idScheme.getIdUnder(namespace);
         T repo = (T) cache.get(identifier);
         if (repo == null) {
@@ -218,6 +218,9 @@ public class EntryRepoFactory implements Runnable {
                     if (diskDump.exists()) {
                         final FileReader reader = new FileReader(diskDump);
                         repo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+                    } else if (primeFrom != null) {
+                        T primingVersion = findOrCreate(namespace, primeFrom, creator, null);
+                        repo.load(primingVersion.dump());
                     }
                 }
             }
