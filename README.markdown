@@ -3,6 +3,22 @@ A typical problem that teams doing CI (continuous integration) try and solve is 
 
 **TestLoadBalancer (TLB)** aims at splitting your entire test suite into mutually exclusive units such that each of the unit can be executed in parallel. Assuming that tests are written independent of each other, which is a best practice in writing tests, the tests can be ordered and arranged in anyway and *TLB* leverages this fact in order to split the test suite and reorder the tests.
 
+# Build from Source
+
+TLB is a Java project that uses *ant* for building, *ivy* for dependency management and *junit* for tests.
+
+Follow these steps to get TLB building locally
+
+* Clone the code base
+* Make sure you have:
+    * JDK 1.6
+    * ant 1.7 or above
+    * ant-junit libraries in the ant lib directory
+* TLB uses ivy to manage dependencies. Hence, the build will need to be able to download all the dependent libraries from a maven repo.
+* In the checkout directory, run `ant`.  This will _download all the deps_ (only the first time), _compile_ and _run all tests_ for all the modules and _build_ the packages.
+
+Checkout the _build.xml_ file to see all the build targets.
+
 # Documentation:
 Detailed documentation of TLB concepts and configuration options is available in the [TLB Website](http://test-load-balancer.github.com).
 
