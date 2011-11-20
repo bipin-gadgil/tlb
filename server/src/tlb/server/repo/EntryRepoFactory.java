@@ -11,8 +11,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Map;
 
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 
@@ -59,6 +57,7 @@ public class EntryRepoFactory implements Runnable {
             cache.remove(identifier);
             File file = dumpFile(identifier);
             if (file.exists()) FileUtils.forceDelete(file);
+            repoLedger.deleteRepoEntryFor(identifier);
         }
     }
 

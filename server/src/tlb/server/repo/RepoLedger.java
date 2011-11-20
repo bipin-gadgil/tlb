@@ -11,4 +11,8 @@ public class RepoLedger extends NamedEntryRepo<RepoCreatedTimeEntry> {
     public List<RepoCreatedTimeEntry> parse(String string) {
         return RepoCreatedTimeEntry.parse(string);
     }
+
+    public void deleteRepoEntryFor(String identifier) {
+        nameToEntry.remove(identifier);
+    }
 }

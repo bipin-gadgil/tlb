@@ -198,7 +198,7 @@ public class EntryRepoFactoryTest {
 
     @Test
     public void shouldKeepRecordOfAllReposCreated() throws IllegalAccessException, IOException, ClassNotFoundException {
-        RepoLedger reposLedger = (RepoLedger) TestUtil.deref("repoLedger", factory);
+        RepoLedger reposLedger = repoLedger(factory);
         assertThat(reposLedger.list().size(), is(0));
         when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 6, 42));
         factory.createSuiteTimeRepo("name-time-1", "version-time-1");
@@ -227,6 +227,10 @@ public class EntryRepoFactoryTest {
 
         assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", UNIVERSAL_SET, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime(), true)));
         assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", PARTITION_RECORD, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime(), true)));
+    }
+
+    private RepoLedger repoLedger(EntryRepoFactory factory) throws IllegalAccessException {
+        return (RepoLedger) TestUtil.deref("repoLedger", factory);
     }
 
     private String getIdStr(final String version, final String type, final String namespace) {
@@ -382,7 +386,7 @@ public class EntryRepoFactoryTest {
     }
 
     @Test
-    public void shouldPurgeDiskDumpAndRepositoryOlderThanGivenTime() throws IOException, ClassNotFoundException, InterruptedException {
+    public void shouldPurgeDiskDumpAndRepositoryOlderThanGivenTime() throws IOException, ClassNotFoundException, InterruptedException, IllegalAccessException {
         final GregorianCalendar[] cal = new GregorianCalendar[1];
         final TimeProvider timeProvider = new TimeProvider() {
             @Override
@@ -433,12 +437,16 @@ public class EntryRepoFactoryTest {
 
         assertThat(baseDir.list().length, is(4));
         assertThat(Arrays.asList(baseDir.list()), hasItem("foo_old_suite__time"));
+        assertThat(repoLedger(factory).list().size(), is(3));
+        assertThat(reposInLedger(factory), hasItem("foo_old_suite__time"));
 
         cal[0] = new GregorianCalendar(2010, 6, 10, 0, 37, 12);
         factory.purgeVersionsOlderThan(2);
 
-        assertThat(baseDir.list().length, is(3));
         assertThat(Arrays.asList(baseDir.list()), not(hasItem("foo_old_suite__time")));
+        assertThat(baseDir.list().length, is(3));
+        assertThat(reposInLedger(factory), not(hasItem("foo_old_suite__time")));
+        assertThat(repoLedger(factory).list().size(), is(2));
 
         oldList = repo.list("old");
         assertThat(oldList.size(), is(4));
@@ -452,6 +460,17 @@ public class EntryRepoFactoryTest {
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Baz", 20)));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Bang", 130)));
+
+        assertThat(reposInLedger(factory), hasItem("foo_old_suite__time"));
+        assertThat(repoLedger(factory).list().size(), is(3));
+    }
+
+    private List<String> reposInLedger(EntryRepoFactory factory) throws IllegalAccessException {
+        List<String> repoIds = new ArrayList<String>();
+        for (RepoCreatedTimeEntry repoCreatedTimeEntry : repoLedger(factory).list()) {
+            repoIds.add(repoCreatedTimeEntry.getRepoIdentifier());
+        }
+        return repoIds;
     }
 
     @Test

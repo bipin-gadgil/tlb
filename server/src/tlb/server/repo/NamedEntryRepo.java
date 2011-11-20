@@ -38,7 +38,7 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         return nameToEntry.values();
     }
 
-    public synchronized void update(T record) {
+    public void update(T record) {
         nameToEntry.put(getKey(record), record);
         dirty = true;
     }
@@ -76,13 +76,12 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         return dirty;
     }
 
-    public synchronized final String diskDump() {
-        String dumpStr = dump();
+    public final String diskDump() {
         dirty = false;
-        return dumpStr;
+        return dump();
     }
 
-    public synchronized final String dump() {
+    public final String dump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (T entry : nameToEntry.values()) {
             dumpBuffer.append(entry.dump());
@@ -90,16 +89,20 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         return dumpBuffer.toString();
     }
 
-    public synchronized void loadCopyFromDisk(final String fileContents) {
-        load(fileContents);
+    public void loadCopyFromDisk(final String fileContents) {
         dirty = false;
+        loadInternal(fileContents);
     }
 
     public void load(String contents) {
+        loadInternal(contents);
+        dirty = true;
+    }
+
+    private void loadInternal(String contents) {
         nameToEntry.clear();
         for (T entry : parse(contents)) {
             nameToEntry.put(getKey(entry), entry);
         }
-        dirty = true;
     }
 }
