@@ -42,6 +42,21 @@ setup-examples-XXX.tar.gz      Contains tiny projects that demonstrate TLB hooku
 To unarchive TLB distribution:
 You can use "tar -zxvf tlb-YYY-XXXX.tar.gz" on *nix(GNU/Linux, Unix or MacOS). Windows users can unarchive the distribution using WinRAR, 7z or the Zip Utility(bundled with recent versions of Windows, the zip utility bundled with older versions may not work).
 
+Building TLB from source
+------------------------
+
+TLB is a Java project that uses ant for building, ivy for dependency management and junit for tests.
+
+Follow these steps to get TLB building locally
+
+* Clone the code base
+* Make sure you have:
+** JDK 1.6
+** ant 1.7 or above
+** ant-junit libraries in the ant lib directory
+* TLB uses ivy to manage dependencies. Hence, the build will need to be able to download all the dependent libraries from a maven repo.
+* In the checkout directory, run ant. This will download all the deps (only the first time), compile and run all tests for all the modules and build the packages.
+* Checkout the build.xml file to see all the build targets.
 
 Artifacts: TLB(Archive Contents/Downloads)
 ------------------------------------------
