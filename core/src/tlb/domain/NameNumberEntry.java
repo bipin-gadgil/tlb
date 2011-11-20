@@ -14,7 +14,7 @@ public class NameNumberEntry  implements NamedEntry {
         T create(String name, long number);
     }
 
-    public static final Pattern NAME_NUMBER_PATTERN = Pattern.compile("(.*?):\\s*(\\d+)");
+    public static final Pattern NAME_NUMBER_PATTERN = Pattern.compile("(.*?):\\s*(-?\\d+)");
     protected String name;
     protected long number;
 

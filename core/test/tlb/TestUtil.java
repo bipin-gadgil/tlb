@@ -173,6 +173,7 @@ public class TestUtil {
             boolean matched = false;
             for (LoggingEvent evt : loggingEvents) {
                 ThrowableInformation throwableInformation = evt.getThrowableInformation();
+                if (throwableInformation == null) continue;
                 matched = match(throwableInformation.getThrowable(), expected);
                 if (matched) break;
             }

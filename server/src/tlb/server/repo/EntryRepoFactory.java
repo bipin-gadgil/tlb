@@ -9,6 +9,10 @@ import tlb.utils.SystemEnvironment;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 
@@ -63,14 +67,17 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public void purgeVersionsOlderThan(int versionLifeInDays) {
-        for (String identifier : cache.keys()) {
-            EntryRepo entryRepo = cache.get(identifier);
-            if (entryRepo instanceof VersioningEntryRepo) {
-                final VersioningEntryRepo repo = (VersioningEntryRepo) entryRepo;
+        GregorianCalendar cal = timeProvider.cal();
+        cal.add(GregorianCalendar.DAY_OF_WEEK, -versionLifeInDays);//this should be parametrized
+        final Date tooOldThreshold = cal.getTime();
+        for (RepoCreatedTimeEntry repoTimeEntry : repoLedger.list()) {
+            if (repoTimeEntry.isPurgable() && repoTimeEntry.getCreationTime().before(tooOldThreshold)) {
+                String repoIdentifier = repoTimeEntry.getRepoIdentifier();
                 try {
-                    repo.purgeOldVersions(versionLifeInDays);
+                    this.purge(repoIdentifier);
+                    logger.warn(String.format("purged repo identified by '%s' at '%s'.", repoIdentifier, timeProvider.now()));
                 } catch (Exception e) {
-                    logger.warn(String.format("failed to delete older versions for repo identified by '%s'", identifier), e);
+                    logger.warn(String.format("failed to delete older versions for repo identified by '%s'", repoIdentifier), e);
                 }
             }
         }
@@ -105,6 +112,8 @@ public class EntryRepoFactory implements Runnable {
         public int hashCode() {
             return type != null ? type.hashCode() : 0;
         }
+
+        public abstract boolean isPurgable();
     }
 
     public static class VersionedNamespace extends IdentificationScheme {
@@ -135,6 +144,11 @@ public class EntryRepoFactory implements Runnable {
         @Override
         public int hashCode() {
             return version != null ? version.hashCode() : 0;
+        }
+
+        @Override
+        public boolean isPurgable() {
+            return ! LATEST_VERSION.equals(version);
         }
     }
 
@@ -235,7 +249,7 @@ public class EntryRepoFactory implements Runnable {
                         repo.load(primingVersion.dump());
                     }
                     if (! (repo instanceof RepoLedger)) {
-                        repoLedger.update(new RepoCreatedTimeEntry(identifier, timeProvider.now().getTime()));
+                        repoLedger.update(new RepoCreatedTimeEntry(identifier, timeProvider.now().getTime(), idScheme.isPurgable()));
                     }
                 }
             }

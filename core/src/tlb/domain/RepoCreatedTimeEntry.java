@@ -1,5 +1,6 @@
 package tlb.domain;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -12,11 +13,27 @@ public class RepoCreatedTimeEntry extends NameNumberEntry {
         }
     };
 
-    public RepoCreatedTimeEntry(String name, long number) {
-        super(name, number);
+    public RepoCreatedTimeEntry(String repoIdentifier, long createAtTimestamp) {
+        this(repoIdentifier, createAtTimestamp, true);
+    }
+
+    public RepoCreatedTimeEntry(String repoIdentifier, long createdAtTimestamp, boolean purgable) {
+        super(repoIdentifier, purgable ? createdAtTimestamp : -1);
     }
 
     public static List<RepoCreatedTimeEntry> parse(String entries) {
         return parse(entries, REPO_INSTANCE_CREATOR);
+    }
+
+    public boolean isPurgable() {
+        return number != -1;
+    }
+
+    public String getRepoIdentifier() {
+        return name;
+    }
+
+    public Date getCreationTime() {
+        return new Date(number);
     }
 }

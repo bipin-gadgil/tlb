@@ -11,6 +11,9 @@ import java.util.List;
  * @understands storage and retrival of test case to test suite mappings
  */
 public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry> {
+
+    public static final String REPO_TYPE = "test_case";
+
     public TestCaseRepo(TimeProvider timeProvider) {
         super(timeProvider);
     }
@@ -77,11 +80,11 @@ public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry
 
     @Override
     public TestCaseRepo getSubRepo(String versionIdentifier) throws IOException {
-        return (TestCaseRepo) factory.findOrCreate(namespace, new EntryRepoFactory.VersionedNamespace(versionIdentifier, "test_case"), new EntryRepoFactory.Creator<TestCaseRepo>() {
+        return factory.findOrCreate(namespace, new EntryRepoFactory.VersionedNamespace(versionIdentifier, REPO_TYPE), new EntryRepoFactory.Creator<TestCaseRepo>() {
             public TestCaseRepo create() {
                 return new TestCaseRepo(new TimeProvider());
             }
-        }, null);
+        }, new EntryRepoFactory.VersionedNamespace(EntryRepoFactory.LATEST_VERSION, REPO_TYPE));
     }
 
     public String getNamespace() {

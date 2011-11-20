@@ -12,6 +12,7 @@ import tlb.utils.SystemEnvironment;
 import java.io.*;
 import java.util.*;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -204,21 +205,28 @@ public class EntryRepoFactoryTest {
         when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 7, 0));
         factory.createSuiteTimeRepo("name-time-2", "version-time-2");
         factory.createSuiteResultRepo("name-result", "version-result");
+        factory.createSuiteResultRepo("name-result", LATEST_VERSION);
         factory.createSubsetRepo("name-size", "version-size");
+        factory.createSubsetRepo("name-size", LATEST_VERSION);
         when(timeProvider.now()).thenReturn(new Date(111, 10, 19, 8, 0));
         factory.createPartitionRecordRepo("name-partitions", "version-partitions", "module-name");
         factory.createUniversalSetRepo("name-partitions", "version-partitions", "module-name");
 
-        assertThat(reposLedger.list().size(), is(8));
+        assertThat(reposLedger.list().size(), is(10));
 
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-1", SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-2", SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-result", SUITE_RESULT, "name-result"), new Date(111, 10, 19, 7, 0).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-size", SUBSET_SIZE, "name-size"), new Date(111, 10, 19, 7, 0).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", UNIVERSAL_SET, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime())));
-        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", PARTITION_RECORD, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime())));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime(), false)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-1", SUITE_TIME, "name-time-1"), new Date(111, 10, 19, 6, 42).getTime(), true)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime(), false)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-time-2", SUITE_TIME, "name-time-2"), new Date(111, 10, 19, 7, 0).getTime(), true)));
+
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-result", SUITE_RESULT, "name-result"), new Date(111, 10, 19, 7, 0).getTime(), true)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUITE_RESULT, "name-result"), new Date(111, 10, 19, 7, 0).getTime(), false)));
+
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr("version-size", SUBSET_SIZE, "name-size"), new Date(111, 10, 19, 7, 0).getTime(), true)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(getIdStr(EntryRepoFactory.LATEST_VERSION, SUBSET_SIZE, "name-size"), new Date(111, 10, 19, 7, 0).getTime(), false)));
+
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", UNIVERSAL_SET, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime(), true)));
+        assertThat(reposLedger.list(), hasItem(new RepoCreatedTimeEntry(new EntryRepoFactory.SubmoduledUnderVersionedNamespace("version-partitions", PARTITION_RECORD, "module-name").getIdUnder("name-partitions"), new Date(111, 10, 19, 8, 0).getTime(), true)));
     }
 
     private String getIdStr(final String version, final String type, final String namespace) {
@@ -423,8 +431,14 @@ public class EntryRepoFactoryTest {
         exitHook.start();
         exitHook.join();
 
+        assertThat(baseDir.list().length, is(4));
+        assertThat(Arrays.asList(baseDir.list()), hasItem("foo_old_suite__time"));
+
         cal[0] = new GregorianCalendar(2010, 6, 10, 0, 37, 12);
         factory.purgeVersionsOlderThan(2);
+
+        assertThat(baseDir.list().length, is(3));
+        assertThat(Arrays.asList(baseDir.list()), not(hasItem("foo_old_suite__time")));
 
         oldList = repo.list("old");
         assertThat(oldList.size(), is(4));
@@ -441,26 +455,52 @@ public class EntryRepoFactoryTest {
     }
 
     @Test
-    public void shouldHaveATimerThatPurgesOldVersions() throws ClassNotFoundException, IOException {
+    public void shouldHaveATimerThatPurgesOldVersions_evenWhenExceptionsAreThrownForSomeRepos() throws ClassNotFoundException, IOException {
+        final GregorianCalendar[] cal = new GregorianCalendar[1];
+        cal[0] = new GregorianCalendar(2011, 10, 1, 0, 0, 0);
+        final TimeProvider timeProvider = new TimeProvider() {
+            @Override
+            public GregorianCalendar cal() {
+                GregorianCalendar gregorianCalendar = cal[0];
+                return gregorianCalendar == null ? null : (GregorianCalendar) gregorianCalendar.clone();
+            }
+
+            @Override
+            public Date now() {
+                return cal().getTime();
+            }
+        };
+
+        factory = new EntryRepoFactory(baseDir, timeProvider) {
+            @Override
+            public void purge(String identifier) throws IOException {
+                if (identifier.equals("bar_some-version_foo__bar")) {
+                    throw new IOException("test exception");
+                } else {
+                    super.purge(identifier);
+                }
+            }
+        };
+
         final VersioningEntryRepo repo1 = mock(VersioningEntryRepo.class);
         final VersioningEntryRepo repo2 = mock(VersioningEntryRepo.class);
         final VersioningEntryRepo repo3 = mock(VersioningEntryRepo.class);
-        doThrow(new IOException("test exception")).when(repo2).purgeOldVersions(12);
         findOrCreateRepo(repo1, "foo");
         findOrCreateRepo(repo2, "bar");
         findOrCreateRepo(repo3, "baz");
         logFixture.startListening();
+
+        cal[0] = new GregorianCalendar(2011, 10, 20, 6, 9, 35);
         factory.purgeVersionsOlderThan(12);
         logFixture.stopListening();
-        verify(repo1).purgeOldVersions(12);
-        verify(repo2).purgeOldVersions(12);
-        verify(repo3).purgeOldVersions(12);
-        logFixture.assertHeard("failed to delete older versions for repo identified by 'bar_LATEST_foo__bar'");
+        logFixture.assertHeard("purged repo identified by 'foo_some-version_foo__bar' at 'Sun Nov 20 06:09:35 IST 2011'.");
+        logFixture.assertHeard("purged repo identified by 'baz_some-version_foo__bar' at 'Sun Nov 20 06:09:35 IST 2011'.");
+        logFixture.assertHeard("failed to delete older versions for repo identified by 'bar_some-version_foo__bar'");
         logFixture.assertHeardException(new IOException("test exception"));
     }
 
     private EntryRepo findOrCreateRepo(final VersioningEntryRepo repo, String name) throws IOException, ClassNotFoundException {
-        return factory.findOrCreate(name, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, "foo_bar"), new EntryRepoFactory.Creator<EntryRepo>() {
+        return factory.findOrCreate(name, new EntryRepoFactory.VersionedNamespace("some-version", "foo_bar"), new EntryRepoFactory.Creator<EntryRepo>() {
             public EntryRepo create() {
                 return repo;
             }
@@ -472,7 +512,7 @@ public class EntryRepoFactoryTest {
         factory.createSuiteTimeRepo("foo", LATEST_VERSION);
         Cache<EntryRepo> repos = (Cache<EntryRepo>) deref("cache", factory);
         List<String> keys = repos.keys();
-        assertThat(keys.size(), is(1 + 1));//repoLedger
+        assertThat(keys.size(), is(1 + 1));//+ 1 for repoLedger
         String fooKey = keys.get(0);
         repos.clear();
         try {
