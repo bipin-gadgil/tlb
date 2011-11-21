@@ -46,7 +46,7 @@ public class ServerWith_LowMem {
             for (int j = 0; j < 10000; j++)
                 suiteTimeRepo.update(new SuiteTimeEntry(new String("foo bar baz bang quux"), j * 100));
             for (int j = 0; j < 100; j++)
-                suiteTimeRepo.getSubRepo("abcde" + j);
+                factory.createSuiteTimeRepo(name, "abcde" + j);
         }
     }
 }

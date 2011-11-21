@@ -3,19 +3,18 @@ package tlb.server.repo;
 import tlb.domain.NamedEntry;
 import tlb.domain.TimeProvider;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @understands storage and retrival of test case to test suite mappings
  */
-public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry> {
+public class TestCaseRepo extends NamedEntryRepo<TestCaseRepo.TestCaseEntry> {
 
     public static final String REPO_TYPE = "test_case";
 
     public TestCaseRepo(TimeProvider timeProvider) {
-        super(timeProvider);
+        super();
     }
 
     public List<TestCaseEntry> parse(String string) {
@@ -76,15 +75,6 @@ public class TestCaseRepo extends VersioningEntryRepo<TestCaseRepo.TestCaseEntry
             }
             return parsed;
         }
-    }
-
-    @Override
-    public TestCaseRepo getSubRepo(String versionIdentifier) throws IOException {
-        return factory.findOrCreate(namespace, new EntryRepoFactory.VersionedNamespace(versionIdentifier, REPO_TYPE), new EntryRepoFactory.Creator<TestCaseRepo>() {
-            public TestCaseRepo create() {
-                return new TestCaseRepo(new TimeProvider());
-            }
-        }, new EntryRepoFactory.VersionedNamespace(EntryRepoFactory.LATEST_VERSION, REPO_TYPE));
     }
 
     public String getNamespace() {

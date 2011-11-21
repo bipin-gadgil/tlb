@@ -40,14 +40,14 @@ public class SuiteTimeRepoTest {
     public void shouldKeepVersionFrozenAcrossDumpAndReload() throws InterruptedException, ClassNotFoundException, IOException {
         repo.update(parseSingleEntry("foo.bar.Foo: 12"));
         repo.update(parseSingleEntry("foo.bar.Bar: 134"));
-        repo.sortedList("foo");
+        factory.createSuiteTimeRepo("name", "foo");
         repo.update(parseSingleEntry("foo.bar.Baz: 15"));
         repo.update(parseSingleEntry("foo.bar.Bar: 18"));
         final Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
-        final SuiteTimeRepo newTestCaseRepo = new EntryRepoFactory(env()).createSuiteTimeRepo("name", LATEST_VERSION);
-        final List<SuiteTimeEntry> frozenCollection = newTestCaseRepo.sortedList("foo");
+        final EntryRepoFactory newFactory = new EntryRepoFactory(env());
+        final List<SuiteTimeEntry> frozenCollection = newFactory.createSuiteTimeRepo("name", "foo").sortedList();
         assertThat(frozenCollection.size(), is(2));
         assertThat(frozenCollection, hasItem(new SuiteTimeEntry("foo.bar.Foo", 12)));
         assertThat(frozenCollection, hasItem(new SuiteTimeEntry("foo.bar.Bar", 134)));

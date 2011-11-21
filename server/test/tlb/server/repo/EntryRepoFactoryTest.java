@@ -408,7 +408,7 @@ public class EntryRepoFactoryTest {
         repo.update(new SuiteTimeEntry("foo.bar.Baz", 15));
         repo.update(new SuiteTimeEntry("foo.bar.Quux", 80));
 
-        Collection<SuiteTimeEntry> oldList = repo.list("old");
+        Collection<SuiteTimeEntry> oldList = factory.createSuiteTimeRepo("foo", "old").sortedList();
         assertThat(oldList.size(), is(2));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Baz", 15)));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
@@ -416,14 +416,14 @@ public class EntryRepoFactoryTest {
         repo.update(new SuiteTimeEntry("foo.bar.Bang", 130));
         repo.update(new SuiteTimeEntry("foo.bar.Baz", 20));
 
-        oldList = repo.list("old");
+        oldList = factory.createSuiteTimeRepo("foo", "old").sortedList();
         assertThat(oldList.size(), is(2));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Baz", 15)));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
 
 
         cal[0] = new GregorianCalendar(2010, 6, 9, 0, 37, 12);
-        Collection<SuiteTimeEntry> notSoOld = repo.list("not_so_old");
+        Collection<SuiteTimeEntry> notSoOld = factory.createSuiteTimeRepo("foo", "not_so_old").sortedList();
         assertThat(notSoOld.size(), is(3));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Baz", 20)));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
@@ -448,14 +448,14 @@ public class EntryRepoFactoryTest {
         assertThat(reposInLedger(factory), not(hasItem("foo_old_suite__time")));
         assertThat(repoLedger(factory).list().size(), is(2));
 
-        oldList = repo.list("old");
+        oldList = factory.createSuiteTimeRepo("foo", "old").sortedList();
         assertThat(oldList.size(), is(4));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Baz", 20)));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Bang", 130)));
         assertThat(oldList, hasItem(new SuiteTimeEntry("foo.bar.Foo", 12)));
 
-        notSoOld = repo.list("not_so_old");
+        notSoOld = factory.createSuiteTimeRepo("foo", "not_so_old").sortedList();
         assertThat(notSoOld.size(), is(3));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Baz", 20)));
         assertThat(notSoOld, hasItem(new SuiteTimeEntry("foo.bar.Quux", 80)));
@@ -501,9 +501,9 @@ public class EntryRepoFactoryTest {
             }
         };
 
-        final VersioningEntryRepo repo1 = mock(VersioningEntryRepo.class);
-        final VersioningEntryRepo repo2 = mock(VersioningEntryRepo.class);
-        final VersioningEntryRepo repo3 = mock(VersioningEntryRepo.class);
+        final NamedEntryRepo repo1 = mock(NamedEntryRepo.class);
+        final NamedEntryRepo repo2 = mock(NamedEntryRepo.class);
+        final NamedEntryRepo repo3 = mock(NamedEntryRepo.class);
         findOrCreateRepo(repo1, "foo");
         findOrCreateRepo(repo2, "bar");
         findOrCreateRepo(repo3, "baz");
@@ -518,7 +518,7 @@ public class EntryRepoFactoryTest {
         logFixture.assertHeardException(new IOException("test exception"));
     }
 
-    private EntryRepo findOrCreateRepo(final VersioningEntryRepo repo, String name) throws IOException, ClassNotFoundException {
+    private EntryRepo findOrCreateRepo(final NamedEntryRepo repo, String name) throws IOException, ClassNotFoundException {
         return factory.findOrCreate(name, new EntryRepoFactory.VersionedNamespace("some-version", "foo_bar"), new EntryRepoFactory.Creator<EntryRepo>() {
             public EntryRepo create() {
                 return repo;

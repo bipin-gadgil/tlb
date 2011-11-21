@@ -198,7 +198,7 @@ public class EntryRepoFactory implements Runnable {
     public SuiteTimeRepo createSuiteTimeRepo(final String namespace, final String version) throws IOException {
         return findOrCreate(namespace, new VersionedNamespace(version, SUITE_TIME), new Creator<SuiteTimeRepo>() {
             public SuiteTimeRepo create() {
-                return new SuiteTimeRepo(timeProvider);
+                return new SuiteTimeRepo();
             }
         }, new VersionedNamespace(LATEST_VERSION, SUITE_TIME));
     }
