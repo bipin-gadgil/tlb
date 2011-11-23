@@ -4,6 +4,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.theories.DataPoint;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.domain.*;
@@ -13,6 +17,7 @@ import java.io.*;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -25,6 +30,7 @@ import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
 
+@RunWith(Theories.class)
 public class EntryRepoFactoryTest {
     private EntryRepoFactory factory;
     private File baseDir;
@@ -42,7 +48,7 @@ public class EntryRepoFactoryTest {
         baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
         timeProvider = mock(TimeProvider.class);
         when(timeProvider.now()).thenReturn(new Date());
-        factory = new EntryRepoFactory(baseDir, timeProvider);
+        factory = new EntryRepoFactory(baseDir, timeProvider, 100);
         logFixture = new TestUtil.LogFixture();
     }
 
@@ -400,7 +406,7 @@ public class EntryRepoFactoryTest {
                 return cal().getTime();
             }
         };
-        final EntryRepoFactory factory = new EntryRepoFactory(baseDir, timeProvider);
+        final EntryRepoFactory factory = new EntryRepoFactory(baseDir, timeProvider, 100);
 
         cal[0] = new GregorianCalendar(2010, 6, 7, 0, 37, 12);
 
@@ -490,7 +496,7 @@ public class EntryRepoFactoryTest {
             }
         };
 
-        factory = new EntryRepoFactory(baseDir, timeProvider) {
+        factory = new EntryRepoFactory(baseDir, timeProvider, 100) {
             @Override
             public void purge(String identifier) throws IOException {
                 if (identifier.equals("bar_some-version_foo__bar")) {
@@ -540,5 +546,50 @@ public class EntryRepoFactoryTest {
             e.printStackTrace();
             fail("Should not fail when trying to purge already purged entry");
         }
+    }
+
+    public static final class CacheSizeEffectAssertion {
+        final int loopLength;
+        final Map<String, String> env;
+
+        public CacheSizeEffectAssertion(Map<String, String> env, int loopLength) {
+            this.env = env;
+            this.loopLength = loopLength;
+        }
+
+        public EntryRepoFactory factory() {
+            return new EntryRepoFactory(new SystemEnvironment(env));
+        }
+
+        @Override
+        public String toString() {
+            return "CacheSizeEffectAssertion{" +
+                    "loopLength=" + loopLength +
+                    ", env=" + env +
+                    '}';
+        }
+    }
+
+    @DataPoint public static final CacheSizeEffectAssertion CACHE_SIZE_4 = new CacheSizeEffectAssertion(Collections.singletonMap(TlbConstants.Server.TLB_DATA_CACHE_SIZE.key, "4"), 5);
+    @DataPoint public static final CacheSizeEffectAssertion CACHE_SIZE_DEFAULT = new CacheSizeEffectAssertion(new HashMap<String, String>(), 101);
+
+    @Theory
+    @SuppressWarnings({"ConstantConditions"})
+    public void shouldHonorCacheSize(CacheSizeEffectAssertion assertion) throws IOException, InterruptedException {
+        EntryRepoFactory factory = assertion.factory();
+        SuiteTimeRepo firstRepo = null;
+        SuiteTimeRepo secondRepo = null;
+        for (int i = 0; i < assertion.loopLength; i++) {
+            SuiteTimeRepo repo = factory.createSuiteTimeRepo("foo-" + i, EntryRepoFactory.LATEST_VERSION);
+            Thread.sleep(1);
+            if (i == 0) {
+                firstRepo = repo;
+            } else if(i == 1) {
+                secondRepo = repo;
+            }
+        }
+        Cache<EntryRepo> repos = factory.getRepos();
+        assertThat(repos.get(firstRepo.getIdentifier()), is(nullValue()));
+        assertThat(repos.get(secondRepo.getIdentifier()), not(nullValue()));
     }
 }

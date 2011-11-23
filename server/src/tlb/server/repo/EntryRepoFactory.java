@@ -34,12 +34,12 @@ public class EntryRepoFactory implements Runnable {
     }
 
     public EntryRepoFactory(SystemEnvironment env) {
-        this(new File(env.val(TlbConstants.Server.TLB_DATA_DIR)), new TimeProvider());
+        this(new File(env.val(TlbConstants.Server.TLB_DATA_DIR)), new TimeProvider(), Integer.parseInt(env.val(TlbConstants.Server.TLB_DATA_CACHE_SIZE)));
     }
 
-    EntryRepoFactory(File tlbStoreDir, TimeProvider timeProvider) {
+    EntryRepoFactory(File tlbStoreDir, TimeProvider timeProvider, int cacheSize) {
         this.tlbStoreDir = tlbStoreDir.getAbsolutePath();
-        this.cache = new Cache<EntryRepo>();
+        this.cache = new Cache<EntryRepo>(cacheSize);
         this.timeProvider = timeProvider;
         try {
             this.repoLedger = findOrCreate(ERF_NAMESPACE, new VersionedNamespace(LATEST_VERSION, "REPO_LEDGER"), new Creator<RepoLedger>() {

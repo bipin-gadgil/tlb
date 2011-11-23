@@ -61,6 +61,7 @@ public interface TlbConstants {
         static final String TOTAL_JOBS = "total_jobs";
         static final SystemEnvironment.EnvVar TLB_VERSION_LIFE_IN_DAYS = new SystemEnvironment.DefaultedEnvVar("TLB_VERSION_LIFE_IN_DAYS", "7");
         static final SystemEnvironment.EnvVar TLB_SYNC_TO_DISK_INTERVAL_IN_MINS = new SystemEnvironment.DefaultedEnvVar("TLB_SYNC_TO_DISK_INTERVAL_IN_MINS", "60");
+        static final SystemEnvironment.EnvVar TLB_DATA_CACHE_SIZE = new SystemEnvironment.DefaultedEnvVar("TLB_DATA_CACHE_SIZE", "100");
 
         static final String MODULE_NAME = "module_name";
         static final String VERIFY_PARTITION_COMPLETENESS = "verify_partition_completeness";
