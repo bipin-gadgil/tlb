@@ -25,7 +25,7 @@ public class AbortOnFailure extends SplitChecker implements TalksToServer {
         ValidationResult result = service.validateUniversalSet(fileResources, moduleName);
         logger.warn(String.format("Split check result for universalSet: %s", result));
         if (result.hasFailed()) {
-            throw new IllegalStateException(result.getMessage());
+            throw new IncorrectBalancingException(result.getMessage());
         }
     }
 
@@ -34,7 +34,7 @@ public class AbortOnFailure extends SplitChecker implements TalksToServer {
         ValidationResult result = service.validateSubSet(fileResources, moduleName);
         logger.warn(String.format("Split check result for subSet: %s", result));
         if (result.hasFailed()) {
-            throw new IllegalStateException(result.getMessage());
+            throw new IncorrectBalancingException(result.getMessage());
         }
     }
 

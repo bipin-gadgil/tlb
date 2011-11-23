@@ -38,4 +38,12 @@ public class ValidationResult {
     public String getMessage() {
         return message;
     }
+
+    @Override
+    public String toString() {
+        return "ValidationResult{" +
+                "status=" + status +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

@@ -2,17 +2,15 @@ package tlb.balancer;
 
 import com.noelios.restlet.http.HttpConstants;
 import org.apache.log4j.Logger;
-import org.restlet.data.Form;
+import org.restlet.data.*;
 import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
 import tlb.splitter.TestSplitter;
 import org.restlet.Context;
-import org.restlet.data.MediaType;
-import org.restlet.data.Request;
-import org.restlet.data.Response;
 import org.restlet.resource.*;
+import tlb.splitter.correctness.IncorrectBalancingException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -45,14 +43,32 @@ public class BalancerResource extends Resource {
             logger.warn(message, e);
             throw new RuntimeException(message, e);
         }
-        String moduleName = ((Form) getRequest().getAttributes().get(HttpConstants.ATTRIBUTE_HEADERS)).getFirstValue(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, TlbConstants.Balancer.DEFAULT_MODULE_NAME);
-        final List<TlbSuiteFile> suiteFilesSubset = splitter.filterSuites(suiteFiles, moduleName);
+        String moduleName = header(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, TlbConstants.Balancer.DEFAULT_MODULE_NAME);
+        List<TlbSuiteFile> suiteFilesSubset = null;
+        try {
+            suiteFilesSubset = splitter.filterSuites(suiteFiles, moduleName);
+        } catch (IncorrectBalancingException e) {
+            setExceptionInResponse(e, Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            return;
+        } catch (UnsupportedOperationException e) {
+            setExceptionInResponse(e, Status.SERVER_ERROR_NOT_IMPLEMENTED);
+            return;
+        }
         Collections.sort(suiteFilesSubset, orderer);
         final StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : suiteFilesSubset) {
             builder.append(suiteFile.dump());
         }
         getResponse().setEntity(new StringRepresentation(builder));
+    }
+
+    private void setExceptionInResponse(RuntimeException e, final Status status) {
+        getResponse().setStatus(status);
+        getResponse().setEntity(new StringRepresentation(e.getMessage()));
+    }
+
+    protected String header(final String headerName, final String defaultValue) {
+        return ((Form) getRequest().getAttributes().get(HttpConstants.ATTRIBUTE_HEADERS)).getFirstValue(headerName, defaultValue);
     }
 
     @Override

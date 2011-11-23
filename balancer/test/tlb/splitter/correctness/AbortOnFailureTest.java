@@ -54,7 +54,7 @@ public class AbortOnFailureTest {
         try {
             checker.universalSet(given, moduleName);
             fail("invalid check-result should have failed the call");
-        } catch(IllegalStateException e) {
+        } catch(IncorrectBalancingException e) {
             assertThat(e.getMessage(), is("Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         }
         verify(server).validateUniversalSet(given, moduleName);
@@ -77,7 +77,7 @@ public class AbortOnFailureTest {
         try {
             checker.subSet(given, moduleName);
             fail("invalid check-result should have failed the call");
-        } catch(IllegalStateException e) {
+        } catch(IncorrectBalancingException e) {
             assertThat(e.getMessage(), is("Expected set ['foo', 'baz'] but given ['foo', 'bar', 'baz']."));
         }
         verify(server).validateSubSet(given, moduleName);

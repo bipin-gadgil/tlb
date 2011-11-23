@@ -3,6 +3,7 @@ package tlb.balancer;
 import com.noelios.restlet.http.HttpConstants;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.restlet.Context;
 import org.restlet.data.*;
 import org.restlet.resource.Representation;
@@ -16,11 +17,13 @@ import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
 import tlb.splitter.AbstractTestSplitter;
 import tlb.splitter.TestSplitter;
+import tlb.splitter.correctness.IncorrectBalancingException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import static junit.framework.Assert.fail;
 import static org.hamcrest.core.Is.is;
@@ -38,6 +41,7 @@ public class BalancerResourceTest {
     protected Representation representation;
 
     private HashMap<String,Object> attrs;
+    private Response mockResponse;
 
     @Before
     public void setUp() throws ClassNotFoundException, IOException {
@@ -56,7 +60,8 @@ public class BalancerResourceTest {
         ctxMap.put(TlbClient.ORDERER, orderer);
         context.setAttributes(ctxMap);
 
-        response = new WrapperResponse(mock(Response.class)) {
+        mockResponse = mock(Response.class);
+        response = new WrapperResponse(mockResponse) {
             @Override
             public void setEntity(Representation entity) {
                 representation = entity;
@@ -128,4 +133,35 @@ public class BalancerResourceTest {
     public void shouldAllowPost() {
         assertThat(balancerResource.allowPost(), is(true));
     }
+
+    @Test
+    public void shouldSetResponseStatusCorrectly_whenCorrectnessCheckIsViolated() throws ResourceException, IOException {
+        when(criteria.filterSuites(Matchers.<List<TlbSuiteFile>>any(), eq("module_foo"))).thenThrow(new IncorrectBalancingException("foo bar and baz errors happened while trying to check correctness"));
+
+        attrs.put(HttpConstants.ATTRIBUTE_HEADERS, new Form(Arrays.asList(new Parameter(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, "module_foo"))));
+
+        balancerResource.acceptRepresentation(new StringRepresentation("foo/bar/Baz.class\nfoo/bar/Bang.class\nfoo/bar/Quux.class\n"));
+
+        verify(criteria).filterSuites(Matchers.<List<TlbSuiteFile>>any(), eq("module_foo"));
+        verify(orderer, never()).compare(Matchers.<TlbSuiteFile>any(), Matchers.<TlbSuiteFile>any());
+        assertThat(representation.getText(), is("foo bar and baz errors happened while trying to check correctness"));
+        verify(mockResponse).setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+        verifyNoMoreInteractions(mockResponse);
+    }
+
+    @Test
+    public void shouldSetResponseStatusCorrectly_whenFeatureBeingUsedIsNotSupported() throws ResourceException, IOException {
+        when(criteria.filterSuites(Matchers.<List<TlbSuiteFile>>any(), eq("module_foo"))).thenThrow(new UnsupportedOperationException("correctness check can't be done while working against go-server. please use tlb server."));
+
+        attrs.put(HttpConstants.ATTRIBUTE_HEADERS, new Form(Arrays.asList(new Parameter(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, "module_foo"))));
+
+        balancerResource.acceptRepresentation(new StringRepresentation("foo/bar/Baz.class\nfoo/bar/Bang.class\nfoo/bar/Quux.class\n"));
+
+        verify(criteria).filterSuites(Matchers.<List<TlbSuiteFile>>any(), eq("module_foo"));
+        verify(orderer, never()).compare(Matchers.<TlbSuiteFile>any(), Matchers.<TlbSuiteFile>any());
+        assertThat(representation.getText(), is("correctness check can't be done while working against go-server. please use tlb server."));
+        verify(mockResponse).setStatus(Status.SERVER_ERROR_NOT_IMPLEMENTED);
+        verifyNoMoreInteractions(mockResponse);
+    }
+
 }
