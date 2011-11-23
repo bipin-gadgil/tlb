@@ -68,7 +68,7 @@
     <target name="server.test.perf" depends="server.test.lowmem"/>
 
     <target name="server.test.lowmem" depends="server.compile.tests, server.compile">
-        <low_mem_test mem="40m" cache-size="20"/><!-- fast gc called a lot of times -->
+        <low_mem_test mem="50m" cache-size="20"/><!-- fast gc called a lot of times -->
         <low_mem_test mem="256m" cache-size="100"/><!-- more neutral free-up to occupancy ratio, but slightly slower gc, called fewer number of times -->
         <low_mem_test mem="4096m" cache-size="2000"/><!-- high space free-up(not good ratio though), but looonng gc, called few times --> 
     </target>
