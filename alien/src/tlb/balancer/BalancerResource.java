@@ -1,9 +1,7 @@
 package tlb.balancer;
 
-import com.noelios.restlet.http.HttpConstants;
 import org.apache.log4j.Logger;
 import org.restlet.data.*;
-import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
@@ -43,7 +41,7 @@ public class BalancerResource extends Resource {
             logger.warn(message, e);
             throw new RuntimeException(message, e);
         }
-        String moduleName = header(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, TlbConstants.Balancer.DEFAULT_MODULE_NAME);
+        String moduleName = RequestUtil.moduleName(getRequest());
         List<TlbSuiteFile> suiteFilesSubset = null;
         try {
             suiteFilesSubset = splitter.filterSuites(suiteFiles, moduleName);
@@ -65,10 +63,6 @@ public class BalancerResource extends Resource {
     private void setExceptionInResponse(RuntimeException e, final Status status) {
         getResponse().setStatus(status);
         getResponse().setEntity(new StringRepresentation(e.getMessage()));
-    }
-
-    protected String header(final String headerName, final String defaultValue) {
-        return ((Form) getRequest().getAttributes().get(HttpConstants.ATTRIBUTE_HEADERS)).getFirstValue(headerName, defaultValue);
     }
 
     @Override

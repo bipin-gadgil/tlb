@@ -27,6 +27,7 @@ public class TlbClient extends Application {
         router.attach("/suite_time", SuiteTimeReporter.class);
         router.attach("/suite_result", SuiteResultReporter.class);
         router.attach(String.format("/control/{%s}", TlbConstants.Balancer.QUERY), ControlResource.class);
+        router.attach("/assert_all_partitions_executed", AllPartitionsExecutedAssertion.class);
 
         return router;
     }
