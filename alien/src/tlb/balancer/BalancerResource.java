@@ -2,6 +2,7 @@ package tlb.balancer;
 
 import org.apache.log4j.Logger;
 import org.restlet.data.*;
+import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
@@ -13,6 +14,9 @@ import tlb.splitter.correctness.IncorrectBalancingException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import static tlb.TlbConstants.Correctness.CORRECTNESS_CHECK_NOT_AVAILABLE;
+import static tlb.TlbConstants.Correctness.CORRECTNESS_VALIDATION_FAILED;
 
 
 /**
@@ -46,10 +50,10 @@ public class BalancerResource extends Resource {
         try {
             suiteFilesSubset = splitter.filterSuites(suiteFiles, moduleName);
         } catch (IncorrectBalancingException e) {
-            setExceptionInResponse(e, Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setExceptionInResponse(e, new Status(Status.CLIENT_ERROR_EXPECTATION_FAILED, e, CORRECTNESS_VALIDATION_FAILED));
             return;
         } catch (UnsupportedOperationException e) {
-            setExceptionInResponse(e, Status.SERVER_ERROR_NOT_IMPLEMENTED);
+            setExceptionInResponse(e, new Status(Status.SERVER_ERROR_NOT_IMPLEMENTED, e, CORRECTNESS_CHECK_NOT_AVAILABLE));
             return;
         }
         Collections.sort(suiteFilesSubset, orderer);

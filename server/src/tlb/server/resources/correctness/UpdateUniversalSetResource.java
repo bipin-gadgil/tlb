@@ -7,8 +7,11 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
+import tlb.TlbConstants;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
+
+import static tlb.TlbConstants.Correctness.CURRENT_PARTITION_POSTED_INCORRECT_UNIVERSAL_SET;
 
 /**
  * @understands maintaining universal set for correctness checks
@@ -24,7 +27,7 @@ public class UpdateUniversalSetResource extends SetResource {
             synchronized (EntryRepoFactory.mutex(universalSetRepo.getIdentifier())) {
                 if (! universalSetRepo.isPrimed()) {
                     universalSetRepo.load(reqPayload(entity));
-                    getResponse().setStatus(Status.SUCCESS_CREATED);
+                    getResponse().setStatus(new Status(Status.SUCCESS_CREATED, "First definition of universal set stored"));
                     return;
                 }
             }
@@ -33,7 +36,7 @@ public class UpdateUniversalSetResource extends SetResource {
         if (match.isSuccess()) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
-            getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);
+            getResponse().setStatus(new Status(Status.CLIENT_ERROR_CONFLICT, CURRENT_PARTITION_POSTED_INCORRECT_UNIVERSAL_SET));
             getResponse().setEntity(new StringRepresentation(match.getMessage()));
         }
     }

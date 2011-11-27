@@ -8,11 +8,14 @@ import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import org.restlet.resource.Variant;
+import tlb.TlbConstants;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.resources.TlbResource;
 
 import java.io.IOException;
+
+import static tlb.TlbConstants.Correctness.SOME_PARTITIONS_DID_NOT_EXECUTE;
 
 /**
  * @understands verifying all partitions have run for a job-name + job-version + module-name combination
@@ -42,7 +45,7 @@ public class VerifyPartitionCompletenessResource extends TlbResource {
         if (partitionRecordRepo.checkAllPartitionsExecuted(operationResult)) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
-            getResponse().setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            getResponse().setStatus(new Status(Status.CLIENT_ERROR_EXPECTATION_FAILED, SOME_PARTITIONS_DID_NOT_EXECUTE));
         }
         return new StringRepresentation(operationResult.getMessage());
     }

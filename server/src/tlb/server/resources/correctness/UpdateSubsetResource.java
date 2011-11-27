@@ -7,6 +7,7 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
+import tlb.TlbConstants;
 import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
@@ -14,6 +15,8 @@ import tlb.server.repo.model.SubsetCorrectnessChecker;
 
 import java.io.IOException;
 
+import static tlb.TlbConstants.Correctness.CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET;
+import static tlb.TlbConstants.Correctness.NO_UNIVERSAL_SET_FOUND;
 import static tlb.TlbConstants.Server.JOB_NUMBER;
 import static tlb.TlbConstants.Server.TOTAL_JOBS;
 
@@ -39,7 +42,7 @@ public class UpdateSubsetResource extends SetResource {
     @Override
     public void acceptRepresentation(Representation entity) throws ResourceException {
         if (! universalSetRepo.isPrimed()) {
-            getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+            getResponse().setStatus(new Status(Status.CLIENT_ERROR_NOT_ACCEPTABLE, NO_UNIVERSAL_SET_FOUND));
             getResponse().setEntity(new StringRepresentation("Universal set for given job-name, job-version and module-name combination doesn't exist."));
             return;
         }
@@ -47,7 +50,7 @@ public class UpdateSubsetResource extends SetResource {
         if (result.isSuccess()) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
-            getResponse().setStatus(Status.CLIENT_ERROR_CONFLICT);
+            getResponse().setStatus(new Status(Status.CLIENT_ERROR_CONFLICT, CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET));
             getResponse().setEntity(new StringRepresentation(result.getMessage()));
         }
     }

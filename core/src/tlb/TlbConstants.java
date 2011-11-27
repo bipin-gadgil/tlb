@@ -41,11 +41,19 @@ public interface TlbConstants {
         static final SystemEnvironment.EnvVar TLB_BALANCER_PORT = new SystemEnvironment.DefaultedEnvVar("TLB_BALANCER_PORT", "8019");
         static final String QUERY = "query";
         static final String DEFAULT_MODULE_NAME = "default-module";
-        String TLB_MODULE_NAME_HEADER = "X-TLB-MODULE-NAME";
+        static final String TLB_MODULE_NAME_HEADER = "X-TLB-MODULE-NAME";
     }
 
     public static interface Correctness {
         static final SystemEnvironment.EnvVar SPLIT_CORRECTNESS_CHECKER = new SystemEnvironment.DefaultedEnvVar("SPLIT_CORRECTNESS_CHECKER", "tlb.splitter.correctness.NoOp");
+
+        static final String CORRECTNESS_CHECK_NOT_AVAILABLE = "Correctness check feature not available in current configuration";
+
+        static final String CORRECTNESS_VALIDATION_FAILED = "Correctness validation failed";
+        static final String NO_UNIVERSAL_SET_FOUND = "Failed to find corresponding universal set definition";
+        static final String CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET = "Choice of suites by the current partition violate correctness check with respect to other partitions";
+        static final String CURRENT_PARTITION_POSTED_INCORRECT_UNIVERSAL_SET = "Current partition is partitioning a different set of test-suites than other partitions";
+        static final String SOME_PARTITIONS_DID_NOT_EXECUTE = "One or more partitions didn't execute for job-name, job-version and module-name combination";
     }
 
     public static interface Server {
