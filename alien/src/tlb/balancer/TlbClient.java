@@ -1,10 +1,10 @@
 package tlb.balancer;
 
-import tlb.TlbConstants;
 import org.restlet.Application;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.Router;
+import tlb.TlbConstants;
 
 /**
  * @understands restlet tlb application for client that runs locally and offloads actual balancing logic from the client 
