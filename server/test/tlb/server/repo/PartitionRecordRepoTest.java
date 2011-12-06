@@ -79,4 +79,20 @@ public class PartitionRecordRepoTest {
         assertThat(parsed.get(1), is(new PartitionIdentifier(3, 3)));
         assertThat(parsed.get(2), is(new PartitionIdentifier(1, 3)));
     }
+
+    @Test
+    public void shouldFailGracefullyWhenNoPartitionsPopulated_andCorrectnessCheckIsCalled() {
+        SetRepo.OperationResult result = new SetRepo.OperationResult(true);
+        repo.checkAllPartitionsExecuted(result);
+        assertThat(result.isSuccess(), is(false));
+        assertThat(result.getMessage(), is("- No record found for partition execution. Please verify correctness check was enabled on this build.\n"));
+    }
+
+    @Test
+    public void shouldFailGracefullyWhenNoPartitionsPopulated_andConfigurationConsistencyCheckIsCalled() {
+        SetRepo.OperationResult result = new SetRepo.OperationResult(true);
+        repo.allSubsetsReceivedWithConsistentConfiguration(result);
+        assertThat(result.isSuccess(), is(false));
+        assertThat(result.getMessage(), is("- No record found for partition execution. Please verify correctness check was enabled on this build.\n"));
+    }
 }

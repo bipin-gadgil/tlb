@@ -15,22 +15,8 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
     }
 
     public boolean allSubsetsReceivedWithConsistentConfiguration(SetRepo.OperationResult operationResult) {
-        Collection<PartitionIdentifier> list = list();
-        int totalPartitions = list.iterator().next().totalPartitions;
-        boolean[] partitionsReceived = new boolean[totalPartitions];
-        for (PartitionIdentifier partitionIdentifier : list) {
-            if (totalPartitions != partitionIdentifier.totalPartitions) {
-                operationResult.appendErrorDescription(String.format("Partitions %s are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.", list));
-                operationResult.setSuccess(false);
-            }
-            partitionsReceived[partitionIdentifier.partitionNumber - 1] = true;
-        }
-        for (boolean b : partitionsReceived) {
-            if (! b) {
-                return false;
-            }
-        }
-        return true;
+        return withNonEmptyList(operationResult, new EnforceConsistentConfigurationForPartitions());
+
     }
 
     public List<PartitionIdentifier> parse(String partitionIdsString) {
@@ -38,24 +24,64 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
     }
 
     public boolean checkAllPartitionsExecuted(SetRepo.OperationResult operationResult) {
+        return withNonEmptyList(operationResult, new CheckAllPartitionsExecuted());
+    }
+
+    private boolean withNonEmptyList(SetRepo.OperationResult operationResult, PartitionIdentifierCollectionAction action) {
         Collection<PartitionIdentifier> list = list();
-        int totalPartitions = list.iterator().next().totalPartitions;
-        boolean[] partitionsReceived = new boolean[totalPartitions];
-        for (PartitionIdentifier partitionIdentifier : list) {
-            partitionsReceived[partitionIdentifier.partitionNumber - 1] = true;
-        }
-        List<Integer> partitionsNotRun = new ArrayList<Integer>();
-        for (int i = 0; i < partitionsReceived.length; i++) {
-            if (! partitionsReceived[i]) {
-                partitionsNotRun.add(i + 1);
-            }
-        }
-        if (partitionsNotRun.size() > 0) {
+        if (list.isEmpty()) {
             operationResult.setSuccess(false);
-            operationResult.appendErrorDescription(String.format("%s of total %s partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.", partitionsNotRun, totalPartitions));
+            operationResult.appendErrorDescription("No record found for partition execution. Please verify correctness check was enabled on this build.");
+            return false;
         } else {
-            operationResult.appendContext("All partitions executed.");
+            return action.performAction(operationResult, list);
         }
-        return operationResult.isSuccess();
+    }
+
+    private static class CheckAllPartitionsExecuted implements PartitionIdentifierCollectionAction {
+        public boolean performAction(SetRepo.OperationResult operationResult, Collection<PartitionIdentifier> list) {
+            int totalPartitions = list.iterator().next().totalPartitions;
+            boolean[] partitionsReceived = new boolean[totalPartitions];
+            for (PartitionIdentifier partitionIdentifier : list) {
+                partitionsReceived[partitionIdentifier.partitionNumber - 1] = true;
+            }
+            List<Integer> partitionsNotRun = new ArrayList<Integer>();
+            for (int i = 0; i < partitionsReceived.length; i++) {
+                if (!partitionsReceived[i]) {
+                    partitionsNotRun.add(i + 1);
+                }
+            }
+            if (partitionsNotRun.size() > 0) {
+                operationResult.setSuccess(false);
+                operationResult.appendErrorDescription(String.format("%s of total %s partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.", partitionsNotRun, totalPartitions));
+            } else {
+                operationResult.appendContext("All partitions executed.");
+            }
+            return operationResult.isSuccess();
+        }
+    }
+
+    private static class EnforceConsistentConfigurationForPartitions implements PartitionIdentifierCollectionAction {
+        public boolean performAction(SetRepo.OperationResult operationResult, Collection<PartitionIdentifier> list) {
+            int totalPartitions = list.iterator().next().totalPartitions;
+            boolean[] partitionsReceived = new boolean[totalPartitions];
+            for (PartitionIdentifier partitionIdentifier : list) {
+                if (totalPartitions != partitionIdentifier.totalPartitions) {
+                    operationResult.appendErrorDescription(String.format("Partitions %s are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.", list));
+                    operationResult.setSuccess(false);
+                }
+                partitionsReceived[partitionIdentifier.partitionNumber - 1] = true;
+            }
+            for (boolean b : partitionsReceived) {
+                if (!b) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    public static interface PartitionIdentifierCollectionAction {
+        boolean performAction(SetRepo.OperationResult operationResult, Collection<PartitionIdentifier> list);
     }
 }
