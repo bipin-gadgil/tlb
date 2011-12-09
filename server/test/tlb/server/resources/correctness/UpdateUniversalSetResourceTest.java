@@ -128,6 +128,29 @@ public class UpdateUniversalSetResourceTest {
     }
 
     @Test
+    public void shouldGenerateError_whenUniversalSetRepoDefinitionByASubsequentPartition_EndsBeforeExpected() throws ResourceException, IOException {
+        String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
+        repo.load(suites);
+        List<SuiteNamePartitionEntry> listBeforeBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
+
+        resource.acceptRepresentation(new StringRepresentation("baz.bang.Quux.class\nbar.baz.Bang.class"));
+
+        assertThat(repo.list().size(), is(3));
+        assertThat(repo.list(), hasItems(new SuiteNamePartitionEntry("foo.bar.Baz.class"), new SuiteNamePartitionEntry("bar.baz.Bang.class"), new SuiteNamePartitionEntry("baz.bang.Quux.class")));
+
+        List<SuiteNamePartitionEntry> listAfterBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
+
+        Collections.sort(listBeforeBadPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
+        Collections.sort(listAfterBadPartitionPosting, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
+        for (int i = 0; i < listBeforeBadPartitionPosting.size(); i++) {
+             assertThat(listBeforeBadPartitionPosting.get(i), sameInstance(listAfterBadPartitionPosting.get(i)));
+        }
+
+        verify(response).setStatus(Status.CLIENT_ERROR_CONFLICT);
+        assertThat(representationGiven.getText(), is("Expected universal set was [bar.baz.Bang.class, baz.bang.Quux.class, foo.bar.Baz.class] but given [bar.baz.Bang.class, baz.bang.Quux.class].\n"));
+    }
+
+    @Test
     public void shouldCreateUniversalSetRepos_namespacedByDifferentModules_whenGivenTheListingByRespectiveFirstPartitions() throws ResourceException, IOException {
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class"));
         assertThat(repo.list().size(), is(3));

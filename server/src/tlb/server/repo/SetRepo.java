@@ -26,16 +26,21 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         List<SuiteNamePartitionEntry> givenList = sortedListFor(parse(list));
         List<SuiteNamePartitionEntry> serverCopy = sortedList();
 
+        OperationResult error = new OperationResult(false, String.format("Expected universal set was %s but given %s.", serverCopy, givenList));
+        if (givenList.size() != serverCopy.size()) {
+            return error;
+        }
+
         for (int i = 0; i < serverCopy.size(); i++) {
             SuiteNamePartitionEntry entry = serverCopy.get(i);
             if (! entry.equals(givenList.get(i))) {
-                return new OperationResult(false, String.format("Expected universal set was %s but given %s.", serverCopy, givenList));
+                return error;
             }
         }
         return new OperationResult(true);
     }
 
-    public Collection<SuiteNamePartitionEntry> list(String version) throws IOException, ClassNotFoundException {
+    public Collection<SuiteNamePartitionEntry> list() {
         return nameToEntry.values();
     }
 
