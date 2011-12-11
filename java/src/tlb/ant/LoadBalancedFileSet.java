@@ -3,10 +3,12 @@ package tlb.ant;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
+import tlb.TlbConstants;
 import tlb.TlbFileResource;
 import tlb.TlbSuiteFile;
 import tlb.factory.TlbBalancerFactory;
 import tlb.orderer.TestOrderer;
+import tlb.splitter.AbstractTestSplitter;
 import tlb.splitter.TestSplitter;
 import tlb.utils.SuiteFileConvertor;
 import tlb.utils.SystemEnvironment;
@@ -24,6 +26,7 @@ public class LoadBalancedFileSet extends FileSet {
 
     private final TestSplitter criteria;
     private final TestOrderer orderer;
+    private String moduleName = TlbConstants.Balancer.DEFAULT_MODULE_NAME;
 
     public LoadBalancedFileSet(TestSplitter criteria, TestOrderer orderer) {
         this.criteria = criteria;
@@ -31,7 +34,7 @@ public class LoadBalancedFileSet extends FileSet {
     }
 
     public LoadBalancedFileSet(SystemEnvironment systemEnvironment) {
-        this(TlbBalancerFactory.getCriteria(systemEnvironment.val(TestSplitter.TLB_SPLITTER), systemEnvironment),
+        this(TlbBalancerFactory.getCriteria(systemEnvironment.val(AbstractTestSplitter.TLB_SPLITTER), systemEnvironment),
                 TlbBalancerFactory.getOrderer(systemEnvironment.val(TestOrderer.TLB_ORDERER), systemEnvironment));
     }
 
@@ -51,9 +54,14 @@ public class LoadBalancedFileSet extends FileSet {
 
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
         List<TlbSuiteFile> suiteFiles = convertor.toTlbSuiteFiles(matchedFiles);
-        logger.info("About to filter tests");
-        suiteFiles = criteria.filterSuites(suiteFiles);
-        logger.info("Done filtering. About to order tests.");
+
+        if (logger.isInfoEnabled()) {
+            logger.info("About to filter tests");
+        }
+        suiteFiles = criteria.filterSuites(suiteFiles, moduleName);
+        if (logger.isInfoEnabled()) {
+            logger.info("Done filtering. About to order tests.");
+        }
         Collections.sort(suiteFiles, orderer);
         logger.info("Done ordering.");
         List<TlbFileResource> matchedTlbFileResources = convertor.toTlbFileResources(suiteFiles);
@@ -68,5 +76,9 @@ public class LoadBalancedFileSet extends FileSet {
 
     public TestSplitter getSplitterCriteria() {
         return criteria;
+    }
+
+    public void setModuleName(String moduleName) {
+        this.moduleName = moduleName;
     }
 }

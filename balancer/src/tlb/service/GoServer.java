@@ -15,10 +15,12 @@ import tlb.TlbConstants;
 
 import static tlb.TlbConstants.*;
 
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.service.http.HttpAction;
 import tlb.service.http.DefaultHttpAction;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.storage.TlbEntryRepository;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
@@ -323,5 +325,17 @@ public class GoServer extends SmoothingServer {
 
     public int totalPartitions() {
         return pearJobs().size();
+    }
+
+    public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
+    }
+
+    public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
+    }
+
+    public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
+        throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
     }
 }

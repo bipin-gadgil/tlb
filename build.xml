@@ -125,6 +125,7 @@
         <attribute name="test.classes.dir"/>
         <attribute name="test.wildcard" default="**/*Test.class*"/>
         <element name="extra-jvmargs" optional="true"/>
+        <element name="extra-envvars" optional="true"/>
         <sequential>
             <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" fork="true">
                 <classpath refid="emma.classpath"/>
@@ -132,6 +133,7 @@
                 <jvmarg value="-Demma.coverage.out.merge=true"/>
                 <jvmarg value="-Dtest.tmp.dir=${test.tmpdata.dir}"/>
                 <extra-jvmargs/>
+                <extra-envvars/>
 
                 <classpath refid="@{test.classpath}"/>
                 <batchtest todir="@{test.reports.dir}">
@@ -476,7 +478,7 @@
     <target name="test.perf" depends="init, server.test.perf"/>
 
     <target name="run_balancer" depends="compile">
-        <java classname="tlb.BalancerApp" fork="true">
+        <java classname="tlb.BalancerApp" fork="true" output="${dog-fooding.reports.target.dir}/balancer.out" error="${dog-fooding.reports.target.dir}/balancer.err">
             <env key="TLB_BASE_URL" value="http://localhost:7019"/>
             <env key="TLB_JOB_NAME" value="foo"/>
             <env key="TLB_PARTITION_NUMBER" value="1"/>
@@ -520,27 +522,34 @@
         </copy>
     </target>
 
-    <target name="test.count_balanced" depends="merge.test.dirs">
+    <target name="-typedef.tlb.classes">
         <typedef name="lbfs" classname="tlb.ant.LoadBalancedFileSet" classpathref="all.classpath"/>
+        <typedef name="assertAllPartitionsExecuted" classname="tlb.ant.CheckMissingPartitions" classpathref="all.classpath"/>
+    </target>
+
+    <target name="test.count_balanced" depends="merge.test.dirs, -typedef.tlb.classes">
         <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" haltonerror="true" showoutput="true" fork="true">
             <classpath refid="all.classpath"/>
             <batchtest todir="${dog-fooding.reports.target.dir}">
-                <lbfs dir="${all.tests.dir}" includes="**/*Test.class"/>
+                <lbfs dir="${all.tests.dir}" includes="**/*Test.class" moduleName="all"/>
                 <formatter type="plain"/>
             </batchtest>
         </junit>
     </target>
 
-    <target name="test.time_balanced" depends="merge.test.dirs">
-        <typedef name="lbfs" classname="tlb.ant.LoadBalancedFileSet" classpathref="all.classpath"/>
+    <target name="test.time_balanced" depends="merge.test.dirs, -typedef.tlb.classes">
         <junit failureproperty="test.failure" printsummary="yes" haltonfailure="true" haltonerror="true" showoutput="true" fork="true">
             <classpath refid="all.classpath"/>
             <batchtest todir="${dog-fooding.reports.target.dir}">
-                <lbfs dir="${all.tests.dir}" includes="**/*Test.class"/>
+                <lbfs dir="${all.tests.dir}" includes="**/*Test.class" moduleName="all"/>
                 <formatter classname="tlb.ant.JunitDataRecorder"/>
                 <formatter type="plain"/>
             </batchtest>
         </junit>
+    </target>
+
+    <target name="assert.all.partitions.executed" depends="-typedef.tlb.classes">
+        <assertAllPartitionsExecuted moduleNames="all"/>
     </target>
 
     <target name="all" depends="clean, test, package"/>

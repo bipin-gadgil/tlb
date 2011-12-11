@@ -40,6 +40,20 @@ public interface TlbConstants {
     public static interface Balancer {
         static final SystemEnvironment.EnvVar TLB_BALANCER_PORT = new SystemEnvironment.DefaultedEnvVar("TLB_BALANCER_PORT", "8019");
         static final String QUERY = "query";
+        static final String DEFAULT_MODULE_NAME = "default-module";
+        static final String TLB_MODULE_NAME_HEADER = "X-Tlb-Module-Name";
+    }
+
+    public static interface Correctness {
+        static final SystemEnvironment.EnvVar SPLIT_CORRECTNESS_CHECKER = new SystemEnvironment.DefaultedEnvVar("SPLIT_CORRECTNESS_CHECKER", "tlb.splitter.correctness.NoOp");
+
+        static final String CORRECTNESS_CHECK_NOT_AVAILABLE = "Correctness check feature not available in current configuration";
+
+        static final String CORRECTNESS_VALIDATION_FAILED = "Correctness validation failed";
+        static final String NO_UNIVERSAL_SET_FOUND = "Failed to find corresponding universal set definition";
+        static final String CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET = "Choice of suites by the current partition violate correctness check with respect to other partitions";
+        static final String CURRENT_PARTITION_POSTED_INCORRECT_UNIVERSAL_SET = "Current partition is partitioning a different set of test-suites than other partitions";
+        static final String SOME_PARTITIONS_DID_NOT_EXECUTE = "One or more partitions didn't execute for job-name, job-version and module-name combination";
     }
 
     public static interface Server {
@@ -51,13 +65,23 @@ public interface TlbConstants {
         static final SystemEnvironment.EnvVar TLB_DATA_DIR = new SystemEnvironment.DefaultedEnvVar("TLB_DATA_DIR", DEFAULT_TLB_DATA_DIR);
 
         static final String LISTING_VERSION = "listing_version";
+        static final String JOB_NUMBER = "job_number";
+        static final String TOTAL_JOBS = "total_jobs";
         static final SystemEnvironment.EnvVar TLB_VERSION_LIFE_IN_DAYS = new SystemEnvironment.DefaultedEnvVar("TLB_VERSION_LIFE_IN_DAYS", "7");
         static final SystemEnvironment.EnvVar TLB_SYNC_TO_DISK_INTERVAL_IN_MINS = new SystemEnvironment.DefaultedEnvVar("TLB_SYNC_TO_DISK_INTERVAL_IN_MINS", "60");
+        static final SystemEnvironment.EnvVar TLB_DATA_CACHE_SIZE = new SystemEnvironment.DefaultedEnvVar("TLB_DATA_CACHE_SIZE", "100");
+
+        static final String MODULE_NAME = "module_name";
+        static final String VERIFY_PARTITION_COMPLETENESS = "verify_partition_completeness";
 
         public static interface EntryRepoFactory {
             static final String SUBSET_SIZE = "subset_size";
             static final String SUITE_TIME = "suite_time";
             static final String SUITE_RESULT = "suite_result";
+            static final String CORRECTNESS_CHECK = "correctness_check";
+            static final String UNIVERSAL_SET = "universal_set";
+            static final String PARTITION_RECORD = "partition_record";
+            static final String SUB_SET = "sub_set";
         }
     }
 }

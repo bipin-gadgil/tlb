@@ -11,7 +11,6 @@ import tlb.TlbSuiteFile;
 import tlb.orderer.TestOrderer;
 import tlb.splitter.CountBasedTestSplitter;
 import tlb.splitter.JobFamilyAwareSplitter;
-import tlb.utils.FileUtil;
 import tlb.utils.SuiteFileConvertor;
 import tlb.utils.SystemEnvironment;
 
@@ -22,6 +21,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tlb.TlbConstants.Go.GO_SERVER_URL;
@@ -30,13 +30,11 @@ import static tlb.TlbConstants.TLB_SPLITTER;
 public class LoadBalancedFileSetTest {
     private LoadBalancedFileSet fileSet;
     private File projectDir;
-    private FileUtil fileUtil;
 
     @Before
     public void setUp() throws Exception {
         SystemEnvironment env = new SystemEnvironment(new HashMap<String, String>());
         fileSet = new LoadBalancedFileSet(env);
-        fileUtil = new FileUtil(env);
         projectDir = TestUtil.createTempFolder();
         initFileSet(fileSet);
     }
@@ -54,10 +52,11 @@ public class LoadBalancedFileSetTest {
         JobFamilyAwareSplitter criteria = mock(JobFamilyAwareSplitter.class);
         TlbFileResource fileResource = new JunitFileResource(included);
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
-        when(criteria.filterSuites(any(List.class))).thenReturn(convertor.toTlbSuiteFiles(Arrays.asList(fileResource)));
+        when(criteria.filterSuites(any(List.class), eq("module_foo"))).thenReturn(convertor.toTlbSuiteFiles(Arrays.asList(fileResource)));
 
         fileSet = new LoadBalancedFileSet(criteria, TestOrderer.NO_OP);
         fileSet.setDir(projectDir);
+        fileSet.setModuleName("module_foo");
         initFileSet(fileSet);
         Iterator files = fileSet.iterator();
 
@@ -76,7 +75,7 @@ public class LoadBalancedFileSetTest {
         JobFamilyAwareSplitter criteria = mock(JobFamilyAwareSplitter.class);
 
         final SuiteFileConvertor convertor = new SuiteFileConvertor();
-        when(criteria.filterSuites(any(List.class))).thenReturn(convertor.toTlbSuiteFiles(Arrays.asList((TlbFileResource) resourceOne, resourceTwo, resourceThree)));
+        when(criteria.filterSuites(any(List.class), eq("default-module"))).thenReturn(convertor.toTlbSuiteFiles(Arrays.asList((TlbFileResource) resourceOne, resourceTwo, resourceThree)));//should use default module when module-name is not set
 
         fileSet = new LoadBalancedFileSet(criteria, new TestOrderer(new SystemEnvironment()) {
             public int compare(TlbSuiteFile o1, TlbSuiteFile o2) {
@@ -101,10 +100,10 @@ public class LoadBalancedFileSetTest {
     }
 
     @Test
-    public void shouldUseSystemPropertyToInstantiateCriteria() {
+    public void shouldUseSystemPropertyToInstantiateCriteria() throws IllegalAccessException {
         fileSet = new LoadBalancedFileSet(initEnvironment("tlb.splitter.CountBasedTestSplitter"));
         fileSet.setDir(projectDir);
-        assertThat(fileSet.getSplitterCriteria(), instanceOf(CountBasedTestSplitter.class));
+        assertThat(TestUtil.deref("splitter", fileSet.getSplitterCriteria()), instanceOf(CountBasedTestSplitter.class));
     }
 
     private SystemEnvironment initEnvironment(String strategyName) {

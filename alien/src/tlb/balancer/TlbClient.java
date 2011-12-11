@@ -1,10 +1,10 @@
 package tlb.balancer;
 
-import tlb.TlbConstants;
 import org.restlet.Application;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.Router;
+import tlb.TlbConstants;
 
 /**
  * @understands restlet tlb application for client that runs locally and offloads actual balancing logic from the client 
@@ -27,6 +27,7 @@ public class TlbClient extends Application {
         router.attach("/suite_time", SuiteTimeReporter.class);
         router.attach("/suite_result", SuiteResultReporter.class);
         router.attach(String.format("/control/{%s}", TlbConstants.Balancer.QUERY), ControlResource.class);
+        router.attach("/assert_all_partitions_executed", AllPartitionsExecutedAssertion.class);
 
         return router;
     }

@@ -14,10 +14,10 @@ import tlb.utils.SystemEnvironment;
 /**
  * @understands the criteria for splitting a given test suite across jobs from the same family
  */
-public abstract class JobFamilyAwareSplitter extends TestSplitter implements TalksToServer {
+public abstract class JobFamilyAwareSplitter extends AbstractTestSplitter implements TalksToServer {
     public static TestSplitter MATCH_ALL_FILE_SET = new JobFamilyAwareSplitter(null) {
         @Override
-        public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+        public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
             return fileResources;
         }
 
@@ -34,8 +34,7 @@ public abstract class JobFamilyAwareSplitter extends TestSplitter implements Tal
         super(env);
     }
 
-    @Override
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         logger.info(String.format("got total of %s files to balance", fileResources.size()));
 
         totalPartitions = server.totalPartitions();

@@ -2,94 +2,72 @@ package tlb.server.resources;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
-import tlb.TlbConstants;
-import tlb.domain.Entry;
-import tlb.server.repo.EntryRepo;
-import tlb.server.repo.EntryRepoFactory;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.resource.*;
+import tlb.TlbConstants;
+import tlb.domain.Entry;
+import tlb.server.repo.EntryRepoFactory;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.logging.Level;
 
-
+import static tlb.TlbConstants.Server.LISTING_VERSION;
+import static tlb.TlbConstants.Server.REPO_FACTORY;
 import static tlb.TlbConstants.Server.REQUEST_NAMESPACE;
 
 /**
- * @understands listing and modification of tlb resource
+ * @understands is a single point of extension for all TLB resources which also packages commonly used helpers for other resources
  */
 public abstract class TlbResource extends Resource {
+    protected final Map<String, Object> reqAttrs;
+
     private static final Logger logger = Logger.getLogger(TlbResource.class.getName());
-    protected EntryRepo repo;
-    private final Map<String, Object> reqAttrs;
 
     public TlbResource(Context context, Request request, Response response) {
         super(context, request, response);
-        EntryRepoFactory repoFactory = (EntryRepoFactory) context.getAttributes().get(TlbConstants.Server.REPO_FACTORY);
-        reqAttrs = request.getAttributes();
         getVariants().add(new Variant(MediaType.TEXT_PLAIN));
-        String key = strAttr(REQUEST_NAMESPACE);
+        reqAttrs = request.getAttributes();
         try {
-            repo = getRepo(repoFactory, key);
+            createRepos();
         } catch (Exception e) {
-            logger.warn(String.format("Failed to get repo for '%s'", key), e);
+            logger.warn(String.format("Failed to get repo for '%s'", request.getOriginalRef().getPath()), e);
             throw new RuntimeException(e);
         }
     }
 
-    protected String strAttr(final String requestNamespace) {
-        return (String) reqAttrs.get(requestNamespace);
+    protected abstract void createRepos() throws IOException, ClassNotFoundException;
+
+    protected String strAttr(final String key) {
+        return (String) reqAttrs.get(key);
     }
 
-    protected Collection<Entry> getListing() throws IOException, ClassNotFoundException {
-        return repo.list();
+    protected EntryRepoFactory repoFactory() {
+        return (EntryRepoFactory) getContext().getAttributes().get(REPO_FACTORY);
     }
 
-    protected abstract EntryRepo getRepo(EntryRepoFactory repoFactory, String key) throws IOException, ClassNotFoundException;
+    protected String reqNamespace() {
+        return strAttr(REQUEST_NAMESPACE);
+    }
 
-    @Override
-    public Representation represent(Variant variant) throws ResourceException {
-        StringBuilder builder = new StringBuilder();
-        final Collection<Entry> listing;
+    protected String reqVersion() {
+        return strAttr(LISTING_VERSION);
+    }
+
+    protected String reqModuleName() {
+        return strAttr(TlbConstants.Server.MODULE_NAME);
+    }
+
+    protected String reqPayload(Representation entity) {
+        String text = null;
         try {
-            listing = getListing();
-        } catch (Exception e) {
+            text = entity.getText();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        for (Entry entry : listing) {
-            builder.append(entry.dump());
-        }
-        String text = builder.toString();
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("Request %s was served listing checksum: %s", getRequest().getOriginalRef().getPath(), DigestUtils.md5Hex(text)));
-        }
-        return new StringRepresentation(text, MediaType.TEXT_PLAIN);
-    }
-
-    @Override
-    public void storeRepresentation(Representation entity) throws ResourceException {
-        try {
-            repo.update(parseEntry(entity));
-        } catch (Exception e) {
-            logger.warn(String.format("update of representation failed for %s", entity), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected abstract Entry parseEntry(Representation entity) throws IOException;
-
-    @Override
-    public void acceptRepresentation(Representation entity) throws ResourceException {
-        try {
-            repo.add(parseEntry(entity));
-        } catch (Exception e) {
-            logger.warn(String.format("addition of representation failed for %s", entity), e);
-            throw new RuntimeException(e);
-        }
+        return text;
     }
 }

@@ -58,13 +58,29 @@
     <target name="server.test.perf" depends="server.test.lowmem"/>
 
     <target name="server.test.lowmem" depends="server.compile.tests, server.compile">
-        <test-task-config test.classpath="server.test.classpath" test.classes.dir="${server.test.classes.dir}" test.reports.dir="${server.test.reports.dir}" emma.file="${server.emma.file}" test.wildcard="**/*_LowMem.class*">
-            <extra-jvmargs>
-                <jvmarg value="-Xms30m"/>
-                <jvmarg value="-Xmx30m"/>
-            </extra-jvmargs>
-        </test-task-config>
+        <low_mem_test mem="50m" cache-size="20"/><!-- fast gc called a lot of times -->
+        <low_mem_test mem="256m" cache-size="100"/><!-- more neutral free-up to occupancy ratio, but slightly slower gc, called fewer number of times -->
+        <low_mem_test mem="4096m" cache-size="2000"/><!-- high space free-up(not good ratio though), but looonng gc, called few times --> 
     </target>
+
+    <macrodef name="low_mem_test">
+        <attribute name="mem"/>
+        <attribute name="cache-size"/>
+        <sequential>
+            <echo message="*************************************************************"/>
+            <echo message="Running with @{cache-size} repos and max-memory set to @{mem}"/>
+            <echo message="*************************************************************"/>
+            <test-task-config test.classpath="server.test.classpath" test.classes.dir="${server.test.classes.dir}" test.reports.dir="${server.test.reports.dir}" emma.file="${server.emma.file}" test.wildcard="**/*_LowMem.class*">
+                <extra-jvmargs>
+                    <jvmarg value="-Xms@{mem}"/>
+                    <jvmarg value="-Xmx@{mem}"/>
+                </extra-jvmargs>
+                <extra-envvars>
+                    <env key="TLB_DATA_CACHE_SIZE" value="@{cache-size}"/>
+                </extra-envvars>
+            </test-task-config>
+        </sequential>
+    </macrodef>
 
     <target name="emma.instr.server" depends="server.compile">
         <emma-instr classes-dir="${server.classes.dir}" name="server"/>

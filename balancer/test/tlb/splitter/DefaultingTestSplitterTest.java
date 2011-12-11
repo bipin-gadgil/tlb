@@ -18,6 +18,8 @@ import static org.junit.matchers.JUnitMatchers.hasItem;
 
 public class DefaultingTestSplitterTest {
 
+    private static final String moduleName = "module_foo";
+
     @Test
     public void shouldAttemptCriterionSpecifiedInOrder() throws Exception{
         TestSplitter criteria = defaultingCriteriaWith("tlb.splitter.test.UnusableSplitter1:tlb.splitter.test.UnusableSplitter2:tlb.splitter.test.LastSelectingSplitter");
@@ -25,7 +27,7 @@ public class DefaultingTestSplitterTest {
         TlbSuiteFile foo = new TlbSuiteFileImpl("foo");
         TlbSuiteFile bar = new TlbSuiteFileImpl("bar");
         final List<TlbSuiteFile> suiteFiles = Arrays.asList(foo, bar);
-        List<TlbSuiteFile> filteredResources = criteria.filterSuites(suiteFiles);
+        List<TlbSuiteFile> filteredResources = criteria.filterSuites(suiteFiles, moduleName);
         assertThat(filteredResources.size(), is(1));
         assertThat(filteredResources, hasItem(bar));
     }
@@ -37,7 +39,7 @@ public class DefaultingTestSplitterTest {
         TlbSuiteFile foo = new TlbSuiteFileImpl("foo");
         TlbSuiteFile bar = new TlbSuiteFileImpl("bar");
 
-        List<TlbSuiteFile> filteredResources = criteria.filterSuites(Arrays.asList(foo, bar));
+        List<TlbSuiteFile> filteredResources = criteria.filterSuites(Arrays.asList(foo, bar), moduleName);
         assertThat(filteredResources.size(), is(1));
         assertThat(filteredResources, hasItem(bar));
     }
@@ -56,7 +58,7 @@ public class DefaultingTestSplitterTest {
         TlbSuiteFile foo = new TlbSuiteFileImpl("foo");
         TlbSuiteFile bar = new TlbSuiteFileImpl("bar");
         try {
-            criteria.filterSuites(Arrays.asList(foo, bar));
+            criteria.filterSuites(Arrays.asList(foo, bar), moduleName);
             fail("should have raised exception as no usable criteria specified");
         } catch (Exception e) {
             assertThat(e.getMessage(), is("None of [tlb.splitter.test.UnusableSplitter1, tlb.splitter.test.UnusableSplitter2] could successfully split the test suites."));

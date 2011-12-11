@@ -5,7 +5,7 @@ import tlb.factory.TlbBalancerFactory;
 import tlb.factory.TlbFactory;
 import tlb.orderer.TestOrderer;
 import tlb.server.ServerInitializer;
-import tlb.splitter.TestSplitter;
+import tlb.splitter.AbstractTestSplitter;
 import tlb.utils.SystemEnvironment;
 import org.restlet.Context;
 import org.restlet.Restlet;
@@ -30,7 +30,7 @@ public class BalancerInitializer extends ServerInitializer {
     @Override
     public Restlet application() {
         HashMap<String, Object> appMap = new HashMap<String, Object>();
-        appMap.put(TlbClient.SPLITTER, TlbBalancerFactory.getCriteria(env.val(TestSplitter.TLB_SPLITTER), env));
+        appMap.put(TlbClient.SPLITTER, TlbBalancerFactory.getCriteria(env.val(AbstractTestSplitter.TLB_SPLITTER), env));
         appMap.put(TlbClient.ORDERER, TlbBalancerFactory.getOrderer(env.val(TestOrderer.TLB_ORDERER), env));
         appMap.put(TlbClient.TALK_TO_SERVICE, TlbFactory.getTalkToService(env));
         appMap.put(TlbClient.APP_COMPONENT, init());

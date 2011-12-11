@@ -2,10 +2,17 @@ package tlb.service;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.theories.DataPoint;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
+import org.mockito.internal.invocation.Invocation;
 import tlb.TestUtil;
 import tlb.TlbConstants;
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.service.http.HttpAction;
@@ -27,6 +34,7 @@ import static tlb.TestUtil.fileContents;
 import static tlb.TlbConstants.Go;
 import static tlb.TlbConstants.TLB_TMP_DIR;
 
+@RunWith(Theories.class)
 public class GoServerTest {
     private GoServer server;
     private TestUtil.LogFixture logFixture;
@@ -467,6 +475,44 @@ public class GoServerTest {
             assertThat(e, is(IllegalStateException.class));
             assertThat(e.getMessage(), is("Couldn't find a historical run for stage in '2' pages of stage feed."));
         }
+    }
+
+    public static interface MethodInvocation {
+        void invoke(Server server);
+    }
+
+    @DataPoint public static final MethodInvocation UNIVERSAL_SET_REPORTING_CALL = new MethodInvocation() {
+        public void invoke(Server server) {
+            server.validateUniversalSet(new ArrayList<TlbSuiteFile>(), "foo");
+        }
+    };
+
+    @DataPoint public static final MethodInvocation SUB_SET_REPORTING_CALL = new MethodInvocation() {
+        public void invoke(Server server) {
+            server.validateSubSet(new ArrayList<TlbSuiteFile>(), "foo");
+        }
+    };
+
+    @DataPoint public static final MethodInvocation ALL_PARTITIONS_EXECUTED_CALL = new MethodInvocation() {
+        public void invoke(Server server) {
+            server.verifyAllPartitionsExecutedFor("foo");
+        }
+    };
+
+
+    @Theory
+    public void shouldFailAndInformUserAboutCorrectnessCheckUnavailability_whileUsingGoServerSupport(MethodInvocation invocation) {
+        Map<String, String> map = initEnvMap("http://test.host:8153/go");
+        server = new GoServer(new SystemEnvironment(map), mock(HttpAction.class));
+        
+        UnsupportedOperationException e = null;
+        try {
+            invocation.invoke(server);
+            Assert.fail("should not have allowed correctness check invocation while working against go server.");
+        } catch (UnsupportedOperationException ex) {
+            e = ex;
+        }
+        assertThat(e.getMessage(), is("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet."));
     }
 
     private SystemEnvironment initEnvironment(String url) {

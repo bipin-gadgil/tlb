@@ -6,16 +6,17 @@ import org.junit.matchers.JUnitMatchers;
 import org.restlet.Component;
 import tlb.TestUtil;
 import tlb.TlbConstants;
+import tlb.TlbSuiteFile;
+import tlb.TlbSuiteFileImpl;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.server.ServerInitializer;
 import tlb.server.TlbServerInitializer;
 import tlb.service.http.DefaultHttpAction;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.utils.SystemEnvironment;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -33,6 +34,10 @@ public class TlbServerTest {
     private HashMap<String,String> clientEnv;
     private DefaultHttpAction httpAction;
     private SystemEnvironment env;
+    private String jobVersion;
+    private String jobName;
+    private String partitionNumber;
+    private String totalPartitions;
 
     @BeforeClass
     public static void startTlbServer() throws Exception {
@@ -54,10 +59,14 @@ public class TlbServerTest {
     @Before
     public void setUp() {
         clientEnv = new HashMap<String, String>();
-        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_NAME, "job");
-        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "4");
-        clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, "15");
-        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_VERSION, String.valueOf(UUID.randomUUID()));
+        jobName = "job";
+        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_NAME, jobName);
+        partitionNumber = "4";
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, partitionNumber);
+        totalPartitions = "15";
+        clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, totalPartitions);
+        jobVersion = String.valueOf(UUID.randomUUID());
+        clientEnv.put(TlbConstants.TlbServer.TLB_JOB_VERSION, jobVersion);
         String url = "http://localhost:" + freePort;
         clientEnv.put(TlbConstants.TlbServer.TLB_BASE_URL, url);
         httpAction = new DefaultHttpAction();
@@ -213,5 +222,230 @@ public class TlbServerTest {
         Assert.assertThat(server.totalPartitions(), Is.is(15));
         updateEnv(env, TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, "7");
         Assert.assertThat(server.totalPartitions(), Is.is(7));
+    }
+
+    @Test
+    public void shouldPostUniversalSetToServer_underModuleNamespace_ForFirstPartition() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        validationResult = server.validateUniversalSet(files, "bar-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+    }
+
+    @Test
+    public void shouldReturnFailure_whenUniversalSetMismatches() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        files.remove(0);
+        incrementPartitionNumber();
+        validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(true));
+        assertThat(validationResult.getMessage(), is("Expected universal set was [com.bar.Bar, com.baz.Baz, com.foo.Foo, com.quux.Quux] but given [com.bar.Bar, com.baz.Baz, com.quux.Quux].\n"));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldSucceed_whenUniversalSetMatchesVersionPostedByOtherPartitions() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        files.add(new TlbSuiteFileImpl("com.baz.Baz"));
+        files.add(new TlbSuiteFileImpl("com.quux.Quux"));
+
+        ValidationResult validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("First validation snapshot."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FIRST));
+
+        incrementPartitionNumber();
+
+        validationResult = server.validateUniversalSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(false));
+        assertThat(validationResult.getMessage(), is("Universal set matched."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.OK));
+    }
+
+    @Test
+    public void shouldBlowWhenUniversalSetForSubsetDoesNotExist() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+
+        ValidationResult validationResult = server.validateSubSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(true));
+        assertThat(validationResult.getMessage(), is("Universal set for given job-name, job-version and module-name combination doesn't exist."));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldBlow_whenUniversalSetForSubsetIsNotComplete() throws IllegalAccessException {
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        files.add(new TlbSuiteFileImpl("com.foo.Foo"));
+        files.add(new TlbSuiteFileImpl("com.bar.Bar"));
+        server.validateUniversalSet(files, "foo-module");
+
+        files.add(new TlbSuiteFileImpl("com.bar.Baz"));
+        ValidationResult validationResult = server.validateSubSet(files, "foo-module");
+
+        assertThat(validationResult.hasFailed(), is(true));
+        assertThat(validationResult.getMessage(), is("- Found 1 unknown(not present in universal set) suite(s) named: [com.bar.Baz].\nHad total of 3 suites named [com.bar.Bar, com.bar.Baz, com.foo.Foo] in partition 4 of 15. Corresponding universal set had a total of 2 suites named [com.bar.Bar: 4/15, com.foo.Foo: 4/15].\n"));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldBlow_whenCollectiveExhaustionIsViolatedBetweenPartitions() throws IllegalAccessException {
+        makeTlbServerFor(1, 2);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        TlbSuiteFile suiteOne = new TlbSuiteFileImpl("suite/One");
+        files.add(suiteOne);
+        TlbSuiteFile suiteTwo = new TlbSuiteFileImpl("suite/Two");
+        files.add(suiteTwo);
+        TlbSuiteFile suiteThree = new TlbSuiteFileImpl("suite/Three");
+        files.add(suiteThree);
+        server.validateUniversalSet(files, "foo-module");
+
+        ValidationResult validationResult = server.validateSubSet(Arrays.asList(suiteOne), "foo-module");
+        assertThat(validationResult.hasFailed(), is(false));
+
+        partitionNumber = "2";
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, partitionNumber);
+        server = new TlbServer(new SystemEnvironment(clientEnv), httpAction);
+
+        validationResult = server.validateSubSet(Arrays.asList(suiteThree), "foo-module");
+        assertThat(validationResult.hasFailed(), is(true));
+
+        assertThat(validationResult.getMessage(), is("- Collective exhaustion of tests violated with none of the 2 partition picked running suites: [suite/Two]. Failing partition 2 as this is the last one to execute.\nHad total of 1 suites named [suite/Three] in partition 2 of 2. Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two].\n"));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldBlow_whenMutualExclusionIsViolatedBetweenPartitions() throws IllegalAccessException {
+        makeTlbServerFor(1, 2);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        TlbSuiteFile suiteOne = new TlbSuiteFileImpl("suite/One");
+        files.add(suiteOne);
+        TlbSuiteFile suiteTwo = new TlbSuiteFileImpl("suite/Two");
+        files.add(suiteTwo);
+        TlbSuiteFile suiteThree = new TlbSuiteFileImpl("suite/Three");
+        files.add(suiteThree);
+        server.validateUniversalSet(files, "foo-module");
+
+        ValidationResult validationResult = server.validateSubSet(Arrays.asList(suiteTwo, suiteOne), "foo-module");
+        assertThat(validationResult.hasFailed(), is(false));
+
+        makeTlbServerFor(2, 2);
+
+        validationResult = server.validateSubSet(Arrays.asList(suiteTwo, suiteThree), "foo-module");
+        assertThat(validationResult.hasFailed(), is(true));
+
+        assertThat(validationResult.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 2/2. Suites [suite/Two: 1/2] have already been selected for running by other partitions.\nHad total of 2 suites named [suite/Three, suite/Two] in partition 2 of 2. Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two: 1/2].\n"));
+        assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
+    }
+
+    @Test
+    public void shouldSucceed_whenPartitionsAreMutuallyExclusiveAndCollectivelyExhaustive() throws IllegalAccessException {
+        makeTlbServerFor(1, 2);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        TlbSuiteFile suiteOne = new TlbSuiteFileImpl("suite/One");
+        files.add(suiteOne);
+        TlbSuiteFile suiteTwo = new TlbSuiteFileImpl("suite/Two");
+        files.add(suiteTwo);
+        TlbSuiteFile suiteThree = new TlbSuiteFileImpl("suite/Three");
+        files.add(suiteThree);
+        server.validateUniversalSet(files, "foo-module");
+
+        ValidationResult validationResult = server.validateSubSet(Arrays.asList(suiteOne), "foo-module");
+        assertThat(validationResult.hasFailed(), is(false));
+
+        makeTlbServerFor(2, 2);
+
+        validationResult = server.validateSubSet(Arrays.asList(suiteTwo, suiteThree), "foo-module");
+        assertThat(validationResult.hasFailed(), is(false));
+
+        assertThat(validationResult.getMessage(), is("Subset found consistent."));
+    }
+
+    private void makeTlbServerFor(final int partitionNumber, final int totalPartitions) {
+        this.partitionNumber = String.valueOf(partitionNumber);
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, this.partitionNumber);
+        this.totalPartitions = String.valueOf(totalPartitions);
+        clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, this.totalPartitions);
+        server = new TlbServer(new SystemEnvironment(clientEnv), httpAction);
+    }
+
+    @Test
+    public void shouldSucceed_allPartitionsExecutedValidation_ifAllPartitionsForGivenModuleHaveRun() throws IllegalAccessException {
+        makeTlbServerFor(1, 2);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        TlbSuiteFile suiteOne = new TlbSuiteFileImpl("suite/One");
+        files.add(suiteOne);
+        TlbSuiteFile suiteTwo = new TlbSuiteFileImpl("suite/Two");
+        files.add(suiteTwo);
+        TlbSuiteFile suiteThree = new TlbSuiteFileImpl("suite/Three");
+        files.add(suiteThree);
+        server.validateUniversalSet(files, "foo-module");
+
+        server.validateSubSet(Arrays.asList(suiteOne), "foo-module");
+
+        makeTlbServerFor(2, 2);
+
+        server.validateSubSet(Arrays.asList(suiteTwo, suiteThree), "foo-module");
+
+        ValidationResult validationResult = server.verifyAllPartitionsExecutedFor("foo-module");
+
+        assertThat(validationResult.getMessage(), is("All partitions executed.\n"));
+        assertThat(validationResult.hasFailed(), is(false));
+    }
+
+    @Test
+    public void shouldFail_allPartitionsExecutedValidation_ifAllPartitionsForGivenModuleHave_NOT_Run() throws IllegalAccessException {
+        makeTlbServerFor(1, 2);
+
+        ArrayList<TlbSuiteFile> files = new ArrayList<TlbSuiteFile>();
+        TlbSuiteFile suiteOne = new TlbSuiteFileImpl("suite/One");
+        files.add(suiteOne);
+        server.validateUniversalSet(files, "foo-module");
+
+        server.validateSubSet(Arrays.asList(suiteOne), "foo-module");
+
+        ValidationResult validationResult = server.verifyAllPartitionsExecutedFor("foo-module");
+
+        assertThat(validationResult.getMessage(), is("- [2] of total 2 partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
+        assertThat(validationResult.hasFailed(), is(true));
+    }
+
+    private void incrementPartitionNumber() {
+        clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, String.valueOf(Integer.parseInt(partitionNumber) + 1));
     }
 }

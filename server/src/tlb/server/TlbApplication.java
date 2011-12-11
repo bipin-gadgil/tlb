@@ -1,17 +1,19 @@
 package tlb.server;
 
-import tlb.TlbConstants;
-import tlb.server.resources.*;
 import org.restlet.Application;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.Router;
+import tlb.server.resources.SubsetSizeResource;
+import tlb.server.resources.SuiteResultResource;
+import tlb.server.resources.SuiteTimeResource;
+import tlb.server.resources.VersionedSuiteTimeResource;
+import tlb.server.resources.correctness.UpdateSubsetResource;
+import tlb.server.resources.correctness.UpdateUniversalSetResource;
+import tlb.server.resources.correctness.VerifyPartitionCompletenessResource;
 
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUBSET_SIZE;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_RESULT;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
-import static tlb.TlbConstants.Server.LISTING_VERSION;
-import static tlb.TlbConstants.Server.REQUEST_NAMESPACE;
+import static tlb.TlbConstants.Server.EntryRepoFactory.*;
+import static tlb.TlbConstants.Server.*;
 
 /**
  * @understands restlet tlb application for tlb server
@@ -32,6 +34,11 @@ public class TlbApplication extends Application {
 
         router.attach(String.format("/{%s}/%s", REQUEST_NAMESPACE, SUITE_TIME), SuiteTimeResource.class);
         router.attach(String.format("/{%s}/%s/{%s}", REQUEST_NAMESPACE, SUITE_TIME, LISTING_VERSION), VersionedSuiteTimeResource.class);
+
+        router.attach(String.format("/{%s}/%s/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, UNIVERSAL_SET, MODULE_NAME), UpdateUniversalSetResource.class);
+        router.attach(String.format("/{%s}/%s/{%s}/{%s}/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, TOTAL_JOBS, JOB_NUMBER, SUB_SET, MODULE_NAME), UpdateSubsetResource.class);
+
+        router.attach(String.format("/{%s}/%s/{%s}/%s/{%s}", REQUEST_NAMESPACE, CORRECTNESS_CHECK, LISTING_VERSION, VERIFY_PARTITION_COMPLETENESS, MODULE_NAME), VerifyPartitionCompletenessResource.class);
 
         return router;
     }

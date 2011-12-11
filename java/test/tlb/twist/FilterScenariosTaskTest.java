@@ -18,10 +18,11 @@ public class FilterScenariosTaskTest {
     @Test
     public void shouldCallLoadBalanceWithDefaultDestinationFolderIfNotSet() throws Exception {
         task.setScenariosFolder("scenarios");
+        task.setModuleName("main-twist-module");
 
         task.execute();
 
-        verify(twistSuite).balance("scenarios", FilterScenariosTask.DEFAULT_TWIST_LOCATION);
+        verify(twistSuite).balance("scenarios", FilterScenariosTask.DEFAULT_TWIST_LOCATION, "main-twist-module");
     }
 
     @Test
@@ -31,6 +32,6 @@ public class FilterScenariosTaskTest {
 
         task.execute();
 
-        verify(twistSuite).balance("scenarios", "destination");
+        verify(twistSuite).balance("scenarios", "destination", "default-module");
     }
 }

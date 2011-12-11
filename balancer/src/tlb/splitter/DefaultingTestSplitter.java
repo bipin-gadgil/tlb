@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @understands choosing criteria in order of preference
  */
-public class DefaultingTestSplitter extends TestSplitter {
+public class DefaultingTestSplitter extends AbstractTestSplitter {
     private static final Logger logger = Logger.getLogger(DefaultingTestSplitter.class.getName());
     public static final SystemEnvironment.EnvVar TLB_PREFERRED_SPLITTERS = new SystemEnvironment.DefaultedEnvVar(TlbConstants.TLB_PREFERRED_SPLITTERS, TimeBasedTestSplitter.class.getCanonicalName() + ":" + CountBasedTestSplitter.class.getCanonicalName());
 
@@ -30,11 +30,10 @@ public class DefaultingTestSplitter extends TestSplitter {
         }
     }
 
-    @Override
-    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources) {
+    public List<TlbSuiteFile> filterSuites(List<TlbSuiteFile> fileResources, String moduleName) {
         for (TestSplitter criteria : criterion) {
             try {
-                List<TlbSuiteFile> subset = criteria.filterSuites(fileResources);
+                List<TlbSuiteFile> subset = criteria.filterSuites(fileResources, moduleName);
                 logger.info(String.format("Used %s to balance.", criteria.getClass().getCanonicalName()));
                 return subset;
             } catch (Exception e) {

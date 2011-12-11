@@ -6,6 +6,9 @@ import org.restlet.Context;
 import org.restlet.Finder;
 import org.restlet.Restlet;
 import tlb.server.resources.*;
+import tlb.server.resources.correctness.UpdateSubsetResource;
+import tlb.server.resources.correctness.UpdateUniversalSetResource;
+import tlb.server.resources.correctness.VerifyPartitionCompletenessResource;
 
 import java.util.HashMap;
 
@@ -55,4 +58,29 @@ public class TlbApplicationTest {
         Restlet restlet = routeMaping.get("/{namespace}/suite_result");
         assertThat(((Finder)restlet).getTargetClass().getName(), is(SuiteResultResource.class.getName()));
     }
+
+    @Test
+    public void shouldHaveAn_updateUniversalSet_RouteForCorrectnessCheck() {
+        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
+        assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/universal_set/{module_name}"));
+        Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/universal_set/{module_name}");
+        assertThat(((Finder)restlet).getTargetClass().getName(), is(UpdateUniversalSetResource.class.getName()));
+    }
+
+    @Test
+    public void shouldHaveA_updateSubset_RouteForCorrectnessCheck() {
+        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
+        assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/{total_jobs}/{job_number}/sub_set/{module_name}"));
+        Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/{total_jobs}/{job_number}/sub_set/{module_name}");
+        assertThat(((Finder)restlet).getTargetClass().getName(), is(UpdateSubsetResource.class.getName()));
+    }
+
+    @Test
+    public void shouldHaveARouteFor_partitionCompleteness_correctnessCheck() {
+        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
+        assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/verify_partition_completeness/{module_name}"));
+        Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/verify_partition_completeness/{module_name}");
+        assertThat(((Finder)restlet).getTargetClass().getName(), is(VerifyPartitionCompletenessResource.class.getName()));
+    }
+
 }

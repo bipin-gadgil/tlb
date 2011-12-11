@@ -7,7 +7,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
-import tlb.domain.SuiteLevelEntry;
 import tlb.utils.SystemEnvironment;
 
 import java.io.File;
@@ -81,16 +80,6 @@ public class TestUtil {
             }
         }
         throw new IllegalStateException("Failed to find a free port");
-    }
-
-    public static List<SuiteLevelEntry> sortedList(final Collection<? extends SuiteLevelEntry> list) {
-        ArrayList<SuiteLevelEntry> entryList = new ArrayList<SuiteLevelEntry>(list);
-        Collections.sort(entryList, new Comparator<SuiteLevelEntry>() {
-            public int compare(SuiteLevelEntry o1, SuiteLevelEntry o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        return entryList;
     }
 
     public static String convertToPlatformSpecificPath(String classRelPath) {
@@ -184,6 +173,7 @@ public class TestUtil {
             boolean matched = false;
             for (LoggingEvent evt : loggingEvents) {
                 ThrowableInformation throwableInformation = evt.getThrowableInformation();
+                if (throwableInformation == null) continue;
                 matched = match(throwableInformation.getThrowable(), expected);
                 if (matched) break;
             }

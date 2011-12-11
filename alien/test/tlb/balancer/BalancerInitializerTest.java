@@ -3,6 +3,7 @@ package tlb.balancer;
 import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Component;
+import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.orderer.FailedFirstOrderer;
 import tlb.service.TlbServer;
@@ -37,7 +38,7 @@ public class BalancerInitializerTest {
         updateEnv(env, TlbConstants.Balancer.TLB_BALANCER_PORT.key, "614");
         updateEnv(env, TlbConstants.TlbServer.TLB_BASE_URL, "http://foo.bar.com:7019");
         ConcurrentMap<String,Object> map = initializer.application().getContext().getAttributes();
-        assertThat(map.get(TlbClient.SPLITTER), is(CountBasedTestSplitter.class));
+        assertThat(TestUtil.deref("splitter", map.get(TlbClient.SPLITTER)), is(CountBasedTestSplitter.class));
         assertThat(map.get(TlbClient.ORDERER), is(FailedFirstOrderer.class));
         assertThat(map.get(TlbClient.TALK_TO_SERVICE), is(TlbServer.class));
         assertThat(map.get(TlbClient.APP_COMPONENT), is(Component.class));

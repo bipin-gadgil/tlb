@@ -1,28 +1,27 @@
 package tlb.server.repo;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SuiteLevelEntry;
 import tlb.domain.TimeProvider;
-import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static junit.framework.Assert.fail;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static tlb.server.repo.TestCaseRepo.TestCaseEntry.parseSingleEntry;
 
-public class SuiteEntryRepoTest {
+public class NamedEntryRepoTest {
 
     private TestCaseRepo testCaseRepo;
 
@@ -34,9 +33,9 @@ public class SuiteEntryRepoTest {
     @Test
     public void shouldStoreAttributesFactorySets() throws ClassNotFoundException, IOException {
         final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTempFolder().getAbsolutePath())));
-        final SuiteEntryRepo entryRepo = (SuiteEntryRepo) factory.findOrCreate("name_space", "version", "type", new EntryRepoFactory.Creator<SuiteEntryRepo>() {
-            public SuiteEntryRepo create() {
-                return new SuiteEntryRepo<TestCaseRepo.TestCaseEntry>() {
+        final NamedEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<NamedEntryRepo>() {
+            public NamedEntryRepo create() {
+                return new NamedEntryRepo<TestCaseRepo.TestCaseEntry>() {
                     public Collection<TestCaseRepo.TestCaseEntry> list(String version) throws IOException, ClassNotFoundException {
                         return null;
                     }
@@ -46,7 +45,7 @@ public class SuiteEntryRepoTest {
                     }
                 };
             }
-        });
+        }, null);
         assertThat(entryRepo.factory, sameInstance(factory));
         assertThat(entryRepo.namespace, is("name_space"));
         assertThat(entryRepo.identifier, is("name__space_version_type"));
@@ -66,7 +65,7 @@ public class SuiteEntryRepoTest {
     public void shouldRecordSuiteRecordWhenUpdated() {
         testCaseRepo.update(parseSingleEntry("shouldBar#Bar"));
         testCaseRepo.update(parseSingleEntry("shouldFoo#Foo"));
-        List<SuiteLevelEntry> entryList = TestUtil.sortedList(testCaseRepo.list());
+        List<TestCaseRepo.TestCaseEntry> entryList = testCaseRepo.sortedList();
         assertThat(entryList.size(), is(2));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
@@ -77,7 +76,7 @@ public class SuiteEntryRepoTest {
         testCaseRepo.update(parseSingleEntry("shouldBar#Bar"));
         testCaseRepo.update(parseSingleEntry("shouldFoo#Foo"));
         testCaseRepo.update(parseSingleEntry("shouldBar#Foo"));
-        List<SuiteLevelEntry> entryList = TestUtil.sortedList(testCaseRepo.list());
+        List<TestCaseRepo.TestCaseEntry> entryList = testCaseRepo.sortedList();
         assertThat(entryList.size(), is(2));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Foo")));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
@@ -92,15 +91,27 @@ public class SuiteEntryRepoTest {
     }
 
     @Test
+    public void shouldLoadFromDisk() throws IOException, ClassNotFoundException {
+        testCaseRepo.loadCopyFromDisk("shouldBar#Bar\nshouldFoo#Foo\n");
+        assertThat(testCaseRepo.sortedList(), is(listOf(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar"), new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo"))));
+        assertThat(testCaseRepo.isDirty(), is(false));
+    }
+
+    @Test
     public void shouldLoadFromGivenReader() throws IOException, ClassNotFoundException {
-        File tempFile = File.createTempFile("temp-file", "something");
-        tempFile.deleteOnExit();
+        testCaseRepo.load("shouldBar#Bar\nshouldFoo#Foo\n");
+        assertThat(testCaseRepo.sortedList(), is(listOf(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar"), new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo"))));
+        assertThat(testCaseRepo.isDirty(), is(true));
+    }
 
-        FileUtils.writeStringToFile(tempFile, "shouldBar#Bar\nshouldFoo#Foo\n");
-
-        final FileReader reader = new FileReader(tempFile);
-        testCaseRepo.load(FileUtil.readIntoString(new BufferedReader(reader)));
-        assertThat(TestUtil.sortedList(testCaseRepo.list()), is(listOf(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar"), new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo"))));
+    @Test
+    public void shouldVersionListItself() {
+        testCaseRepo.update(parseSingleEntry("shouldBar#Bar"));
+        testCaseRepo.update(parseSingleEntry("shouldFoo#Foo"));
+        List<TestCaseRepo.TestCaseEntry> entryList = testCaseRepo.sortedList();
+        assertThat(entryList.size(), is(2));
+        assertThat(entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
+        assertThat(entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
     }
 
     @Test
@@ -116,15 +127,18 @@ public class SuiteEntryRepoTest {
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_bun", "my.Suite"));
         assertThat(testCaseRepo.isDirty(), is(true));
 
-        testCaseRepo.load("should_run#my.Suite\nshould_eat_bun#my.Suite");
+        testCaseRepo.loadCopyFromDisk("should_run#my.Suite\nshould_eat_bun#my.Suite");
         assertThat("Its not dirty if just loaded from file.", testCaseRepo.isDirty(), is(false));
+
+        testCaseRepo.load("should_run#my.Suite\nshould_eat_bun#my.Suite");
+        assertThat("Is dirty, as was loaded externally, and not from a file", testCaseRepo.isDirty(), is(true));
     }
 
     @Test
     public void shouldResetEntriesWhenLoadingFromString() {
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("test_name", "suite_name"));
 
-        testCaseRepo.load("foo#bar");
+        testCaseRepo.loadCopyFromDisk("foo#bar");
 
         Collection<TestCaseRepo.TestCaseEntry> list = testCaseRepo.list();
         assertThat(list.size(), is(1));
@@ -154,11 +168,29 @@ public class SuiteEntryRepoTest {
         verify(repoFactory, never()).syncRepoToDisk("foo_bar_baz", testCaseRepo);
     }
 
-    private List<SuiteLevelEntry> listOf(SuiteLevelEntry... entries) {
-        ArrayList<SuiteLevelEntry> list = new ArrayList<SuiteLevelEntry>();
-        for (SuiteLevelEntry entry : entries) {
+    private <T> List<T> listOf(T... entries) {
+        ArrayList<T> list = new ArrayList<T>();
+        for (T entry : entries) {
             list.add(entry);
         }
         return list;
+    }
+    
+    @Test
+    public void shouldUnderstandWhenHasFactorySet() {
+        TestCaseRepo repo = new TestCaseRepo(new TimeProvider());
+        assertThat(repo.hasFactory(), is(false));
+        repo.setFactory(mock(EntryRepoFactory.class));
+        assertThat(repo.hasFactory(), is(true));
+        repo.setFactory(null);
+        assertThat(repo.hasFactory(), is(false));
+    }
+
+    @Test
+    public void shouldReturnIdentifier() {
+        TestCaseRepo repo = new TestCaseRepo(new TimeProvider());
+        assertThat(repo.getIdentifier(), is(nullValue()));
+        repo.setIdentifier("foo");
+        assertThat(repo.getIdentifier(), is("foo"));
     }
 }

@@ -2,17 +2,17 @@ package tlb.server.repo;
 
 import org.apache.log4j.Logger;
 import tlb.TlbConstants;
+import tlb.domain.RepoCreatedTimeEntry;
 import tlb.domain.TimeProvider;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
-
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUBSET_SIZE;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_RESULT;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
+import static tlb.TlbConstants.Server.EntryRepoFactory.*;
 
 /**
  * @understands creation of EntryRepo
@@ -21,104 +21,251 @@ public class EntryRepoFactory implements Runnable {
     public static final String DELIMITER = "_";
     public static final String LATEST_VERSION = "LATEST";
     private static final Logger logger = Logger.getLogger(EntryRepoFactory.class.getName());
+    public static final String ERF_NAMESPACE = "tlb-erf";
 
     //private final Map<String, EntryRepo> repos;
     private final String tlbStoreDir;
     private final TimeProvider timeProvider;
     private Cache<EntryRepo> cache;
+    private final RepoLedger repoLedger;
 
     static interface Creator<T> {
         T create();
     }
 
     public EntryRepoFactory(SystemEnvironment env) {
-        this(new File(env.val(TlbConstants.Server.TLB_DATA_DIR)), new TimeProvider());
+        this(new File(env.val(TlbConstants.Server.TLB_DATA_DIR)), new TimeProvider(), Integer.parseInt(env.val(TlbConstants.Server.TLB_DATA_CACHE_SIZE)));
     }
 
-    EntryRepoFactory(File tlbStoreDir, TimeProvider timeProvider) {
+    EntryRepoFactory(File tlbStoreDir, TimeProvider timeProvider, int cacheSize) {
         this.tlbStoreDir = tlbStoreDir.getAbsolutePath();
-        this.cache = new Cache<EntryRepo>();
+        this.cache = new Cache<EntryRepo>(cacheSize);
         this.timeProvider = timeProvider;
-    }
-
-    public void purge(String identifier) throws IOException {
-        synchronized (repoId(identifier)) {
-            cache.remove(identifier);
-            File file = dumpFile(identifier);
-            if (file.exists()) FileUtils.forceDelete(file);
+        try {
+            this.repoLedger = findOrCreate(ERF_NAMESPACE, new VersionedNamespace(LATEST_VERSION, "REPO_LEDGER"), new Creator<RepoLedger>() {
+                public RepoLedger create() {
+                    return new RepoLedger();
+                }
+            }, null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private String repoId(String identifier) {
+    public void purge(String identifier) throws IOException {
+        synchronized (mutex(identifier)) {
+            cache.remove(identifier);
+            File file = dumpFile(identifier);
+            if (file.exists()) FileUtils.forceDelete(file);
+            repoLedger.deleteRepoEntryFor(identifier);
+        }
+    }
+
+    public static String mutex(String identifier) {
         return identifier.intern();
     }
 
     public void purgeVersionsOlderThan(int versionLifeInDays) {
-        for (String identifier : cache.keys()) {
-            EntryRepo entryRepo = cache.get(identifier);
-            if (entryRepo instanceof VersioningEntryRepo) {
-                final VersioningEntryRepo repo = (VersioningEntryRepo) entryRepo;
+        GregorianCalendar cal = timeProvider.cal();
+        cal.add(GregorianCalendar.DAY_OF_WEEK, -versionLifeInDays);//this should be parametrized
+        final Date tooOldThreshold = cal.getTime();
+        for (RepoCreatedTimeEntry repoTimeEntry : repoLedger.list()) {
+            if (repoTimeEntry.isPurgable() && repoTimeEntry.getCreationTime().before(tooOldThreshold)) {
+                String repoIdentifier = repoTimeEntry.getRepoIdentifier();
                 try {
-                    repo.purgeOldVersions(versionLifeInDays);
+                    this.purge(repoIdentifier);
+                    logger.warn(String.format("purged repo identified by '%s' at '%s'.", repoIdentifier, timeProvider.now()));
                 } catch (Exception e) {
-                    logger.warn(String.format("failed to delete older versions for repo identified by '%s'", identifier), e);
+                    logger.warn(String.format("failed to delete older versions for repo identified by '%s'", repoIdentifier), e);
                 }
             }
         }
     }
 
+    public static abstract class IdentificationScheme {
+        private final String type;
+
+        protected IdentificationScheme(String type) {
+            this.type = type;
+        }
+
+        public String getIdUnder(String namespace) {
+            return escape(namespace) + DELIMITER + getIdWithoutNamespace() + DELIMITER + escape(type);
+        }
+
+        public abstract String getIdWithoutNamespace();
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            IdentificationScheme that = (IdentificationScheme) o;
+
+            if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return type != null ? type.hashCode() : 0;
+        }
+
+        public abstract boolean isPurgable();
+    }
+
+    public static class VersionedNamespace extends IdentificationScheme {
+        private final String version;
+
+        public VersionedNamespace(String version, String type) {
+            super(type);
+            this.version = version;
+        }
+
+        @Override
+        public String getIdWithoutNamespace() {
+            return escape(version);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            VersionedNamespace that = (VersionedNamespace) o;
+
+            if (version != null ? !version.equals(that.version) : that.version != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return version != null ? version.hashCode() : 0;
+        }
+
+        @Override
+        public boolean isPurgable() {
+            return ! LATEST_VERSION.equals(version);
+        }
+    }
+
+    public static class SubmoduledUnderVersionedNamespace extends VersionedNamespace {
+        private final String submoduleName;
+
+        public SubmoduledUnderVersionedNamespace(String version, String type, String submoduleName) {
+            super(version, type);
+            this.submoduleName = submoduleName;
+        }
+
+        @Override
+        public String getIdWithoutNamespace() {
+            return super.getIdWithoutNamespace() + DELIMITER + escape(submoduleName);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+
+            SubmoduledUnderVersionedNamespace that = (SubmoduledUnderVersionedNamespace) o;
+
+            if (submoduleName != null ? !submoduleName.equals(that.submoduleName) : that.submoduleName != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + (submoduleName != null ? submoduleName.hashCode() : 0);
+            return result;
+        }
+    }
+
+
     public SuiteResultRepo createSuiteResultRepo(final String namespace, final String version) throws ClassNotFoundException, IOException {
-        return (SuiteResultRepo) findOrCreate(namespace, version, SUITE_RESULT, new Creator<SuiteResultRepo>() {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUITE_RESULT), new Creator<SuiteResultRepo>() {
             public SuiteResultRepo create() {
                 return new SuiteResultRepo();
             }
-        });
+        }, null);
     }
 
     public SuiteTimeRepo createSuiteTimeRepo(final String namespace, final String version) throws IOException {
-        return (SuiteTimeRepo) findOrCreate(namespace, version, SUITE_TIME, new Creator<SuiteTimeRepo>() {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUITE_TIME), new Creator<SuiteTimeRepo>() {
             public SuiteTimeRepo create() {
-                return new SuiteTimeRepo(timeProvider);
+                return new SuiteTimeRepo();
             }
-        });
+        }, new VersionedNamespace(LATEST_VERSION, SUITE_TIME));
     }
 
-    public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException, ClassNotFoundException {
-        return (SubsetSizeRepo) findOrCreate(namespace, version, SUBSET_SIZE, new Creator<SubsetSizeRepo>() {
+    public SubsetSizeRepo createSubsetRepo(final String namespace, final String version) throws IOException {
+        return findOrCreate(namespace, new VersionedNamespace(version, SUBSET_SIZE), new Creator<SubsetSizeRepo>() {
             public SubsetSizeRepo create() {
                 return new SubsetSizeRepo();
             }
-        });
+        }, null);
     }
 
-    EntryRepo findOrCreate(String namespace, String version, String type, Creator<? extends EntryRepo> creator) throws IOException {
-        String identifier = name(namespace, version, type);
-        synchronized (repoId(identifier)) {
-            EntryRepo repo = cache.get(identifier);
-            if (repo == null) {
-                repo = creator.create();
-                repo.setNamespace(namespace);
-                repo.setIdentifier(identifier);
-                cache.put(identifier, repo);
+    public SetRepo createUniversalSetRepo(String namespace, String version, final String submoduleName) throws IOException {
+        return findOrCreate(namespace, new SubmoduledUnderVersionedNamespace(version, UNIVERSAL_SET, submoduleName), new Creator<SetRepo>() {
+            public SetRepo create() {
+                return new SetRepo();
+            }
+        }, null);
+    }
 
-                File diskDump = dumpFile(identifier);
-                if (diskDump.exists()) {
-                    final FileReader reader = new FileReader(diskDump);
-                    repo.load(FileUtil.readIntoString(new BufferedReader(reader)));
+    public PartitionRecordRepo createPartitionRecordRepo(String namespace, String version, String submoduleName) throws IOException {
+        return findOrCreate(namespace, new SubmoduledUnderVersionedNamespace(version, PARTITION_RECORD, submoduleName), new Creator<PartitionRecordRepo>() {
+            public PartitionRecordRepo create() {
+                return new PartitionRecordRepo();
+            }
+        }, null);
+    }
+
+    <T extends EntryRepo> T findOrCreate(String namespace, IdentificationScheme idScheme, Creator<T> creator, IdentificationScheme primeFrom) throws IOException {
+        String identifier = idScheme.getIdUnder(namespace);
+        T repo = (T) cache.get(identifier);
+        if (repo == null) {
+            synchronized (mutex(identifier)) {
+                repo = (T) cache.get(identifier);
+                if (repo == null) {
+                    repo = creator.create();
+                    repo.setNamespace(namespace);
+                    repo.setIdentifier(identifier);
+                    cache.put(identifier, repo);
+
+                    File diskDump = dumpFile(identifier);
+                    if (diskDump.exists()) {
+                        final FileReader reader = new FileReader(diskDump);
+                        repo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+                    } else if (primeFrom != null) {
+                        T primingVersion = findOrCreate(namespace, primeFrom, creator, null);
+                        repo.load(primingVersion.dump());
+                    }
+                    if (! (repo instanceof RepoLedger)) {
+                        repoLedger.update(new RepoCreatedTimeEntry(identifier, timeProvider.now().getTime(), idScheme.isPurgable()));
+                    }
                 }
             }
-            repo.setFactory(this);
-            return repo;
         }
+        if (! repo.hasFactory()) {
+            synchronized (mutex(identifier)) {
+                if (! repo.hasFactory()) {
+                    repo.setFactory(this);
+                }
+            }
+        }
+        return repo;
     }
 
     private File dumpFile(String identifier) {
         new File(tlbStoreDir).mkdirs();
         return new File(tlbStoreDir, identifier);
-    }
-
-    public static String name(String namespace, String version, String type) {
-        return escape(namespace) + DELIMITER + escape(version) + DELIMITER + escape(type);
     }
 
     private static String escape(String str) {
@@ -142,10 +289,11 @@ public class EntryRepoFactory implements Runnable {
 
     public void syncRepoToDisk(final String identifier, final EntryRepo entryRepo) {
         try {
+            FileWriter writer = null;
             //don't care about a couple entries not being persisted(at teardown), as client is capable of balancing on averages(treat like new suites)
-            synchronized (repoId(identifier)) {
+            synchronized (mutex(identifier)) {
                 if (entryRepo != null && entryRepo.isDirty()) {
-                    FileWriter writer = null;
+
                     try {
                         writer = new FileWriter(dumpFile(identifier));
                         String dump = entryRepo.diskDump();

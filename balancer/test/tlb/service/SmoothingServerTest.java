@@ -6,8 +6,10 @@ import org.junit.Test;
 import org.mockito.internal.verification.Times;
 import tlb.TestUtil;
 import tlb.TlbConstants;
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
+import tlb.splitter.correctness.ValidationResult;
 import tlb.storage.TlbEntryRepository;
 import tlb.utils.SystemEnvironment;
 
@@ -160,6 +162,18 @@ public class SmoothingServerTest {
 
         public int totalPartitions() {
             return delegate.totalPartitions();
+        }
+
+        public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
+            throw new UnsupportedOperationException("not implemented yet");
+        }
+
+        public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
+            throw new UnsupportedOperationException("not implemented yet");
+        }
+
+        public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
+            throw new UnsupportedOperationException("not implemented yet");
         }
     }
 }

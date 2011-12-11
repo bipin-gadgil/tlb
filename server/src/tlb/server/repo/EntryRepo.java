@@ -12,21 +12,27 @@ import java.util.List;
 public interface EntryRepo<T extends Entry> extends Serializable {
     Collection<T> list();
 
-    Collection<T> list(String version) throws IOException, ClassNotFoundException;
-
     void update(T entry);
 
     String diskDump();
 
-    void load(final String fileContents);
+    String dump();
+
+    void loadCopyFromDisk(final String fileContents);
+
+    void load(final String contents);
 
     void add(T entry);
 
     void setFactory(EntryRepoFactory factory);
 
+    boolean hasFactory();
+
     void setNamespace(String namespace);
 
     void setIdentifier(String type);
+
+    String getIdentifier();
 
     List<T> parse(String string);
 

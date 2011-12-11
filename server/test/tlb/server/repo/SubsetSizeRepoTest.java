@@ -9,8 +9,10 @@ import java.io.*;
 import java.util.List;
 
 import static junit.framework.Assert.fail;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class SubsetSizeRepoTest {
     private SubsetSizeRepo subsetSizeRepo;
@@ -56,15 +58,24 @@ public class SubsetSizeRepoTest {
     public void shouldDumpDataAsString() throws IOException, ClassNotFoundException {
         addToRepo();
         String dump = subsetSizeRepo.diskDump();
-        subsetSizeRepo.load(dump);
+        subsetSizeRepo.loadCopyFromDisk(dump);
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
     }
 
     @Test
-    public void shouldLoadFromGivenReader() throws IOException, ClassNotFoundException {
+    public void shouldLoadFromDisk() throws IOException, ClassNotFoundException {
+        final StringReader reader = new StringReader("10\n12\n7\n");
+        subsetSizeRepo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+        assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
+        assertThat(subsetSizeRepo.isDirty(), is(false));
+    }
+
+    @Test
+    public void shouldLoadFromGivenSource() throws IOException, ClassNotFoundException {
         final StringReader reader = new StringReader("10\n12\n7\n");
         subsetSizeRepo.load(FileUtil.readIntoString(new BufferedReader(reader)));
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
+        assertThat(subsetSizeRepo.isDirty(), is(true));
     }
     
     @Test
@@ -99,7 +110,28 @@ public class SubsetSizeRepoTest {
         repo.add(new SubsetSizeEntry(25));
         assertThat(repo.isDirty(), is(true));
 
-        repo.load("10");
+        repo.loadCopyFromDisk("10");
         assertThat("Its not dirty if just loaded from file.", repo.isDirty(), is(false));
+
+        repo.load("10\n15");
+        assertThat("Loaded, but not from file.", repo.isDirty(), is(true));
+    }
+
+    @Test
+    public void shouldUnderstandWhenHasFactorySet() {
+        SubsetSizeRepo repo = new SubsetSizeRepo();
+        assertThat(repo.hasFactory(), is(false));
+        repo.setFactory(mock(EntryRepoFactory.class));
+        assertThat(repo.hasFactory(), is(true));
+        repo.setFactory(null);
+        assertThat(repo.hasFactory(), is(false));
+    }
+
+    @Test
+    public void shouldReturnIdentifier() {
+        SubsetSizeRepo repo = new SubsetSizeRepo();
+        assertThat(repo.getIdentifier(), is(nullValue()));
+        repo.setIdentifier("foo");
+        assertThat(repo.getIdentifier(), is("foo"));
     }
 }

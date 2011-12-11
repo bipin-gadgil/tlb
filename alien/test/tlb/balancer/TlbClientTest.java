@@ -55,4 +55,12 @@ public class TlbClientTest {
         Restlet restlet = routeMaping.get(String.format("/control/{%s}", TlbConstants.Balancer.QUERY));
         assertThat(((Finder)restlet).getTargetClass().getName(), is(ControlResource.class.getName()));
     }
+
+    @Test
+    public void shouldExposeAssertionThatAllPartitionsExecuted() {
+        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
+        assertThat(routeMaping.keySet(), hasItem("/assert_all_partitions_executed"));
+        Restlet restlet = routeMaping.get("/assert_all_partitions_executed");
+        assertThat(((Finder)restlet).getTargetClass().getName(), is(AllPartitionsExecutedAssertion.class.getName()));
+    }
 }

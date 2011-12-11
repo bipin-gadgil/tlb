@@ -99,17 +99,8 @@ public class ControlResourceTest {
             throw new RuntimeException("please execute this test from project root");
         }
         final Process process = new ProcessBuilder("ant", "run_balancer", "-Doffline=t", "-Drandom.balancer.port=" + port).start();
-        final boolean[] shouldRun = new boolean[1];
-        final Runnable streamPumper = new Runnable() {
-            public void run() {
-                shouldRun[0] = true;
-                while (shouldRun[0]) {
-                    emptyStream(process.getErrorStream());
-                    emptyStream(process.getInputStream());
-                }
-            }
-        };
-        new Thread(streamPumper).start();
+        Pumper pumperOut = new Pumper(process.getInputStream());
+        Pumper pumperErr = new Pumper(process.getErrorStream());
 
         DefaultHttpClient client = new DefaultHttpClient();
         final HttpGet suicide = new HttpGet(String.format("http://localhost:%s/control/suicide", port));
@@ -128,7 +119,30 @@ public class ControlResourceTest {
         assertThat(suicideCall.getStatusLine().getStatusCode(), is(200));
         assertThat(EntityUtils.toString(suicideCall.getEntity()), is("HALTING"));
         assertThat(process.waitFor(), is(0));
-        shouldRun[0] = false;
+        pumperOut.stop();
+        pumperErr.stop();
+    }
+
+    private class Pumper {
+        private Thread thd;
+        private boolean shdRun;
+
+        protected Pumper(final InputStream stream) {
+            shdRun = true;
+            final Runnable runner = new Runnable() {
+                public void run() {
+                    while (shdRun) {
+                        emptyStream(stream);
+                    }
+                }
+            };
+            thd = new Thread(runner);
+        }
+
+        void stop() throws InterruptedException {
+            shdRun = false;
+            thd.join();
+        }
     }
 
     private void emptyStream(InputStream stream) {

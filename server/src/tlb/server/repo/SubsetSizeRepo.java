@@ -14,6 +14,8 @@ import java.util.List;
 public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
     private volatile List<SubsetSizeEntry> entries;
     private volatile boolean dirty;
+    private volatile String identifier;
+    transient volatile protected EntryRepoFactory factory;
 
     public SubsetSizeRepo() {
         setEntries(new ArrayList<SubsetSizeEntry>());
@@ -36,17 +38,27 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
     }
 
     public synchronized String diskDump() {
+        String dumpStr = dump();
+        dirty = false;
+        return dumpStr;
+    }
+
+    public synchronized String dump() {
         StringBuilder dumpBuffer = new StringBuilder();
         for (SubsetSizeEntry entry : entries) {
             dumpBuffer.append(entry.dump());
         }
-        dirty = false;
         return dumpBuffer.toString();
     }
 
-    public synchronized void load(final String fileContents) {
-        setEntries(parse(fileContents));
+    public synchronized void loadCopyFromDisk(final String fileContents) {
+        load(fileContents);
         dirty = false;
+    }
+
+    public void load(String contents) {
+        setEntries(parse(contents));
+        dirty = true;
     }
 
     public synchronized void add(SubsetSizeEntry entry) {
@@ -55,15 +67,23 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
     }
 
     public void setFactory(EntryRepoFactory factory) {
-        //doesn't need
+        this.factory = factory;
+    }
+
+    public boolean hasFactory() {
+        return factory != null;
     }
 
     public void setNamespace(String namespace) {
         //doesn't need
     }
 
-    public void setIdentifier(String type) {
-        //doesn't need
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
+
+    public String getIdentifier() {
+        return identifier;
     }
 
     public List<SubsetSizeEntry> parse(String string) {

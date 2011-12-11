@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * @understands result of executing a test suite
  */
-public class SuiteResultEntry implements SuiteLevelEntry {
+public class SuiteResultEntry implements NamedEntry {
 
     private static final Pattern RESULT_PATTERN = Pattern.compile("(.*?):\\s*(true|false)");
 

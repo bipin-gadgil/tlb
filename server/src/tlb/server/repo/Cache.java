@@ -16,10 +16,14 @@ public class Cache<T> {
     private final net.sf.ehcache.Cache cache;
 
     public Cache() {
+        this(1000);
+    }
+
+    public Cache(final int maxElementsInMemory) {
         cache = new net.sf.ehcache.Cache(
                 new CacheConfiguration()
                         .name(UUID.randomUUID().toString())
-                        .maxElementsInMemory(10000)
+                        .maxElementsInMemory(maxElementsInMemory)
                         .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU)
                         .overflowToDisk(false)
                         .eternal(true)

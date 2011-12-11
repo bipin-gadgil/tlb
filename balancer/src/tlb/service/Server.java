@@ -1,7 +1,9 @@
 package tlb.service;
 
+import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
+import tlb.splitter.correctness.ValidationResult;
 
 import java.util.List;
 
@@ -26,4 +28,10 @@ public interface Server {
     int partitionNumber();
 
     int totalPartitions();
+
+    ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName);
+
+    ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName);
+
+    ValidationResult verifyAllPartitionsExecutedFor(String moduleName);
 }
