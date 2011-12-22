@@ -3,6 +3,7 @@ package tlb.server.repo;
 import tlb.domain.SubsetSizeEntry;
 import org.junit.Before;
 import org.junit.Test;
+import tlb.server.RepoFactoryTestUtil;
 import tlb.utils.FileUtil;
 
 import java.io.*;
@@ -57,7 +58,7 @@ public class SubsetSizeRepoTest {
     @Test
     public void shouldDumpDataAsString() throws IOException, ClassNotFoundException {
         addToRepo();
-        String dump = subsetSizeRepo.diskDump();
+        String dump = RepoFactoryTestUtil.diskDump(subsetSizeRepo);
         subsetSizeRepo.loadCopyFromDisk(dump);
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
     }
@@ -104,7 +105,7 @@ public class SubsetSizeRepoTest {
         repo.add(new SubsetSizeEntry(10));
         assertThat(repo.isDirty(), is(true));
 
-        repo.diskDump();
+        RepoFactoryTestUtil.diskDump(repo);
         assertThat(repo.isDirty(), is(false));
 
         repo.add(new SubsetSizeEntry(25));

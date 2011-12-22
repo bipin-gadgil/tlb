@@ -2,6 +2,9 @@ package tlb.server.repo;
 
 import tlb.domain.NamedEntry;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,17 +79,21 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         return dirty;
     }
 
-    public synchronized final String diskDump() {
+    public synchronized void diskDumpTo(final Writer writer) throws IOException {
         dirty = false;
-        return dump();
+        dumpTo(writer);
     }
 
-    public final String dump() {
-        StringBuilder dumpBuffer = new StringBuilder();
+    public final String dump() throws IOException {
+        StringWriter stringWriter = new StringWriter();
+        dumpTo(stringWriter);
+        return stringWriter.toString();
+    }
+
+    public void dumpTo(Writer writer) throws IOException {
         for (T entry : nameToEntry.values()) {
-            dumpBuffer.append(entry.dump());
+            writer.write(entry.dump());
         }
-        return dumpBuffer.toString();
     }
 
     public synchronized void loadCopyFromDisk(final String fileContents) {

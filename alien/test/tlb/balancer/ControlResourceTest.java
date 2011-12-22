@@ -137,6 +137,7 @@ public class ControlResourceTest {
                 }
             };
             thd = new Thread(runner);
+            thd.start();
         }
 
         void stop() throws InterruptedException {

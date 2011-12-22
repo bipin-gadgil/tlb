@@ -14,9 +14,7 @@ public interface EntryRepo<T extends Entry> extends Serializable {
 
     void update(T entry);
 
-    String diskDump();
-
-    String dump();
+    String dump() throws IOException;
 
     void loadCopyFromDisk(final String fileContents);
 
@@ -37,4 +35,8 @@ public interface EntryRepo<T extends Entry> extends Serializable {
     List<T> parse(String string);
 
     boolean isDirty();
+
+    void diskDumpTo(Writer writer) throws IOException;
+
+    void dumpTo(Writer writer) throws IOException;
 }

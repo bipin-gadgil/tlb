@@ -2,7 +2,9 @@ package tlb.server.repo;
 
 import tlb.domain.SubsetSizeEntry;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,18 +39,21 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
         throw new UnsupportedOperationException("update not allowed on repository");
     }
 
-    public synchronized String diskDump() {
-        String dumpStr = dump();
+    public synchronized void diskDumpTo(Writer writer) throws IOException {
+        dumpTo(writer);
         dirty = false;
-        return dumpStr;
     }
 
-    public synchronized String dump() {
-        StringBuilder dumpBuffer = new StringBuilder();
+    public synchronized String dump() throws IOException {
+        StringWriter stringWriter = new StringWriter();
+        dumpTo(stringWriter);
+        return stringWriter.toString();
+    }
+
+    public void dumpTo(Writer writer) throws IOException {
         for (SubsetSizeEntry entry : entries) {
-            dumpBuffer.append(entry.dump());
+            writer.write(entry.dump());
         }
-        return dumpBuffer.toString();
     }
 
     public synchronized void loadCopyFromDisk(final String fileContents) {

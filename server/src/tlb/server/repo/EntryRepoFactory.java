@@ -289,15 +289,17 @@ public class EntryRepoFactory implements Runnable {
 
     public void syncRepoToDisk(final String identifier, final EntryRepo entryRepo) {
         try {
-            FileWriter writer = null;
+            OutputStreamWriter writer = null;
+            FileOutputStream fos = null;
             //don't care about a couple entries not being persisted(at teardown), as client is capable of balancing on averages(treat like new suites)
             synchronized (mutex(identifier)) {
                 if (entryRepo != null && entryRepo.isDirty()) {
-
                     try {
-                        writer = new FileWriter(dumpFile(identifier));
-                        String dump = entryRepo.diskDump();
-                        writer.write(dump);
+                        File file = dumpFile(identifier);
+                        fos = new FileOutputStream(file);
+                        BufferedOutputStream bos = new BufferedOutputStream(fos);
+                        writer = new OutputStreamWriter(bos);
+                        entryRepo.diskDumpTo(writer);
                     } finally {
                         try {
                             if (writer != null) {
@@ -305,6 +307,16 @@ public class EntryRepoFactory implements Runnable {
                             }
                         } catch (IOException e) {
                             logger.warn(String.format("closing of disk dump file of %s failed, tlb server may not be able to perform data dependent operations well on next reboot.", identifier), e);
+                            throw e;
+                        }
+
+                        try {
+                            if (fos != null) {
+                                fos.close();
+                            }
+                        } catch (IOException e) {
+                            logger.warn(String.format("closing of disk dump file of %s failed, tlb server may not be able to perform data dependent operations well on next reboot.", identifier), e);
+                            throw e;
                         }
                     }
                 }

@@ -3,7 +3,9 @@ package tlb.server.repo;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.domain.SuiteNamePartitionEntry;
+import tlb.server.RepoFactoryTestUtil;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,11 +32,11 @@ public class SetRepoTest {
     }
 
     @Test
-    public void shouldUnderstandIfRepoHasBeenPrimedWithData() {
+    public void shouldUnderstandIfRepoHasBeenPrimedWithData() throws IOException {
         assertThat(repo.isPrimed(), is(false));
         repo.load("foo/bar/Baz\nbar/baz/Quux");
         assertThat(repo.isPrimed(), is(true));
-        String s = repo.diskDump();
+        String s = RepoFactoryTestUtil.diskDump(repo);
         assertThat(repo.isPrimed(), is(true));
     }
 

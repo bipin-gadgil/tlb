@@ -5,6 +5,7 @@ import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.domain.TimeProvider;
+import tlb.server.RepoFactoryTestUtil;
 import tlb.utils.SystemEnvironment;
 
 import java.io.IOException;
@@ -86,7 +87,7 @@ public class NamedEntryRepoTest {
     public void shouldDumpDataOnGivenOutputStream() throws IOException, ClassNotFoundException {
         testCaseRepo.update(parseSingleEntry("shouldBar#Bar"));
         testCaseRepo.update(parseSingleEntry("shouldFoo#Foo"));
-        String dump = testCaseRepo.diskDump();
+        String dump = RepoFactoryTestUtil.diskDump(testCaseRepo);
         assertThat(dump, is("shouldBar#Bar\nshouldFoo#Foo\n"));
     }
 
@@ -115,13 +116,13 @@ public class NamedEntryRepoTest {
     }
 
     @Test
-    public void shouldUnderstandDirtiness() {
+    public void shouldUnderstandDirtiness() throws IOException {
         assertThat(testCaseRepo.isDirty(), is(false));
 
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_run", "my.Suite"));
         assertThat(testCaseRepo.isDirty(), is(true));
 
-        testCaseRepo.diskDump();
+        RepoFactoryTestUtil.diskDump(testCaseRepo);
         assertThat(testCaseRepo.isDirty(), is(false));
 
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_bun", "my.Suite"));
@@ -157,13 +158,13 @@ public class NamedEntryRepoTest {
     }
 
     @Test
-    public void shouldNOTWriteDataBackToFileWhenNOTDirty_beforeGettingGarbageCollected() throws IllegalAccessException {
+    public void shouldNOTWriteDataBackToFileWhenNOTDirty_beforeGettingGarbageCollected() throws IllegalAccessException, IOException {
         EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
         testCaseRepo.setFactory(repoFactory);
         testCaseRepo.setIdentifier("foo_bar_baz");
 
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("testFoo", "foo.Bar"));
-        String ignore = testCaseRepo.diskDump();
+        String ignore = RepoFactoryTestUtil.diskDump(testCaseRepo);
         TestUtil.invoke("finalize", testCaseRepo);
         verify(repoFactory, never()).syncRepoToDisk("foo_bar_baz", testCaseRepo);
     }

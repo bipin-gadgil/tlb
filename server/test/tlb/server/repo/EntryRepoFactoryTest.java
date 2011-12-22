@@ -9,6 +9,8 @@ import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.domain.*;
@@ -261,11 +263,11 @@ public class EntryRepoFactoryTest {
         EntryRepo repoBaz = mock(EntryRepo.class);
 
         when(repoFoo.isDirty()).thenReturn(true);
-        when(repoFoo.diskDump()).thenReturn("foo-data");
+        stubDiskDump(repoFoo, "foo-data");
         when(repoBar.isDirty()).thenReturn(true);
-        when(repoBar.diskDump()).thenReturn("bar-data");
+        stubDiskDump(repoBar, "bar-data");
         when(repoBaz.isDirty()).thenReturn(true);
-        when(repoBaz.diskDump()).thenReturn("baz-data");
+        stubDiskDump(repoBaz, "baz-data");
 
         factory.getRepos().put("foo", repoFoo);
         factory.getRepos().put("bar", repoBar);
@@ -274,9 +276,9 @@ public class EntryRepoFactoryTest {
         Thread exitHook = factory.exitHook();
         exitHook.start();
         exitHook.join();
-        verify(repoFoo).diskDump();
-        verify(repoBar).diskDump();
-        verify(repoBaz).diskDump();
+        verify(repoFoo).diskDumpTo(any(Writer.class));
+        verify(repoBar).diskDumpTo(any(Writer.class));
+        verify(repoBaz).diskDumpTo(any(Writer.class));
     }
 
     @Test
@@ -325,15 +327,30 @@ public class EntryRepoFactoryTest {
         factory.getRepos().put("foo_subset__size", repoFoo);
         factory.getRepos().put("bar_subset__size", repoBar);
         when(repoFoo.isDirty()).thenReturn(true);
-        when(repoFoo.diskDump()).thenThrow(new RuntimeException("test exception"));
+        doThrow(new RuntimeException("test exception")).when(repoFoo).diskDumpTo(any(Writer.class));
+
         when(repoBar.isDirty()).thenReturn(true);
-        when(repoBar.diskDump()).thenReturn("bar-data");
+        stubDiskDump(repoBar, "bar-data");
+
         logFixture.startListening();
         factory.run();
         logFixture.stopListening();
+
+        verify(repoFoo).diskDumpTo(any(Writer.class));
+        verify(repoBar).diskDumpTo(any(Writer.class));
+
         logFixture.assertHeard("disk dump of foo_subset__size failed");
-        verify(repoFoo).diskDump();
-        verify(repoBar).diskDump();
+    }
+
+    private void stubDiskDump(EntryRepo repoBar, final String dumpString) throws IOException {
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Object[] arguments = invocation.getArguments();
+                Writer writer = (Writer) arguments[0];
+                writer.write(dumpString);
+                return null;
+            }
+        }).when(repoBar).diskDumpTo(any(Writer.class));
     }
 
     @Test

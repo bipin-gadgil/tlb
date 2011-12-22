@@ -478,7 +478,7 @@
     <target name="test.perf" depends="init, server.test.perf"/>
 
     <target name="run_balancer" depends="compile">
-        <java classname="tlb.BalancerApp" fork="true" output="${dog-fooding.reports.target.dir}/balancer.out" error="${dog-fooding.reports.target.dir}/balancer.err">
+        <java classname="tlb.BalancerApp" fork="true">
             <env key="TLB_BASE_URL" value="http://localhost:7019"/>
             <env key="TLB_JOB_NAME" value="foo"/>
             <env key="TLB_PARTITION_NUMBER" value="1"/>
