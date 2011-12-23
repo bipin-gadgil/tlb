@@ -73,7 +73,10 @@ public class EntryRepoFactoryTest {
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
-        setRepo.load("foo/bar/Baz.quux");
+        synchronized (setRepo) {
+            StringReader stringReader = new StringReader("foo/bar/Baz.quux");
+            setRepo.loadAndMarkDirty(stringReader);
+        }
         partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
         partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
 
@@ -103,7 +106,10 @@ public class EntryRepoFactoryTest {
         subsetRepo.add(new SubsetSizeEntry(10));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Quux", 25));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
-        setRepo.load("bar.baz.Quux");
+        synchronized (setRepo) {
+            StringReader stringReader1 = new StringReader("bar.baz.Quux");
+            setRepo.loadAndMarkDirty(stringReader1);
+        }
         partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
 
         factory.syncReposToDisk();
@@ -119,7 +125,10 @@ public class EntryRepoFactoryTest {
         subsetRepo.add(new SubsetSizeEntry(21));
         suiteTimeRepo.update(new SuiteTimeEntry("foo.bar.Bang", 35));
         suiteResultRepo.update(new SuiteResultEntry("foo.bar.Baz", true));
-        setRepo.load("quux.bar.Baz");
+        synchronized (setRepo) {
+            StringReader stringReader = new StringReader("quux.bar.Baz");
+            setRepo.loadAndMarkDirty(stringReader);
+        }
         partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
 
         factory.syncReposToDisk();
@@ -299,7 +308,10 @@ public class EntryRepoFactoryTest {
         String version = "foo-bar";
         String submoduleName = "module-name";
         SetRepo setRepo = factory.createUniversalSetRepo("quux", version, submoduleName);
-        setRepo.load("foo/bar/Baz\nquux/bar/Baz\nfoo/baz/Quux");
+        synchronized (setRepo) {
+            StringReader stringReader = new StringReader("foo/bar/Baz\nquux/bar/Baz\nfoo/baz/Quux");
+            setRepo.loadAndMarkDirty(stringReader);
+        }
 
         PartitionRecordRepo partitionRepo = factory.createPartitionRecordRepo("quux", version, submoduleName);
         partitionRepo.subsetReceivedFromPartition(new PartitionIdentifier(1, 2));

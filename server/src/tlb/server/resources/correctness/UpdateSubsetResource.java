@@ -7,13 +7,15 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
-import tlb.TlbConstants;
 import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.model.SubsetCorrectnessChecker;
+import tlb.utils.Function;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 import static tlb.TlbConstants.Correctness.CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET;
 import static tlb.TlbConstants.Correctness.NO_UNIVERSAL_SET_FOUND;
@@ -46,7 +48,12 @@ public class UpdateSubsetResource extends SetResource {
             getResponse().setEntity(new StringRepresentation("Universal set for given job-name, job-version and module-name combination doesn't exist."));
             return;
         }
-        SetRepo.OperationResult result = subsetCorrectnessChecker.reportSubset(reqPayload(entity), Integer.parseInt(strAttr(JOB_NUMBER)), Integer.parseInt(strAttr(TOTAL_JOBS)));
+        SetRepo.OperationResult result = reqPayload(new Function<Reader, IOException, SetRepo.OperationResult>() {
+            public SetRepo.OperationResult execute(Reader reader) throws IOException {
+                return subsetCorrectnessChecker.reportSubset(Integer.parseInt(strAttr(JOB_NUMBER)), Integer.parseInt(strAttr(TOTAL_JOBS)), reader);
+            }
+        }, entity);
+
         if (result.isSuccess()) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {

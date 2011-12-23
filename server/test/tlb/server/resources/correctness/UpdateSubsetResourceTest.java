@@ -18,6 +18,7 @@ import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -92,7 +93,10 @@ public class UpdateSubsetResourceTest {
 
     @Test
     public void shouldUpdateUniversalSetRepoSuiteCounts_forSuitesConsumedByASubset() throws ResourceException, IOException {
-        repo.load("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class");
+        synchronized (repo) {
+            StringReader stringReader = new StringReader("foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class");
+            repo.loadAndMarkDirty(stringReader);
+        }
         List<SuiteNamePartitionEntry> listBefore = new ArrayList<SuiteNamePartitionEntry>(repo.list());
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class"));
         List<SuiteNamePartitionEntry> listAfter = new ArrayList<SuiteNamePartitionEntry>(repo.list());

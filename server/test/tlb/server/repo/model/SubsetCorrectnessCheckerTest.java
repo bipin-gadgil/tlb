@@ -8,6 +8,8 @@ import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.repo.NamedEntryRepo;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -24,9 +26,10 @@ public class SubsetCorrectnessCheckerTest {
     }
 
     @Test
-    public void shouldRegisterWhenASubsetConsumesAGivenSuite() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
-        SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nfoo/Quux", 2, 10);
+    public void shouldRegisterWhenASubsetConsumesAGivenSuite() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+        repo.loadAndMarkDirty(stringReader);
+        SetRepo.OperationResult result = checker.reportSubset(2, 10, new StringReader("foo/bar/Baz\nfoo/Quux"));
         assertThat(result.isSuccess(), is(true));
 
         List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
@@ -41,9 +44,10 @@ public class SubsetCorrectnessCheckerTest {
     }
 
     @Test
-    public void shouldFailWhen_subsetHasATestThatUniversalSetDoesNot() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
-        SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nfoo/Bar\nhell/Yeah\nhell/o/World\nfoo/Quux", 1, 2);
+    public void shouldFailWhen_subsetHasATestThatUniversalSetDoesNot() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+        repo.loadAndMarkDirty(stringReader);
+        SetRepo.OperationResult result = checker.reportSubset(1, 2, new StringReader("foo/bar/Baz\nfoo/Bar\nhell/Yeah\nhell/o/World\nfoo/Quux"));
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Found 3 unknown(not present in universal set) suite(s) named: [foo/Bar, hell/Yeah, hell/o/World].\nHad total of 5 suites named [foo/Bar, foo/Quux, foo/bar/Baz, hell/Yeah, hell/o/World] in partition 1 of 2. Corresponding universal set had a total of 4 suites named [bar/baz/Quux, foo/Quux: 1/2, foo/bar/Baz: 1/2, hello/World].\n"));
 
@@ -59,9 +63,10 @@ public class SubsetCorrectnessCheckerTest {
     }
 
     @Test
-    public void shouldFailWhen_subsetHasATestAppearingMoreThanOnce() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
-        SetRepo.OperationResult result = checker.reportSubset("foo/Quux\nfoo/bar/Baz\nfoo/Quux\nfoo/bar/Baz\nfoo/Quux", 2, 3);
+    public void shouldFailWhen_subsetHasATestAppearingMoreThanOnce() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+        repo.loadAndMarkDirty(stringReader);
+        SetRepo.OperationResult result = checker.reportSubset(2, 3, new StringReader("foo/Quux\nfoo/bar/Baz\nfoo/Quux\nfoo/bar/Baz\nfoo/Quux"));
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Found more than one occurrence of 2 suite(s) named: {foo/bar/Baz=2, foo/Quux=3}.\nHad total of 5 suites named [foo/Quux, foo/Quux, foo/Quux, foo/bar/Baz, foo/bar/Baz] in partition 2 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux, foo/Quux: 2/3, foo/bar/Baz: 2/3, hello/World].\n"));
 
@@ -77,16 +82,17 @@ public class SubsetCorrectnessCheckerTest {
     }
     
     @Test
-    public void shouldFailWhen_mutualExclusionIsViolated() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+    public void shouldFailWhen_mutualExclusionIsViolated() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+        repo.loadAndMarkDirty(stringReader);
 
-        SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nbar/baz/Quux", 2, 3);
+        SetRepo.OperationResult result = checker.reportSubset(2, 3, new StringReader("foo/bar/Baz\nbar/baz/Quux"));
         assertThat(result.isSuccess(), is(true));
 
-        result = checker.reportSubset("foo/Quux", 3, 3);
+        result = checker.reportSubset(3, 3, new StringReader("foo/Quux"));
         assertThat(result.isSuccess(), is(true));
 
-        result = checker.reportSubset("bar/baz/Quux\nhello/World\nfoo/Quux", 1, 3);
+        result = checker.reportSubset(1, 3, new StringReader("bar/baz/Quux\nhello/World\nfoo/Quux"));
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 1/3. Suites [bar/baz/Quux: 2/3, foo/Quux: 3/3] have already been selected for running by other partitions.\nHad total of 3 suites named [bar/baz/Quux, foo/Quux, hello/World] in partition 1 of 3. Corresponding universal set had a total of 4 suites named [bar/baz/Quux: 2/3, foo/Quux: 3/3, foo/bar/Baz: 2/3, hello/World: 1/3].\n"));
         List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
@@ -101,10 +107,11 @@ public class SubsetCorrectnessCheckerTest {
     }
     
     @Test
-    public void shouldNotFailWhen_oneSubsetPostsTwice() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+    public void shouldNotFailWhen_oneSubsetPostsTwice() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World");
+        repo.loadAndMarkDirty(stringReader);
 
-        SetRepo.OperationResult result = checker.reportSubset("foo/bar/Baz\nbar/baz/Quux", 2, 3);
+        SetRepo.OperationResult result = checker.reportSubset(2, 3, new StringReader("foo/bar/Baz\nbar/baz/Quux"));
         assertThat(result.isSuccess(), is(true));
 
         List<SuiteNamePartitionEntry> sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
@@ -118,7 +125,7 @@ public class SubsetCorrectnessCheckerTest {
         SuiteNamePartitionEntryTest.assertNotInUse(sortedEntriesAfterSubsetPost.get(3), "hello/World");
 
 
-        result = checker.reportSubset("foo/bar/Baz\nfoo/Quux", 2, 3); //second call from the same partition
+        result = checker.reportSubset(2, 3, new StringReader("foo/bar/Baz\nfoo/Quux")); //second call from the same partition
         assertThat(result.isSuccess(), is(true));
 
         sortedEntriesAfterSubsetPost = NamedEntryRepo.sortedListFor(repo.list());
@@ -133,16 +140,17 @@ public class SubsetCorrectnessCheckerTest {
     }
 
     @Test
-    public void shouldFailWhen_collectiveExhaustionIsViolated() {
-        repo.load("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World\nbaz/bar/Foo");
+    public void shouldFailWhen_collectiveExhaustionIsViolated() throws IOException {
+        StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux\nfoo/Quux\nhello/World\nbaz/bar/Foo");
+        repo.loadAndMarkDirty(stringReader);
 
-        SetRepo.OperationResult result = checker.reportSubset("bar/baz/Quux", 2, 3);
+        SetRepo.OperationResult result = checker.reportSubset(2, 3, new StringReader("bar/baz/Quux"));
         assertThat(result.isSuccess(), is(true));
 
-        result = checker.reportSubset("foo/Quux", 3, 3);
+        result = checker.reportSubset(3, 3, new StringReader("foo/Quux"));
         assertThat(result.isSuccess(), is(true));
 
-        result = checker.reportSubset("hello/World", 1, 3);
+        result = checker.reportSubset(1, 3, new StringReader("hello/World"));
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- Collective exhaustion of tests violated with none of the 3 partition picked running suites: [baz/bar/Foo, foo/bar/Baz]. Failing partition 1 as this is the last one to execute.\nHad total of 1 suites named [hello/World] in partition 1 of 3. Corresponding universal set had a total of 5 suites named [bar/baz/Quux: 2/3, baz/bar/Foo, foo/Quux: 3/3, foo/bar/Baz, hello/World: 1/3].\n"));
 

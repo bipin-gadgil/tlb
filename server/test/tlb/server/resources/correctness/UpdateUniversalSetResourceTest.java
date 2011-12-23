@@ -17,6 +17,7 @@ import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 
 import static org.hamcrest.core.Is.is;
@@ -85,7 +86,10 @@ public class UpdateUniversalSetResourceTest {
     @Test
     public void shouldMatchUniversalSetRepo_whenGivenTheListingByAnyPartitionAfterFirst() throws ResourceException, IOException {
         String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
-        repo.load(suites);
+        synchronized (repo) {
+            StringReader stringReader = new StringReader(suites);
+            repo.loadAndMarkDirty(stringReader);
+        }
         List<SuiteNamePartitionEntry> listBefore2ndPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class\nbar.baz.Bang.class"));
@@ -107,7 +111,10 @@ public class UpdateUniversalSetResourceTest {
     @Test
     public void shouldGenerateError_whenUniversalSetRepoIsNotMatched_ForAnyPartitionAfterFirst() throws ResourceException, IOException {
         String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
-        repo.load(suites);
+        synchronized (repo) {
+            StringReader stringReader = new StringReader(suites);
+            repo.loadAndMarkDirty(stringReader);
+        }
         List<SuiteNamePartitionEntry> listBeforeBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
         resource.acceptRepresentation(new StringRepresentation("foo.bar.Baz.class\nbaz.bang.Quux.class"));
@@ -130,7 +137,10 @@ public class UpdateUniversalSetResourceTest {
     @Test
     public void shouldGenerateError_whenUniversalSetRepoDefinitionByASubsequentPartition_EndsBeforeExpected() throws ResourceException, IOException {
         String suites = "foo.bar.Baz.class\nbar.baz.Bang.class\nbaz.bang.Quux.class";
-        repo.load(suites);
+        synchronized (repo) {
+            StringReader stringReader = new StringReader(suites);
+            repo.loadAndMarkDirty(stringReader);
+        }
         List<SuiteNamePartitionEntry> listBeforeBadPartitionPosting = new ArrayList<SuiteNamePartitionEntry>(repo.list());
 
         resource.acceptRepresentation(new StringRepresentation("baz.bang.Quux.class\nbar.baz.Bang.class"));

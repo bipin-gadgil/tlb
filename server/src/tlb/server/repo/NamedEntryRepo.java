@@ -96,6 +96,10 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
 
     public void loadCopyFromDisk(Reader reader) throws IOException {
         dirty = false;
+        load(reader);
+    }
+
+    private void load(Reader reader) throws IOException {
         nameToEntry.clear();
         LineNumberReader rdr = new LineNumberReader(reader);
         String line = null;
@@ -105,8 +109,8 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         }
     }
 
-    public synchronized void load(String contents) {
-        loadInternal(contents);
+    public synchronized void loadAndMarkDirty(Reader stringReader) throws IOException {
+        load(stringReader);
         dirty = true;
     }
 

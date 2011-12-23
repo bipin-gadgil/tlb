@@ -107,7 +107,10 @@ public class NamedEntryRepoTest {
 
     @Test
     public void shouldLoadFromGivenReader() throws IOException, ClassNotFoundException {
-        testCaseRepo.load("shouldBar#Bar\nshouldFoo#Foo\n");
+        synchronized (testCaseRepo) {
+            StringReader stringReader = new StringReader("shouldBar#Bar\nshouldFoo#Foo\n");
+            testCaseRepo.loadAndMarkDirty(stringReader);
+        }
         assertThat(testCaseRepo.sortedList(), is(listOf(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar"), new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo"))));
         assertThat(testCaseRepo.isDirty(), is(true));
     }
@@ -140,7 +143,10 @@ public class NamedEntryRepoTest {
         }
         assertThat("Its not dirty if just loaded from file.", testCaseRepo.isDirty(), is(false));
 
-        testCaseRepo.load("should_run#my.Suite\nshould_eat_bun#my.Suite");
+        synchronized (testCaseRepo) {
+            StringReader stringReader = new StringReader("should_run#my.Suite\nshould_eat_bun#my.Suite");
+            testCaseRepo.loadAndMarkDirty(stringReader);
+        }
         assertThat("Is dirty, as was loaded externally, and not from a file", testCaseRepo.isDirty(), is(true));
     }
 

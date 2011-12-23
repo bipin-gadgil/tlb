@@ -74,7 +74,8 @@ public class SubsetSizeRepoTest {
     @Test
     public void shouldLoadFromGivenSource() throws IOException, ClassNotFoundException {
         final StringReader reader = new StringReader("10\n12\n7\n");
-        subsetSizeRepo.load(FileUtil.readIntoString(new BufferedReader(reader)));
+        StringReader reader1 = new StringReader(FileUtil.readIntoString(new BufferedReader(reader)));
+        subsetSizeRepo.loadAndMarkDirty(reader1);
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
         assertThat(subsetSizeRepo.isDirty(), is(true));
     }
@@ -120,7 +121,8 @@ public class SubsetSizeRepoTest {
         repo.loadCopyFromDisk(new StringReader("10"));
         assertThat("Its not dirty if just loaded from file.", repo.isDirty(), is(false));
 
-        repo.load("10\n15");
+        StringReader reader = new StringReader("10\n15");
+        repo.loadAndMarkDirty(reader);
         assertThat("Loaded, but not from file.", repo.isDirty(), is(true));
     }
 

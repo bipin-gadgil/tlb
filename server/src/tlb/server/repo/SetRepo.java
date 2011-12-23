@@ -4,6 +4,9 @@ import tlb.domain.PartitionIdentifier;
 import tlb.domain.SuiteNamePartitionEntry;
 
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -26,8 +29,22 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         return nameToEntry.size() > 0;
     }
 
-    public OperationResult tryMatching(String list) {
-        List<SuiteNamePartitionEntry> givenList = sortedListFor(parse(list));
+    public OperationResult tryMatching(Reader reader) throws IOException {
+        return tryMatching(parse(reader));
+    }
+
+    private List<SuiteNamePartitionEntry> parse(Reader reader) throws IOException {
+        LineNumberReader lineReader = new LineNumberReader(reader);
+        String line = null;
+        List<SuiteNamePartitionEntry> parsedList = new ArrayList<SuiteNamePartitionEntry>();
+        while((line = lineReader.readLine()) != null) {
+            parsedList.add(parseLine(line));
+        }
+        return parsedList;
+    }
+
+    private OperationResult tryMatching(List<SuiteNamePartitionEntry> parsedList) {
+        List<SuiteNamePartitionEntry> givenList = sortedListFor(parsedList);
         List<SuiteNamePartitionEntry> serverCopy = sortedList();
 
         OperationResult error = new OperationResult(false, String.format("Expected universal set was %s but given %s.", serverCopy, givenList));
@@ -53,11 +70,11 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         throw new UnsupportedOperationException("not allowed on this type of repository");
     }
 
-    public OperationResult usedBySubset(String suiteNames, int partitionNumber, int totalPartitions) {
+    public OperationResult usedBySubset(int partitionNumber, int totalPartitions, final Reader reader) throws IOException {
         List<SuiteNamePartitionEntry> unknownSuites = new ArrayList<SuiteNamePartitionEntry>();
         Map<String, Integer> occurrenceCount = new HashMap<String, Integer>();
         List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNamePartitionEntry>();
-        List<SuiteNamePartitionEntry> subsetSuites = parse(suiteNames);
+        List<SuiteNamePartitionEntry> subsetSuites = parse(reader);
         for (SuiteNamePartitionEntry subsetEntry : subsetSuites) {
             SuiteNamePartitionEntry persistentEntry = nameToEntry.get(getKey(subsetEntry));
             if (persistentEntry != null) {

@@ -6,6 +6,7 @@ import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.RepoFactoryTestUtil;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,7 +42,10 @@ public class SetRepoTest {
     @Test
     public void shouldUnderstandIfRepoHasBeenPrimedWithData() throws IOException {
         assertThat(repo.isPrimed(), is(false));
-        repo.load("foo/bar/Baz\nbar/baz/Quux");
+        synchronized (repo) {
+            StringReader stringReader = new StringReader("foo/bar/Baz\nbar/baz/Quux");
+            repo.loadAndMarkDirty(stringReader);
+        }
         assertThat(repo.isPrimed(), is(true));
         String s = RepoFactoryTestUtil.diskDump(repo);
         assertThat(repo.isPrimed(), is(true));

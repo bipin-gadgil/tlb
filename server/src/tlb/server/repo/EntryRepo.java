@@ -16,8 +16,6 @@ public interface EntryRepo<T extends Entry, Impl> extends Serializable {
 
     String dump() throws IOException;
 
-    void load(final String contents);
-
     void copyFrom(Impl otherRepo);
 
     void add(T entry);
@@ -43,4 +41,6 @@ public interface EntryRepo<T extends Entry, Impl> extends Serializable {
     void dumpTo(Writer writer) throws IOException;
 
     void loadCopyFromDisk(Reader reader) throws IOException;
+
+    void loadAndMarkDirty(Reader reader) throws IOException;
 }

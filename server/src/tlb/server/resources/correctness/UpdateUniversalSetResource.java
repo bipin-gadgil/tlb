@@ -7,9 +7,13 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
-import tlb.TlbConstants;
 import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SetRepo;
+import tlb.utils.Function;
+import tlb.utils.Procedure;
+
+import java.io.IOException;
+import java.io.Reader;
 
 import static tlb.TlbConstants.Correctness.CURRENT_PARTITION_POSTED_INCORRECT_UNIVERSAL_SET;
 
@@ -26,13 +30,23 @@ public class UpdateUniversalSetResource extends SetResource {
         if (! universalSetRepo.isPrimed()) {
             synchronized (EntryRepoFactory.mutex(universalSetRepo.getIdentifier())) {
                 if (! universalSetRepo.isPrimed()) {
-                    universalSetRepo.load(reqPayload(entity));
+                    synchronized (universalSetRepo) {
+                        reqPayload(new Procedure<Reader, IOException>() {
+                            public void perform(Reader reader) throws IOException {
+                                universalSetRepo.loadAndMarkDirty(reader);
+                            }
+                        }, entity);
+                    }
                     getResponse().setStatus(new Status(Status.SUCCESS_CREATED, "First definition of universal set stored"));
                     return;
                 }
             }
         }
-        SetRepo.OperationResult match = universalSetRepo.tryMatching(reqPayload(entity));
+        SetRepo.OperationResult match = reqPayload(new Function<Reader, IOException, SetRepo.OperationResult>() {
+            public SetRepo.OperationResult execute(Reader reader) throws IOException {
+                return universalSetRepo.tryMatching(reader);
+            }
+        }, entity);
         if (match.isSuccess()) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {

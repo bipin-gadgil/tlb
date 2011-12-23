@@ -10,8 +10,12 @@ import org.restlet.resource.*;
 import tlb.TlbConstants;
 import tlb.domain.Entry;
 import tlb.server.repo.EntryRepoFactory;
+import tlb.utils.Function;
+import tlb.utils.Procedure;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Map;
 
@@ -61,13 +65,19 @@ public abstract class TlbResource extends Resource {
         return strAttr(TlbConstants.Server.MODULE_NAME);
     }
 
-    protected String reqPayload(Representation entity) {
-        String text = null;
+    protected <T> T reqPayload(Function<Reader, IOException, T> readBody, Representation entity) {
         try {
-            text = entity.getText();
+            Reader bodyReader = null;
+            try {
+                bodyReader = entity.getReader();
+                return readBody.execute(new BufferedReader(bodyReader));
+            } finally {
+                if (bodyReader != null) {
+                    bodyReader.close();
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return text;
     }
 }

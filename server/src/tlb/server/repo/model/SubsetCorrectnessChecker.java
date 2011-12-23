@@ -5,6 +5,9 @@ import tlb.domain.SuiteNamePartitionEntry;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +23,8 @@ public class SubsetCorrectnessChecker {
         this.partitionRecordRepo = partitionRecordRepo;
     }
 
-    public SetRepo.OperationResult reportSubset(String subsetSuites, int partitionNumber, int totalPartitions) {
-        SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(subsetSuites, partitionNumber, totalPartitions);
+    public SetRepo.OperationResult reportSubset(int partitionNumber, int totalPartitions, final Reader reader) throws IOException {
+        SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(partitionNumber, totalPartitions, reader);
         partitionRecordRepo.subsetReceivedFromPartition(new PartitionIdentifier(partitionNumber, totalPartitions));
         if (partitionRecordRepo.allSubsetsReceivedWithConsistentConfiguration(operationResult)) {
             List<SuiteNamePartitionEntry> unassignedSuites = new ArrayList<SuiteNamePartitionEntry>();

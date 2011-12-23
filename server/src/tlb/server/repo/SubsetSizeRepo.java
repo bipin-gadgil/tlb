@@ -21,11 +21,6 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry, SubsetSizeRepo
         setEntries(new ArrayList<SubsetSizeEntry>());
     }
 
-    public SubsetSizeRepo(String contents) {
-        List<SubsetSizeEntry> parse = parse(contents);
-        setEntries(parse);
-    }
-
     private synchronized void setEntries(final List<SubsetSizeEntry> list) {
         entries = Collections.synchronizedList(list);
     }
@@ -61,6 +56,10 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry, SubsetSizeRepo
 
     public synchronized void loadCopyFromDisk(Reader reader) throws IOException {
         dirty = false;
+        load(reader);
+    }
+
+    private void load(Reader reader) throws IOException {
         LineNumberReader rdr = new LineNumberReader(reader);
         String line = null;
         entries.clear();
@@ -70,10 +69,9 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry, SubsetSizeRepo
         }
     }
 
-
-    public void load(String contents) {
-        SubsetSizeRepo subsetSizeRepo = new SubsetSizeRepo(contents);
-        copyFrom(subsetSizeRepo);
+    public void loadAndMarkDirty(Reader reader) throws IOException {
+        load(reader);
+        dirty = true;
     }
 
     public void copyFrom(SubsetSizeRepo otherRepo) {
