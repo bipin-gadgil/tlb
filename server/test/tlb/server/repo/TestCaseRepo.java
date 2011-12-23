@@ -21,6 +21,10 @@ public class TestCaseRepo extends NamedEntryRepo<TestCaseRepo.TestCaseEntry> {
         return TestCaseEntry.parse(string);
     }
 
+    public TestCaseEntry parseLine(String line) {
+        return TestCaseEntry.parseSingleEntry(line);
+    }
+
     public static class TestCaseEntry implements NamedEntry {
         private final String testName;
         private final String suiteName;

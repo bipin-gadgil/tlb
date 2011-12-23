@@ -2,16 +2,14 @@ package tlb.server.repo;
 
 import tlb.domain.NamedEntry;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @understands persistence and retrieval of suite based data
  */
-public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<T> {
+public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<T, NamedEntryRepo<T>> {
     protected Map<String, T> nameToEntry;
     protected String namespace;
     transient protected EntryRepoFactory factory;
@@ -96,9 +94,15 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         }
     }
 
-    public synchronized void loadCopyFromDisk(final String fileContents) {
+    public void loadCopyFromDisk(Reader reader) throws IOException {
         dirty = false;
-        loadInternal(fileContents);
+        nameToEntry.clear();
+        LineNumberReader rdr = new LineNumberReader(reader);
+        String line = null;
+        while((line = rdr.readLine()) != null) {
+            T entry = parseLine(line);
+            nameToEntry.put(getKey(entry), entry);
+        }
     }
 
     public synchronized void load(String contents) {
@@ -111,6 +115,14 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         for (T entry : parse(contents)) {
             nameToEntry.put(getKey(entry), entry);
         }
+    }
+
+    public void copyFrom(NamedEntryRepo<T> otherRepo) {
+        nameToEntry.clear();
+        for (T entry : otherRepo.list()) {
+            nameToEntry.put(getKey(entry), entry);
+        }
+        dirty = true;
     }
 
     @Override

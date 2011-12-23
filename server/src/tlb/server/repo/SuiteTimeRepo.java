@@ -12,4 +12,8 @@ public class SuiteTimeRepo extends NamedEntryRepo<SuiteTimeEntry> {
     public List<SuiteTimeEntry> parse(String string) {
         return SuiteTimeEntry.parse(string);
     }
+
+    public SuiteTimeEntry parseLine(String line) {
+        return SuiteTimeEntry.parseSingleEntry(line);
+    }
 }

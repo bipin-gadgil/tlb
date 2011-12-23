@@ -53,6 +53,8 @@ public class SuiteNamePartitionEntry implements NamedEntry {
         return buffer.toString();
     }
 
+
+
     public static SuiteNamePartitionEntry parseSingleEntry(String singleEntryString) {
         Matcher matcher = SUITE_SET_ENTRY_STRING.matcher(singleEntryString);
         if (matcher.matches()) {

@@ -241,11 +241,18 @@ public class EntryRepoFactory implements Runnable {
 
                     File diskDump = dumpFile(identifier);
                     if (diskDump.exists()) {
-                        final FileReader reader = new FileReader(diskDump);
-                        repo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+                        FileReader reader = null;
+                        try {
+                            reader = new FileReader(diskDump);
+                            repo.loadCopyFromDisk(new BufferedReader(reader));
+                        } finally {
+                            if (reader != null) {
+                                reader.close();
+                            }
+                        }
                     } else if (primeFrom != null) {
                         T primingVersion = findOrCreate(namespace, primeFrom, creator, null);
-                        repo.load(primingVersion.dump());
+                        repo.copyFrom(primingVersion);
                     }
                     if (! (repo instanceof RepoLedger)) {
                         repoLedger.update(new RepoCreatedTimeEntry(identifier, timeProvider.now().getTime(), idScheme.isPurgable()));

@@ -23,6 +23,10 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
         return PartitionIdentifier.parse(partitionIdsString);
     }
 
+    public PartitionIdentifier parseLine(String line) {
+        return PartitionIdentifier.parseSingleEntry(line);
+    }
+
     public boolean checkAllPartitionsExecuted(SetRepo.OperationResult operationResult) {
         return withNonEmptyList(operationResult, new CheckAllPartitionsExecuted());
     }

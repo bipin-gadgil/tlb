@@ -18,4 +18,8 @@ public class SuiteResultRepo extends NamedEntryRepo<SuiteResultEntry> {
     public List<SuiteResultEntry> parse(String string) {
         return SuiteResultEntry.parse(string);
     }
+
+    public SuiteResultEntry parseLine(String line) {
+        return SuiteResultEntry.parseSingleEntry(line);
+    }
 }

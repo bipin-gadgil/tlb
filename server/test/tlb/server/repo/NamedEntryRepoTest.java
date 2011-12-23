@@ -9,6 +9,7 @@ import tlb.server.RepoFactoryTestUtil;
 import tlb.utils.SystemEnvironment;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,10 @@ public class NamedEntryRepoTest {
 
                     public List<TestCaseRepo.TestCaseEntry> parse(String string) {
                         return TestCaseRepo.TestCaseEntry.parse(string);
+                    }
+
+                    public TestCaseRepo.TestCaseEntry parseLine(String line) {
+                        return TestCaseRepo.TestCaseEntry.parseSingleEntry(line);
                     }
                 };
             }
@@ -93,7 +98,9 @@ public class NamedEntryRepoTest {
 
     @Test
     public void shouldLoadFromDisk() throws IOException, ClassNotFoundException {
-        testCaseRepo.loadCopyFromDisk("shouldBar#Bar\nshouldFoo#Foo\n");
+        synchronized (testCaseRepo) {
+            testCaseRepo.loadCopyFromDisk(new StringReader("shouldBar#Bar\nshouldFoo#Foo\n"));
+        }
         assertThat(testCaseRepo.sortedList(), is(listOf(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar"), new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo"))));
         assertThat(testCaseRepo.isDirty(), is(false));
     }
@@ -128,7 +135,9 @@ public class NamedEntryRepoTest {
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("should_bun", "my.Suite"));
         assertThat(testCaseRepo.isDirty(), is(true));
 
-        testCaseRepo.loadCopyFromDisk("should_run#my.Suite\nshould_eat_bun#my.Suite");
+        synchronized (testCaseRepo) {
+            testCaseRepo.loadCopyFromDisk(new StringReader("should_run#my.Suite\nshould_eat_bun#my.Suite"));
+        }
         assertThat("Its not dirty if just loaded from file.", testCaseRepo.isDirty(), is(false));
 
         testCaseRepo.load("should_run#my.Suite\nshould_eat_bun#my.Suite");
@@ -136,10 +145,12 @@ public class NamedEntryRepoTest {
     }
 
     @Test
-    public void shouldResetEntriesWhenLoadingFromString() {
+    public void shouldResetEntriesWhenLoadingFromString() throws IOException {
         testCaseRepo.update(new TestCaseRepo.TestCaseEntry("test_name", "suite_name"));
 
-        testCaseRepo.loadCopyFromDisk("foo#bar");
+        synchronized (testCaseRepo) {
+            testCaseRepo.loadCopyFromDisk(new StringReader("foo#bar"));
+        }
 
         Collection<TestCaseRepo.TestCaseEntry> list = testCaseRepo.list();
         assertThat(list.size(), is(1));

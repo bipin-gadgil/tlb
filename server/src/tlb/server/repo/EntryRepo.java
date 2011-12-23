@@ -9,16 +9,16 @@ import java.util.List;
 /**
  * @understands storage and retrieval of records 
  */
-public interface EntryRepo<T extends Entry> extends Serializable {
+public interface EntryRepo<T extends Entry, Impl> extends Serializable {
     Collection<T> list();
 
     void update(T entry);
 
     String dump() throws IOException;
 
-    void loadCopyFromDisk(final String fileContents);
-
     void load(final String contents);
+
+    void copyFrom(Impl otherRepo);
 
     void add(T entry);
 
@@ -34,9 +34,13 @@ public interface EntryRepo<T extends Entry> extends Serializable {
 
     List<T> parse(String string);
 
+    T parseLine(String line);
+
     boolean isDirty();
 
     void diskDumpTo(Writer writer) throws IOException;
 
     void dumpTo(Writer writer) throws IOException;
+
+    void loadCopyFromDisk(Reader reader) throws IOException;
 }

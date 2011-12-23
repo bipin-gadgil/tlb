@@ -2,9 +2,7 @@ package tlb.server.repo;
 
 import tlb.domain.SubsetSizeEntry;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,7 +11,7 @@ import java.util.List;
 /**
  * @understands storage and retrival of size of subset of total suites run by job
  */
-public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
+public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry, SubsetSizeRepo> {
     private volatile List<SubsetSizeEntry> entries;
     private volatile boolean dirty;
     private volatile String identifier;
@@ -21,6 +19,11 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
 
     public SubsetSizeRepo() {
         setEntries(new ArrayList<SubsetSizeEntry>());
+    }
+
+    public SubsetSizeRepo(String contents) {
+        List<SubsetSizeEntry> parse = parse(contents);
+        setEntries(parse);
     }
 
     private synchronized void setEntries(final List<SubsetSizeEntry> list) {
@@ -56,13 +59,25 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
         }
     }
 
-    public synchronized void loadCopyFromDisk(final String fileContents) {
-        load(fileContents);
+    public synchronized void loadCopyFromDisk(Reader reader) throws IOException {
         dirty = false;
+        LineNumberReader rdr = new LineNumberReader(reader);
+        String line = null;
+        entries.clear();
+        while((line = rdr.readLine()) != null) {
+            SubsetSizeEntry entry = parseLine(line);
+            entries.add(entry);
+        }
     }
 
+
     public void load(String contents) {
-        setEntries(parse(contents));
+        SubsetSizeRepo subsetSizeRepo = new SubsetSizeRepo(contents);
+        copyFrom(subsetSizeRepo);
+    }
+
+    public void copyFrom(SubsetSizeRepo otherRepo) {
+        setEntries(new ArrayList<SubsetSizeEntry>(otherRepo.list()));
         dirty = true;
     }
 
@@ -93,6 +108,10 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry> {
 
     public List<SubsetSizeEntry> parse(String string) {
         return SubsetSizeEntry.parse(string);
+    }
+
+    public SubsetSizeEntry parseLine(String line) {
+        return SubsetSizeEntry.parseSingleEntry(line);
     }
 
     public boolean isDirty() {

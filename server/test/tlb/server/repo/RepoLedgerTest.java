@@ -21,6 +21,12 @@ public class RepoLedgerTest {
     }
 
     @Test
+    public void shouldParseSingleLedgerEntry() {
+        RepoCreatedTimeEntry parsedList = new RepoLedger().parseLine("foo_bar_baz: 10");
+        assertThat(parsedList, is(new RepoCreatedTimeEntry("foo_bar_baz", 10l)));
+    }
+
+    @Test
     public void shouldUnderstandRemovingRepoIdentifier() {
         RepoLedger ledger = new RepoLedger();
         RepoCreatedTimeEntry entry = new RepoCreatedTimeEntry("foo", new Date().getTime());

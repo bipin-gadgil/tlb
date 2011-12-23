@@ -59,14 +59,14 @@ public class SubsetSizeRepoTest {
     public void shouldDumpDataAsString() throws IOException, ClassNotFoundException {
         addToRepo();
         String dump = RepoFactoryTestUtil.diskDump(subsetSizeRepo);
-        subsetSizeRepo.loadCopyFromDisk(dump);
+        subsetSizeRepo.loadCopyFromDisk(new StringReader(dump));
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
     }
 
     @Test
     public void shouldLoadFromDisk() throws IOException, ClassNotFoundException {
         final StringReader reader = new StringReader("10\n12\n7\n");
-        subsetSizeRepo.loadCopyFromDisk(FileUtil.readIntoString(new BufferedReader(reader)));
+        subsetSizeRepo.loadCopyFromDisk(new StringReader(FileUtil.readIntoString(new BufferedReader(reader))));
         assertListContents((List<SubsetSizeEntry>) subsetSizeRepo.list());
         assertThat(subsetSizeRepo.isDirty(), is(false));
     }
@@ -90,11 +90,17 @@ public class SubsetSizeRepoTest {
     }
 
     @Test
-    public void shouldKnowHowToParseAnEntry() {
+    public void shouldKnowHowToParseEntries() {
         List<SubsetSizeEntry> subsetSizeEntry = subsetSizeRepo.parse("10\n19");
         assertThat(subsetSizeEntry.get(0), is(new SubsetSizeEntry(10)));
         assertThat(subsetSizeEntry.get(1), is(new SubsetSizeEntry(19)));
         assertThat(subsetSizeEntry.size(), is(2));
+    }
+
+    @Test
+    public void shouldKnowHowToParseASingleEntry() {
+        SubsetSizeEntry subsetSizeEntry = subsetSizeRepo.parseLine("10");
+        assertThat(subsetSizeEntry, is(new SubsetSizeEntry(10)));
     }
 
     @Test
@@ -111,7 +117,7 @@ public class SubsetSizeRepoTest {
         repo.add(new SubsetSizeEntry(25));
         assertThat(repo.isDirty(), is(true));
 
-        repo.loadCopyFromDisk("10");
+        repo.loadCopyFromDisk(new StringReader("10"));
         assertThat("Its not dirty if just loaded from file.", repo.isDirty(), is(false));
 
         repo.load("10\n15");

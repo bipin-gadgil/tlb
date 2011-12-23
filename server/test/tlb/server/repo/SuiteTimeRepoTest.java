@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
+import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.utils.SystemEnvironment;
 
@@ -51,5 +52,20 @@ public class SuiteTimeRepoTest {
         assertThat(frozenCollection.size(), is(2));
         assertThat(frozenCollection, hasItem(new SuiteTimeEntry("foo.bar.Foo", 12)));
         assertThat(frozenCollection, hasItem(new SuiteTimeEntry("foo.bar.Bar", 134)));
+    }
+
+    @Test
+    public void shouldUnderstandParsingEntries() {
+        SuiteTimeRepo repo = new SuiteTimeRepo();
+        List<SuiteTimeEntry> entries = repo.parse("foo.Bar: 10\nbar.Baz: 20");
+        assertThat(entries.get(0), is(new SuiteTimeEntry("foo.Bar", 10l)));
+        assertThat(entries.get(1), is(new SuiteTimeEntry("bar.Baz", 20l)));
+    }
+
+    @Test
+    public void shouldUnderstandParsingSingleEntry() {
+        SuiteTimeRepo repo = new SuiteTimeRepo();
+        SuiteTimeEntry entry = repo.parseLine("foo.Bar: 10");
+        assertThat(entry, is(new SuiteTimeEntry("foo.Bar", 10l)));
     }
 }

@@ -18,6 +18,10 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         return SuiteNamePartitionEntry.parse(string);
     }
 
+    public SuiteNamePartitionEntry parseLine(String line) {
+        return SuiteNamePartitionEntry.parseSingleEntry(line);
+    }
+
     public boolean isPrimed() {
         return nameToEntry.size() > 0;
     }

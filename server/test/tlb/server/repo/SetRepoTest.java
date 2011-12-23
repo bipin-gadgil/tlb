@@ -32,6 +32,13 @@ public class SetRepoTest {
     }
 
     @Test
+    public void shouldUnderstandParsingSingleEntry() {
+        SuiteNamePartitionEntry parsedEntry = repo.parseLine("foo/bar/Baz");
+        assertThat(parsedEntry, is(new SuiteNamePartitionEntry("foo/bar/Baz")));
+    }
+
+
+    @Test
     public void shouldUnderstandIfRepoHasBeenPrimedWithData() throws IOException {
         assertThat(repo.isPrimed(), is(false));
         repo.load("foo/bar/Baz\nbar/baz/Quux");

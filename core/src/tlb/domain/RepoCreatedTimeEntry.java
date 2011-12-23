@@ -25,6 +25,10 @@ public class RepoCreatedTimeEntry extends NameNumberEntry {
         return parse(entries, REPO_INSTANCE_CREATOR);
     }
 
+    public static RepoCreatedTimeEntry parseSingleEntry(String line) {
+        return parseSingleEntry(line, REPO_INSTANCE_CREATOR);
+    }
+
     public boolean isPurgable() {
         return number != -1;
     }

@@ -81,6 +81,12 @@ public class PartitionRecordRepoTest {
     }
 
     @Test
+    public void shouldParseSingleEntry() {
+        PartitionIdentifier parsed = repo.parseLine("2/3");
+        assertThat(parsed, is(new PartitionIdentifier(2, 3)));
+    }
+
+    @Test
     public void shouldFailGracefullyWhenNoPartitionsPopulated_andCorrectnessCheckIsCalled() {
         SetRepo.OperationResult result = new SetRepo.OperationResult(true);
         repo.checkAllPartitionsExecuted(result);
