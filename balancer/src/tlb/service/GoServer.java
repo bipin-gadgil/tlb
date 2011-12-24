@@ -147,8 +147,9 @@ public class GoServer extends SmoothingServer {
     public void processedTestClassTime(String className, long time) {
         logger.info(String.format("recording run time for suite %s", className));
         testTimesRepository.appendLine(new SuiteTimeEntry(className, time).dump());
-        List<String> testTimes = testTimesRepository.load();
-        if (subsetSize() == testTimes.size()) {
+
+        if (subsetSize() == testTimesRepository.lineCount()) {
+            List<String> testTimes = testTimesRepository.load();
             logger.info(String.format("Posting test run times for %s suite to the cruise server.", subsetSize()));
             postLinesToServer(SuiteTimeEntry.dump(SuiteTimeEntry.parse(testTimes)), artifactFileUrl(TEST_TIME_FILE));
             clearCachingFiles();
@@ -161,9 +162,9 @@ public class GoServer extends SmoothingServer {
 
     public void testClassFailure(String className, boolean hasFailed) {
         failedTestsRepository.appendLine(new SuiteResultEntry(className, hasFailed).dump());
-        List<String> runTests = failedTestsRepository.load();
 
-        if (subsetSize() == runTests.size()) {
+        if (subsetSize() == failedTestsRepository.lineCount()) {
+            List<String> runTests = failedTestsRepository.load();
             List<SuiteResultEntry> resultEntries = SuiteResultEntry.parse(runTests);
             postLinesToServer(SuiteResultEntry.dumpFailures(resultEntries), artifactFileUrl(FAILED_TESTS_FILE));
         }

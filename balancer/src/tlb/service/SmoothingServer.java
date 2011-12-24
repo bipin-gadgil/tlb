@@ -89,8 +89,6 @@ public abstract class SmoothingServer implements Server {
             logger.warn(String.format("could not load test times for smoothing.: '%s'", e.getMessage()), e);
             suiteTimeEntries = new ArrayList<SuiteTimeEntry>();
         }
-        for (SuiteTimeEntry suiteTimeEntry : suiteTimeEntries) {
-            oldTestTimesRepo.appendLine(suiteTimeEntry.dump());
-        }
+        oldTestTimesRepo.appendLines(suiteTimeEntries);
     }
 }

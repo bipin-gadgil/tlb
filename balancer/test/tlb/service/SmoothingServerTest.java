@@ -90,6 +90,7 @@ public class SmoothingServerTest {
         verify(delegate).processedTestClassTime("quux/bang/Boom.class", 15l);
         server.testClassTime("foo/bar/Baz.class", 90l);
         verify(delegate).processedTestClassTime("foo/bar/Baz.class", 16l);
+        verify(delegate, new Times(1)).fetchLastRunTestTimes();
     }
     
     @Test
