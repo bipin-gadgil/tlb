@@ -74,6 +74,9 @@
                 <extra-jvmargs>
                     <jvmarg value="-Xms@{mem}"/>
                     <jvmarg value="-Xmx@{mem}"/>
+                    <jvmarg value="-verbose:gc"/>
+                    <jvmarg value="-Xloggc:${server.test.reports.dir}/GC_@{mem}_@{cache-size}.log"/>
+                    <jvmarg value="-XX:+PrintGCDetails"/>
                 </extra-jvmargs>
                 <extra-envvars>
                     <env key="TLB_DATA_CACHE_SIZE" value="@{cache-size}"/>
