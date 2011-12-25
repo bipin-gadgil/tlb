@@ -35,7 +35,7 @@ public class LoadBalancedFileSetTest {
     public void setUp() throws Exception {
         SystemEnvironment env = new SystemEnvironment(new HashMap<String, String>());
         fileSet = new LoadBalancedFileSet(env);
-        projectDir = TestUtil.createTempFolder();
+        projectDir = TestUtil.createTmpDir();
         initFileSet(fileSet);
     }
 

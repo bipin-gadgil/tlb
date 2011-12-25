@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 
-import static tlb.TestUtil.createTempFolder;
+import static tlb.TestUtil.createTmpDir;
 import static tlb.TestUtil.deref;
 
 
@@ -48,7 +48,7 @@ public class HttpTestUtil {
 
     public HttpTestUtil() {
         Security.addProvider(new BouncyCastleProvider());
-        serverKeyStore = new File(createTempFolder(), "server.jks");
+        serverKeyStore = new File(createTmpDir(), "server.jks");
         prepareCertStore(serverKeyStore);
         server = new Server();
         server.addHandler(echoHandler());

@@ -200,7 +200,7 @@ public class TestUtil {
         return new SystemEnvironment(map);
     }
 
-    public static File createTempFolder() {
+    public static File createTmpDir() {
         String tmpDir = System.getProperty("test.tmp.dir", System.getProperty(SystemEnvironment.TMP_DIR));
         final File file = new File(tmpDir, UUID.randomUUID().toString());
         file.mkdirs();

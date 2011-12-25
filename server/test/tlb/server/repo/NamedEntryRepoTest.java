@@ -34,7 +34,7 @@ public class NamedEntryRepoTest {
 
     @Test
     public void shouldStoreAttributesFactorySets() throws ClassNotFoundException, IOException {
-        final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTempFolder().getAbsolutePath())));
+        final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTmpDir().getAbsolutePath())));
         final NamedEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<NamedEntryRepo>() {
             public NamedEntryRepo create() {
                 return new NamedEntryRepo<TestCaseRepo.TestCaseEntry>() {

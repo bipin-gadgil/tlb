@@ -20,7 +20,7 @@ public class TlbEntryRepositoryTest {
     @Before
     public void setUp() {
         logFixture = new TestUtil.LogFixture();
-        tmpDir = TestUtil.createTempFolder();
+        tmpDir = TestUtil.createTmpDir();
     }
 
     @Test
@@ -66,7 +66,7 @@ public class TlbEntryRepositoryTest {
 
     @Test
     public void shouldNotFailToCleanupWhenDataFileDoesNotExist() throws IOException {
-        TlbEntryRepository repo = new TlbEntryRepository(new File(TestUtil.createTempFolder(), "foo_bar_baz"));
+        TlbEntryRepository repo = new TlbEntryRepository(new File(TestUtil.createTmpDir(), "foo_bar_baz"));
         assertThat(repo.getFile().exists(), is(false));
         repo.cleanup();
         assertThat(repo.getFile().exists(), is(false));
@@ -74,7 +74,7 @@ public class TlbEntryRepositoryTest {
 
     @Test
     public void shouldCleanupTheRepositoryDirectory() throws IOException {
-        File repoFile = new File(TestUtil.createTempFolder(), "foo_bar_baz");
+        File repoFile = new File(TestUtil.createTmpDir(), "foo_bar_baz");
         boolean createdNewFile = repoFile.createNewFile();
         assertThat(createdNewFile, is(true));
         TlbEntryRepository repo = new TlbEntryRepository(repoFile);

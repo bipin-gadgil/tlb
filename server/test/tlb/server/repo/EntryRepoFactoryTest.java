@@ -48,7 +48,7 @@ public class EntryRepoFactoryTest {
 
     @Before
     public void setUp() throws Exception {
-        baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
+        baseDir = new File(TestUtil.createTmpDir(), "test_case_tlb_store");
         timeProvider = mock(TimeProvider.class);
         when(timeProvider.now()).thenReturn(new Date());
         factory = new EntryRepoFactory(baseDir, timeProvider, 100);
@@ -377,7 +377,7 @@ public class EntryRepoFactoryTest {
 
     @Test
     public void shouldFeedTheDiskDumpContentsToSubsetRepo() {
-        TestUtil.createTempFolder();
+        TestUtil.createTmpDir();
     }
 
     @Test

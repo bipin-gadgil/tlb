@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
-import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.utils.SystemEnvironment;
 
@@ -26,7 +25,7 @@ public class SuiteTimeRepoTest {
 
     @Before
     public void setUp() throws Exception {
-        tmpDir = TestUtil.createTempFolder();
+        tmpDir = TestUtil.createTmpDir();
         factory = new EntryRepoFactory(env());
         repo = factory.createSuiteTimeRepo("name", LATEST_VERSION);
     }

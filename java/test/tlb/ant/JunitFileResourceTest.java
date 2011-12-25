@@ -13,7 +13,7 @@ public class JunitFileResourceTest {
     @Test
     public void shouldReturnTheClassNameAsName() {
         Project project = new Project();
-        String baseDir = TestUtil.createTempFolder().getAbsolutePath();
+        String baseDir = TestUtil.createTmpDir().getAbsolutePath();
         project.setBasedir(baseDir);
         JunitFileResource junitFileResource = new JunitFileResource(project, "foo/bar/Baz.class");
         junitFileResource.setBaseDir(new File(baseDir));

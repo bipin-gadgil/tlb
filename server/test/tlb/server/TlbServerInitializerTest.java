@@ -108,7 +108,7 @@ public class TlbServerInitializerTest {
 
     @Test
     public void shouldHonorDiskStorageRootOverride() throws IOException, ClassNotFoundException {
-        String tmpDir = TestUtil.createTempFolder().getAbsolutePath();
+        String tmpDir = TestUtil.createTmpDir().getAbsolutePath();
         systemEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, tmpDir);
         initializer = new TlbServerInitializer(new SystemEnvironment(systemEnv));
         EntryRepoFactory factory = initializer.repoFactory();

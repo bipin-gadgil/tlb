@@ -1,6 +1,5 @@
 package tlb.server.repo;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class ServerWith_LowMem {
 
     @Before
     public void setUp() throws Exception {
-        baseDir = new File(TestUtil.createTempFolder(), "test_case_tlb_store");
+        baseDir = new File(TestUtil.createTmpDir(), "test_case_tlb_store");
         factory = new EntryRepoFactory(env());
     }
 

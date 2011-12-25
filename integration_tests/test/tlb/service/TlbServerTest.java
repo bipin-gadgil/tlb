@@ -1,5 +1,6 @@
 package tlb.service;
 
+import org.apache.commons.io.FileUtils;
 import org.hamcrest.core.Is;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
@@ -14,8 +15,11 @@ import tlb.server.ServerInitializer;
 import tlb.server.TlbServerInitializer;
 import tlb.service.http.DefaultHttpAction;
 import tlb.splitter.correctness.ValidationResult;
+import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static org.hamcrest.core.Is.is;
@@ -38,6 +42,7 @@ public class TlbServerTest {
     private String jobName;
     private String partitionNumber;
     private String totalPartitions;
+    private ArrayList<File> toBeDeleted;
 
     @BeforeClass
     public static void startTlbServer() throws Exception {
@@ -45,7 +50,7 @@ public class TlbServerTest {
         serverEnv.put(TlbConstants.TLB_SMOOTHING_FACTOR.key, "0.1");
         freePort = TestUtil.findFreePort();
         serverEnv.put(TlbConstants.Server.TLB_SERVER_PORT.key, freePort);
-        serverEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTempFolder().getAbsolutePath());
+        serverEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTmpDir().getAbsolutePath());
         ServerInitializer main = new TlbServerInitializer(new SystemEnvironment(serverEnv));
         component = main.init();
         component.start();
@@ -71,8 +76,26 @@ public class TlbServerTest {
         clientEnv.put(TlbConstants.TlbServer.TLB_BASE_URL, url);
         httpAction = new DefaultHttpAction();
         env = new SystemEnvironment(clientEnv);
-        server = new TlbServer(env, httpAction);
+        toBeDeleted = new ArrayList<File>();
+        server = makeTlbServer(env);
         server.clearCachingFiles();
+    }
+
+    private TlbServer makeTlbServer(final SystemEnvironment env) {
+        markForDeletion(env);
+        return new TlbServer(env, httpAction);
+    }
+
+    private void markForDeletion(SystemEnvironment env) {
+        File tmpDir = new FileUtil(env).getUniqueFile("foo").getParentFile();
+        toBeDeleted.add(tmpDir);
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        for (File file : toBeDeleted) {
+            FileUtils.deleteQuietly(file);
+        }
     }
 
     @Test
@@ -161,7 +184,7 @@ public class TlbServerTest {
         Assert.assertThat(entryList, JUnitMatchers.hasItem(new SuiteTimeEntry("com.baz.Baz", 17)));
         Assert.assertThat(entryList, JUnitMatchers.hasItem(new SuiteTimeEntry("com.quux.Quux", 150)));
 
-        server = new TlbServer(env, httpAction);
+        server = makeTlbServer(env);
         httpAction.put(url, "com.foo.Foo: 18");
         httpAction.put(url, "com.foo.Bang: 103");
 
@@ -173,7 +196,7 @@ public class TlbServerTest {
         Assert.assertThat(entryList, JUnitMatchers.hasItem(new SuiteTimeEntry("com.quux.Quux", 150)));
 
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "2");
-        server = new TlbServer(env, httpAction);
+        server = makeTlbServer(env);
         entryList = server.getLastRunTestTimes();
         Assert.assertThat(entryList.size(), Is.is(4));
         Assert.assertThat(entryList, JUnitMatchers.hasItem(new SuiteTimeEntry("com.foo.Foo", 10)));
@@ -183,7 +206,7 @@ public class TlbServerTest {
 
         //should fetch latest for unknown version
         updateEnv(env, TlbConstants.TlbServer.TLB_JOB_VERSION, "bar");
-        server = new TlbServer(env, httpAction);
+        server = makeTlbServer(env);
         entryList = server.getLastRunTestTimes();
         Assert.assertThat(entryList.size(), Is.is(5));
         Assert.assertThat(entryList, JUnitMatchers.hasItem(new SuiteTimeEntry("com.foo.Foo", 18)));
@@ -337,7 +360,7 @@ public class TlbServerTest {
 
         partitionNumber = "2";
         clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, partitionNumber);
-        server = new TlbServer(new SystemEnvironment(clientEnv), httpAction);
+        server = makeTlbServer(new SystemEnvironment(clientEnv));
 
         validationResult = server.validateSubSet(Arrays.asList(suiteThree), "foo-module");
         assertThat(validationResult.hasFailed(), is(true));
@@ -400,7 +423,7 @@ public class TlbServerTest {
         clientEnv.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, this.partitionNumber);
         this.totalPartitions = String.valueOf(totalPartitions);
         clientEnv.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, this.totalPartitions);
-        server = new TlbServer(new SystemEnvironment(clientEnv), httpAction);
+        server = makeTlbServer(new SystemEnvironment(clientEnv));
     }
 
     @Test
