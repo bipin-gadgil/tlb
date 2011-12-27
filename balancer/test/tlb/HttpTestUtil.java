@@ -1,5 +1,6 @@
 package tlb;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V1CertificateGenerator;
@@ -9,6 +10,7 @@ import org.mortbay.jetty.handler.ContextHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 import sun.security.rsa.RSAKeyPairGenerator;
+import tlb.utils.FileUtil;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
@@ -45,14 +47,21 @@ public class HttpTestUtil {
     private Server server;
     private Thread blocker;
     private File serverKeyStore;
+    private File tmpDir;
 
     public HttpTestUtil() {
         Security.addProvider(new BouncyCastleProvider());
-        serverKeyStore = new File(createTmpDir(), "server.jks");
+        tmpDir = createTmpDir();
+        serverKeyStore = new File(tmpDir, "server.jks");
         prepareCertStore(serverKeyStore);
         server = new Server();
         server.addHandler(echoHandler());
         server.addHandler(redirectHandler());
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        FileUtils.deleteQuietly(tmpDir);
     }
 
     public void httpConnector(final int port) {

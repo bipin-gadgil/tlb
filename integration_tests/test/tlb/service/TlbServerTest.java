@@ -33,6 +33,7 @@ import static tlb.TestUtil.updateEnv;
  */
 public class TlbServerTest {
     private static Component component;
+    private static File tmpDir;
     private TlbServer server;
     private static String freePort;
     private HashMap<String,String> clientEnv;
@@ -50,7 +51,8 @@ public class TlbServerTest {
         serverEnv.put(TlbConstants.TLB_SMOOTHING_FACTOR.key, "0.1");
         freePort = TestUtil.findFreePort();
         serverEnv.put(TlbConstants.Server.TLB_SERVER_PORT.key, freePort);
-        serverEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTmpDir().getAbsolutePath());
+        tmpDir = TestUtil.createTmpDir();
+        serverEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, tmpDir.getAbsolutePath());
         ServerInitializer main = new TlbServerInitializer(new SystemEnvironment(serverEnv));
         component = main.init();
         component.start();
@@ -59,6 +61,7 @@ public class TlbServerTest {
     @AfterClass
     public static void shutDownTlbServer() throws Exception {
         component.stop();
+        FileUtils.deleteQuietly(tmpDir);
     }
 
     @Before

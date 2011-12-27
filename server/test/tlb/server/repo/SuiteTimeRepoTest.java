@@ -1,5 +1,7 @@
 package tlb.server.repo;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
@@ -28,6 +30,11 @@ public class SuiteTimeRepoTest {
         tmpDir = TestUtil.createTmpDir();
         factory = new EntryRepoFactory(env());
         repo = factory.createSuiteTimeRepo("name", LATEST_VERSION);
+    }
+
+    @After
+    public void tearDown() {
+        FileUtils.deleteQuietly(tmpDir);
     }
 
     private SystemEnvironment env() {

@@ -1,5 +1,6 @@
 package tlb.server.repo;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
@@ -8,6 +9,7 @@ import tlb.domain.TimeProvider;
 import tlb.server.RepoFactoryTestUtil;
 import tlb.utils.SystemEnvironment;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -34,27 +36,32 @@ public class NamedEntryRepoTest {
 
     @Test
     public void shouldStoreAttributesFactorySets() throws ClassNotFoundException, IOException {
-        final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, TestUtil.createTmpDir().getAbsolutePath())));
-        final NamedEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<NamedEntryRepo>() {
-            public NamedEntryRepo create() {
-                return new NamedEntryRepo<TestCaseRepo.TestCaseEntry>() {
-                    public Collection<TestCaseRepo.TestCaseEntry> list(String version) throws IOException, ClassNotFoundException {
-                        return null;
-                    }
+        File tmpDir = TestUtil.createTmpDir();
+        try {
+            final EntryRepoFactory factory = new EntryRepoFactory(new SystemEnvironment(Collections.singletonMap(TlbConstants.Server.TLB_DATA_DIR.key, tmpDir.getAbsolutePath())));
+            final NamedEntryRepo entryRepo = factory.findOrCreate("name_space", new EntryRepoFactory.VersionedNamespace("version", "type"), new EntryRepoFactory.Creator<NamedEntryRepo>() {
+                public NamedEntryRepo create() {
+                    return new NamedEntryRepo<TestCaseRepo.TestCaseEntry>() {
+                        public Collection<TestCaseRepo.TestCaseEntry> list(String version) throws IOException, ClassNotFoundException {
+                            return null;
+                        }
 
-                    public List<TestCaseRepo.TestCaseEntry> parse(String string) {
-                        return TestCaseRepo.TestCaseEntry.parse(string);
-                    }
+                        public List<TestCaseRepo.TestCaseEntry> parse(String string) {
+                            return TestCaseRepo.TestCaseEntry.parse(string);
+                        }
 
-                    public TestCaseRepo.TestCaseEntry parseLine(String line) {
-                        return TestCaseRepo.TestCaseEntry.parseSingleEntry(line);
-                    }
-                };
-            }
-        }, null);
-        assertThat(entryRepo.factory, sameInstance(factory));
-        assertThat(entryRepo.namespace, is("name_space"));
-        assertThat(entryRepo.identifier, is("name__space_version_type"));
+                        public TestCaseRepo.TestCaseEntry parseLine(String line) {
+                            return TestCaseRepo.TestCaseEntry.parseSingleEntry(line);
+                        }
+                    };
+                }
+            }, null);
+            assertThat(entryRepo.factory, sameInstance(factory));
+            assertThat(entryRepo.namespace, is("name_space"));
+            assertThat(entryRepo.identifier, is("name__space_version_type"));
+        } finally {
+            FileUtils.deleteQuietly(tmpDir);
+        }
     }
 
     @Test

@@ -1,5 +1,6 @@
 package tlb.storage;
 
+import org.junit.After;
 import tlb.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -21,6 +22,11 @@ public class TlbEntryRepositoryTest {
     public void setUp() {
         logFixture = new TestUtil.LogFixture();
         tmpDir = TestUtil.createTmpDir();
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        FileUtils.forceDelete(tmpDir);
     }
 
     @Test
@@ -66,10 +72,15 @@ public class TlbEntryRepositoryTest {
 
     @Test
     public void shouldNotFailToCleanupWhenDataFileDoesNotExist() throws IOException {
-        TlbEntryRepository repo = new TlbEntryRepository(new File(TestUtil.createTmpDir(), "foo_bar_baz"));
-        assertThat(repo.getFile().exists(), is(false));
-        repo.cleanup();
-        assertThat(repo.getFile().exists(), is(false));
+        File tmpDir = TestUtil.createTmpDir();
+        try {
+            TlbEntryRepository repo = new TlbEntryRepository(new File(tmpDir, "foo_bar_baz"));
+            assertThat(repo.getFile().exists(), is(false));
+            repo.cleanup();
+            assertThat(repo.getFile().exists(), is(false));
+        } finally {
+            FileUtils.deleteQuietly(tmpDir);
+        }
     }
 
     @Test

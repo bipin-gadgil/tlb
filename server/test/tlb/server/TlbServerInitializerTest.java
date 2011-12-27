@@ -1,5 +1,6 @@
 package tlb.server;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Component;
@@ -108,15 +109,20 @@ public class TlbServerInitializerTest {
 
     @Test
     public void shouldHonorDiskStorageRootOverride() throws IOException, ClassNotFoundException {
-        String tmpDir = TestUtil.createTmpDir().getAbsolutePath();
-        systemEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, tmpDir);
-        initializer = new TlbServerInitializer(new SystemEnvironment(systemEnv));
-        EntryRepoFactory factory = initializer.repoFactory();
-        File file = new File(tmpDir, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("quux"));
-        file.deleteOnExit();
-        writeEntriedTo(file);
-        SubsetSizeRepo repo = factory.createSubsetRepo("quux", LATEST_VERSION);
-        assertThat((List<SubsetSizeEntry>) repo.list(), is(Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));
+        File tmpDir = TestUtil.createTmpDir();
+        try {
+            String tmpDirPath = tmpDir.getAbsolutePath();
+            systemEnv.put(TlbConstants.Server.TLB_DATA_DIR.key, tmpDirPath);
+            initializer = new TlbServerInitializer(new SystemEnvironment(systemEnv));
+            EntryRepoFactory factory = initializer.repoFactory();
+            File file = new File(tmpDirPath, new EntryRepoFactory.VersionedNamespace(LATEST_VERSION, SUBSET_SIZE).getIdUnder("quux"));
+            file.deleteOnExit();
+            writeEntriedTo(file);
+            SubsetSizeRepo repo = factory.createSubsetRepo("quux", LATEST_VERSION);
+            assertThat((List<SubsetSizeEntry>) repo.list(), is(Arrays.asList(new SubsetSizeEntry(1), new SubsetSizeEntry(2), new SubsetSizeEntry(3))));
+        } finally {
+            FileUtils.deleteQuietly(tmpDir);
+        }
     }
     
     @Test

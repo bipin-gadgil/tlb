@@ -1,8 +1,10 @@
 package tlb.ant;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.resources.FileResource;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import tlb.TestUtil;
@@ -37,6 +39,11 @@ public class LoadBalancedFileSetTest {
         fileSet = new LoadBalancedFileSet(env);
         projectDir = TestUtil.createTmpDir();
         initFileSet(fileSet);
+    }
+
+    @After
+    public void tearDown() {
+        FileUtils.deleteQuietly(projectDir);
     }
 
     private void initFileSet(FileSet fileSet) {

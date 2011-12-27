@@ -30,7 +30,6 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 import static org.mockito.Mockito.*;
 import static tlb.TestUtil.deref;
 import static tlb.TlbConstants.Server.EntryRepoFactory.*;
-import static tlb.TlbConstants.Server.EntryRepoFactory.SUITE_TIME;
 import static tlb.server.repo.EntryRepoFactory.LATEST_VERSION;
 
 @RunWith(Theories.class)
@@ -39,6 +38,7 @@ public class EntryRepoFactoryTest {
     private File baseDir;
     private TestUtil.LogFixture logFixture;
     private TimeProvider timeProvider;
+    private File tmpDir;
 
     private SystemEnvironment env() {
         final HashMap<String, String> env = new HashMap<String, String>();
@@ -48,16 +48,20 @@ public class EntryRepoFactoryTest {
 
     @Before
     public void setUp() throws Exception {
-        baseDir = new File(TestUtil.createTmpDir(), "test_case_tlb_store");
+        tmpDir = TestUtil.createTmpDir();
+        System.err.println("tmpDir = " + tmpDir);
+        baseDir = new File(tmpDir, "test_case_tlb_store");
         timeProvider = mock(TimeProvider.class);
         when(timeProvider.now()).thenReturn(new Date());
         factory = new EntryRepoFactory(baseDir, timeProvider, 100);
         logFixture = new TestUtil.LogFixture();
     }
 
+
     @After
     public void tearDown() throws IOException {
-        FileUtils.forceDelete(baseDir.getParentFile());
+        factory.syncReposToDisk();
+        FileUtils.deleteQuietly(tmpDir);
     }
 
     @Test
@@ -376,11 +380,6 @@ public class EntryRepoFactoryTest {
     }
 
     @Test
-    public void shouldFeedTheDiskDumpContentsToSubsetRepo() {
-        TestUtil.createTmpDir();
-    }
-
-    @Test
     public void shouldUseWorkingDirAsDiskStorageRootWhenNotGiven() throws IOException, ClassNotFoundException {
         final File workingDirStorage = new File(TlbConstants.Server.DEFAULT_TLB_DATA_DIR);
         workingDirStorage.mkdirs();
@@ -570,6 +569,7 @@ public class EntryRepoFactoryTest {
     @Test
     public void shouldCheckRepoExistenceBeforeTryingPurge() throws IOException, IllegalAccessException {
         factory.createSuiteTimeRepo("foo", LATEST_VERSION);
+        factory.syncReposToDisk(); //Otherwise finalize call will re-create a tmp directory to write this empty file under it, and that will be outside the before/after cycle so we'll fail to perform any cleanup. Sigh, GC bites us yet another time. --janmejay
         Cache<EntryRepo> repos = (Cache<EntryRepo>) deref("cache", factory);
         List<String> keys = repos.keys();
         assertThat(keys.size(), is(1 + 1));//+ 1 for repoLedger

@@ -1,7 +1,9 @@
 package tlb.server.repo;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
@@ -33,16 +35,19 @@ public class ServerWith_LowMem {
 
     @Before
     public void setUp() throws Exception {
-        baseDir = new File(TestUtil.createTmpDir(), "test_case_tlb_store");
+        File tmpDir = TestUtil.createTmpDir();
+        baseDir = new File(tmpDir, "test_case_tlb_store");
         factory = new EntryRepoFactory(env());
     }
 
     @After
     public void tearDown() throws IOException {
         factory = null;
+        //FileUtils.deleteQuietly(baseDir); this causes GC issues
     }
  
     @Test
+    @Ignore
     public void shouldNotRunOutOfMemoryWhenTooManyRepositoriesAndVersionsAreLoaded() throws ClassNotFoundException, IOException, InterruptedException {
         final AtomicInteger idx = new AtomicInteger(0);
         Runnable test = new Runnable() {
