@@ -1,6 +1,7 @@
 package tlb.service;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.internal.verification.Times;
@@ -11,6 +12,7 @@ import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.splitter.correctness.ValidationResult;
 import tlb.storage.TlbEntryRepository;
+import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
 import java.io.File;
@@ -48,6 +50,11 @@ public class SmoothingServerTest {
         }
 
         logFixture = new TestUtil.LogFixture();
+    }
+
+    @After
+    public void tearDown() {
+        FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
     }
 
     private TlbEntryRepository testTimeCacheRepo() throws IllegalAccessException {
@@ -117,9 +124,15 @@ public class SmoothingServerTest {
     @Test
     public void shouldAssumeNoOpSmoothingFactorWhenNotGiven() throws NoSuchFieldException, IllegalAccessException {
         when(delegate.fetchLastRunTestTimes()).thenReturn(Arrays.asList(new SuiteTimeEntry("foo/bar/Baz.class", 12l)));
-        updateEnv(env, TlbConstants.TLB_SMOOTHING_FACTOR.key, null);
-        server.testClassTime("foo/bar/Baz.class", 102l);
-        verify(delegate).processedTestClassTime("foo/bar/Baz.class", 102l);
+        File oldFile = new File(new FileUtil(env).tmpDir());
+        try {
+            updateEnv(env, TlbConstants.TLB_SMOOTHING_FACTOR.key, null);
+            server.testClassTime("foo/bar/Baz.class", 102l);
+            verify(delegate).processedTestClassTime("foo/bar/Baz.class", 102l);
+        } finally {
+            FileUtils.deleteQuietly(oldFile);//because the old value may lead to a directory being left behind(teardown will not clean it up because environment here is being mutated.
+            //teardown will get the new location anyway
+        }
     }
 
     private static class DelegatingSmoothingServer extends SmoothingServer {

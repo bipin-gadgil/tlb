@@ -62,6 +62,7 @@ public class DefaultHttpActionTest {
     @AfterClass
     public static void afterAll() {
         httpTestUtil.stop();
+        httpTestUtil.destroy();
     }
 
     private static interface DoAction {

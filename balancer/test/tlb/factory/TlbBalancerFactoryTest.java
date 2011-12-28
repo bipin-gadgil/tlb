@@ -1,5 +1,6 @@
 package tlb.factory;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import tlb.TestUtil;
 import tlb.TlbConstants;
@@ -14,8 +15,10 @@ import tlb.splitter.*;
 import tlb.splitter.correctness.AbortOnFailure;
 import tlb.splitter.correctness.NoOp;
 import tlb.splitter.correctness.SplitChecker;
+import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,49 +77,77 @@ public class TlbBalancerFactoryTest {
 
     @Test
     public void shouldReturn_CorrectnessCheckDecoratedCriteria() throws IllegalAccessException {
-        TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.CountBasedTestSplitter", env("tlb.service.TlbServer", "tlb.splitter.correctness.AbortOnFailure"));
-        assertThat(criteria, instanceOf(AbortOnFailure.class));
-        assertThat(TestUtil.deref("splitter", criteria), instanceOf(CountBasedTestSplitter.class));
+        SystemEnvironment env = env("tlb.service.TlbServer", "tlb.splitter.correctness.AbortOnFailure");
+        try {
+            TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.CountBasedTestSplitter", env);
+            assertThat(criteria, instanceOf(AbortOnFailure.class));
+            assertThat(TestUtil.deref("splitter", criteria), instanceOf(CountBasedTestSplitter.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
     public void shouldReturnCountBasedCriteria() throws IllegalAccessException {
-        TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.CountBasedTestSplitter", env("tlb.service.GoServer", null));
-        assertThat(criteria, instanceOf(SplitChecker.class));
-        assertThat(TestUtil.deref("splitter", criteria), instanceOf(CountBasedTestSplitter.class));
+        SystemEnvironment env = env("tlb.service.GoServer", null);
+        try {
+            TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.CountBasedTestSplitter", env);
+            assertThat(criteria, instanceOf(SplitChecker.class));
+            assertThat(TestUtil.deref("splitter", criteria), instanceOf(CountBasedTestSplitter.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
     public void shouldInjectTlbCommunicatorWhenImplementsTalkToService() {
-        TlbFactory<TestSplitter> criteriaFactory = new TlbFactory<TestSplitter>(TestSplitter.class, JobFamilyAwareSplitter.MATCH_ALL_FILE_SET, SystemEnvironment.class);
         SystemEnvironment env = env("tlb.service.TlbServer", null);
-        TestSplitter criteria = criteriaFactory.getInstance(MockSplitter.class, env, env);
-        assertThat(criteria, instanceOf(MockSplitter.class));
-        assertThat(((MockSplitter)criteria).calledTalksToService, is(true));
-        assertThat(((MockSplitter)criteria).talker, is(TlbServer.class));
+        try {
+            TlbFactory<TestSplitter> criteriaFactory = new TlbFactory<TestSplitter>(TestSplitter.class, JobFamilyAwareSplitter.MATCH_ALL_FILE_SET, SystemEnvironment.class);
+            TestSplitter criteria = criteriaFactory.getInstance(MockSplitter.class, env, env);
+            assertThat(criteria, instanceOf(MockSplitter.class));
+            assertThat(((MockSplitter)criteria).calledTalksToService, is(true));
+            assertThat(((MockSplitter)criteria).talker, is(TlbServer.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
     public void shouldInjectCruiseCommunicatorWhenImplementsTalkToService() {
-        TlbFactory<TestSplitter> criteriaFactory = new TlbFactory<TestSplitter>(TestSplitter.class, JobFamilyAwareSplitter.MATCH_ALL_FILE_SET, SystemEnvironment.class);
         SystemEnvironment env = env("tlb.service.GoServer", null);
-        TestSplitter criteria = criteriaFactory.getInstance(MockSplitter.class, env, env);
-        assertThat(criteria, instanceOf(MockSplitter.class));
-        assertThat(((MockSplitter)criteria).calledTalksToService, is(true));
-        assertThat(((MockSplitter)criteria).talker, is(GoServer.class));
+        try {
+            TlbFactory<TestSplitter> criteriaFactory = new TlbFactory<TestSplitter>(TestSplitter.class, JobFamilyAwareSplitter.MATCH_ALL_FILE_SET, SystemEnvironment.class);
+            TestSplitter criteria = criteriaFactory.getInstance(MockSplitter.class, env, env);
+            assertThat(criteria, instanceOf(MockSplitter.class));
+            assertThat(((MockSplitter)criteria).calledTalksToService, is(true));
+            assertThat(((MockSplitter)criteria).talker, is(GoServer.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
     public void shouldReturnTimeBasedCriteria() throws IllegalAccessException {
-        TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.TimeBasedTestSplitter", env("tlb.service.GoServer", null));
-        assertThat(criteria, instanceOf(SplitChecker.class));
-        assertThat(TestUtil.deref("splitter", criteria), instanceOf(TimeBasedTestSplitter.class));
+        SystemEnvironment env = env("tlb.service.GoServer", null);
+        try {
+            TestSplitter criteria = TlbBalancerFactory.getCriteria("tlb.splitter.TimeBasedTestSplitter", env);
+            assertThat(criteria, instanceOf(SplitChecker.class));
+            assertThat(TestUtil.deref("splitter", criteria), instanceOf(TimeBasedTestSplitter.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
     public void shouldReturnFailedFirstOrderer() {
-        TestOrderer failedTestsFirstOrderer = TlbBalancerFactory.getOrderer("tlb.orderer.FailedFirstOrderer", env("tlb.service.GoServer", null));
-        assertThat(failedTestsFirstOrderer, instanceOf(FailedFirstOrderer.class));
+        SystemEnvironment env = env("tlb.service.GoServer", null);
+        try {
+            TestOrderer failedTestsFirstOrderer = TlbBalancerFactory.getOrderer("tlb.orderer.FailedFirstOrderer", env);
+            assertThat(failedTestsFirstOrderer, instanceOf(FailedFirstOrderer.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     @Test
@@ -124,8 +155,13 @@ public class TlbBalancerFactoryTest {
         final Map<String, String> map = new HashMap<String, String>();
         map.put(TlbConstants.TlbServer.TLB_BASE_URL, "http://localhost:7019");
         map.put(TlbConstants.TYPE_OF_SERVER.key, "tlb.service.TlbServer");
-        Server server = TlbFactory.getTalkToService(new SystemEnvironment(map));
-        assertThat(server, is(TlbServer.class));
+        SystemEnvironment env = new SystemEnvironment(map);
+        try {
+            Server server = TlbFactory.getTalkToService(env);
+            assertThat(server, is(TlbServer.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
     
     @Test
@@ -133,8 +169,13 @@ public class TlbBalancerFactoryTest {
         final Map<String, String> map = new HashMap<String, String>();
         map.put(TlbConstants.Go.GO_SERVER_URL, "http://localhost:8153/cruise");
         map.put(TlbConstants.TYPE_OF_SERVER.key, "tlb.service.GoServer");
-        Server server = TlbFactory.getTalkToService(new SystemEnvironment(map));
-        assertThat(server, is(GoServer.class));
+        SystemEnvironment env = new SystemEnvironment(map);
+        try {
+            Server server = TlbFactory.getTalkToService(env);
+            assertThat(server, is(GoServer.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     private SystemEnvironment env(String talkToService, final String checker) {

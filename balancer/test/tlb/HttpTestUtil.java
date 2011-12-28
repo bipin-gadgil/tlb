@@ -59,8 +59,7 @@ public class HttpTestUtil {
         server.addHandler(redirectHandler());
     }
 
-    @Override
-    protected void finalize() throws Throwable {
+    public void destroy() {
         FileUtils.deleteQuietly(tmpDir);
     }
 

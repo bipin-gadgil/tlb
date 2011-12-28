@@ -61,6 +61,7 @@ public class FileUtilTest {
     public void tearDown() throws IOException {
         logFixture.stopListening();
         deleteOverriddenTmpDirIfExists();
+        FileUtils.deleteQuietly(new File(javaTmpDir));
     }
 
     @Test

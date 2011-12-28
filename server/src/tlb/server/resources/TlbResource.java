@@ -1,27 +1,23 @@
 package tlb.server.resources;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.resource.*;
+import org.restlet.resource.Representation;
+import org.restlet.resource.Resource;
+import org.restlet.resource.Variant;
 import tlb.TlbConstants;
-import tlb.domain.Entry;
-import tlb.server.repo.EntryRepoFactory;
+import tlb.server.repo.*;
 import tlb.utils.Function;
-import tlb.utils.Procedure;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Collection;
 import java.util.Map;
 
-import static tlb.TlbConstants.Server.LISTING_VERSION;
-import static tlb.TlbConstants.Server.REPO_FACTORY;
-import static tlb.TlbConstants.Server.REQUEST_NAMESPACE;
+import static tlb.TlbConstants.Server.*;
 
 /**
  * @understands is a single point of extension for all TLB resources which also packages commonly used helpers for other resources
@@ -49,8 +45,8 @@ public abstract class TlbResource extends Resource {
         return (String) reqAttrs.get(key);
     }
 
-    protected EntryRepoFactory repoFactory() {
-        return (EntryRepoFactory) getContext().getAttributes().get(REPO_FACTORY);
+    protected tlb.server.repo.EntryRepoFactory repoFactory() {
+        return (tlb.server.repo.EntryRepoFactory) getContext().getAttributes().get(REPO_FACTORY);
     }
 
     protected String reqNamespace() {
