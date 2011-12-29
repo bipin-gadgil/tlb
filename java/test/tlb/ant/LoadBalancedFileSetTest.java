@@ -13,6 +13,7 @@ import tlb.TlbSuiteFile;
 import tlb.orderer.TestOrderer;
 import tlb.splitter.CountBasedTestSplitter;
 import tlb.splitter.JobFamilyAwareSplitter;
+import tlb.utils.FileUtil;
 import tlb.utils.SuiteFileConvertor;
 import tlb.utils.SystemEnvironment;
 
@@ -32,10 +33,12 @@ import static tlb.TlbConstants.TLB_SPLITTER;
 public class LoadBalancedFileSetTest {
     private LoadBalancedFileSet fileSet;
     private File projectDir;
+    private File tmpDir;
 
     @Before
     public void setUp() throws Exception {
         SystemEnvironment env = new SystemEnvironment(new HashMap<String, String>());
+        tmpDir = new File(new FileUtil(env).tmpDir());
         fileSet = new LoadBalancedFileSet(env);
         projectDir = TestUtil.createTmpDir();
         initFileSet(fileSet);
@@ -44,6 +47,7 @@ public class LoadBalancedFileSetTest {
     @After
     public void tearDown() {
         FileUtils.deleteQuietly(projectDir);
+        FileUtils.deleteQuietly(tmpDir);
     }
 
     private void initFileSet(FileSet fileSet) {
@@ -108,9 +112,14 @@ public class LoadBalancedFileSetTest {
 
     @Test
     public void shouldUseSystemPropertyToInstantiateCriteria() throws IllegalAccessException {
-        fileSet = new LoadBalancedFileSet(initEnvironment("tlb.splitter.CountBasedTestSplitter"));
-        fileSet.setDir(projectDir);
-        assertThat(TestUtil.deref("splitter", fileSet.getSplitterCriteria()), instanceOf(CountBasedTestSplitter.class));
+        SystemEnvironment env = initEnvironment("tlb.splitter.CountBasedTestSplitter");
+        try {
+            fileSet = new LoadBalancedFileSet(env);
+            fileSet.setDir(projectDir);
+            assertThat(TestUtil.deref("splitter", fileSet.getSplitterCriteria()), instanceOf(CountBasedTestSplitter.class));
+        } finally {
+            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+        }
     }
 
     private SystemEnvironment initEnvironment(String strategyName) {

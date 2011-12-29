@@ -51,8 +51,11 @@ public class TestUtil {
     public static void updateEnv(SystemEnvironment env, String key, String value) throws NoSuchFieldException, IllegalAccessException {
         Field variables = SystemEnvironment.class.getDeclaredField("variables");
         variables.setAccessible(true);
-        Map<String, String> variablesMap = (Map<String, String>) variables.get(env);
-        variablesMap.put(key, value);
+        Map<String, String> map = (Map<String, String>) variables.get(env);
+        map.put(key, value);
+        Field digest = SystemEnvironment.class.getDeclaredField("digest");
+        digest.setAccessible(true);
+        digest.set(env, null);
     }
 
     public static File mkdirInPwd(String dirName) {

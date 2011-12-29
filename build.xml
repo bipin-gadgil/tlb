@@ -477,8 +477,8 @@
 
     <target name="test.perf" depends="init, server.test.perf"/>
 
-    <target name="run_balancer" depends="compile">
-        <java classname="tlb.BalancerApp" fork="true">
+    <target name="run_balancer" depends="compile, compile.tests">
+        <java classname="tlb.TestBalancerApp" fork="true">
             <env key="TLB_BASE_URL" value="http://localhost:7019"/>
             <env key="TLB_JOB_NAME" value="foo"/>
             <env key="TLB_PARTITION_NUMBER" value="1"/>
@@ -492,6 +492,7 @@
                 <path refid="balancer.src.classpath"/>
                 <path refid="restlet.src.classpath"/>
                 <path refid="alien.src.classpath"/>
+                <path refid="alien.test.classpath"/>
                 <path refid="emma.classpath"/>
             </classpath>
         </java>

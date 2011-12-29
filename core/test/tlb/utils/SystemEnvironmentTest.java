@@ -1,23 +1,20 @@
 package tlb.utils;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-
+import com.googlecode.junit.ext.JunitExtRunner;
+import com.googlecode.junit.ext.RunIf;
+import com.googlecode.junit.ext.checkers.OSChecker;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 
-import com.googlecode.junit.ext.RunIf;
-import com.googlecode.junit.ext.JunitExtRunner;
-import com.googlecode.junit.ext.checkers.OSChecker;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertThat;
 
 @RunWith(JunitExtRunner.class)
 public class SystemEnvironmentTest {
@@ -103,22 +100,17 @@ public class SystemEnvironmentTest {
     public void shouldGenerateADigestOfVariablesSet() throws IOException {
         HashMap<String, String> env = new HashMap<String, String>();
         env.put("foo", "bar");
+        env.put("baz", "quux");
         SystemEnvironment sysEnv = new SystemEnvironment(env);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(os);
-        oos.writeObject(env);
-        assertThat(sysEnv.getDigest(), is(DigestUtils.md5Hex(os.toByteArray())));
 
-        sysEnv = new SystemEnvironment();
-        os = new ByteArrayOutputStream();
-        oos = new ObjectOutputStream(os);
-        Map<String,String> externalEnv = System.getenv();
-        Map<String, String> serializableEnv = new HashMap<String, String>();
-        for (String externalKey : externalEnv.keySet()) {
-            serializableEnv.put(externalKey, externalEnv.get(externalKey));
-        }
-        oos.writeObject(serializableEnv);
-        assertThat(sysEnv.getDigest(), is(DigestUtils.md5Hex(os.toByteArray())));
+        assertThat(sysEnv.getDigest(), is(DigestUtils.md5Hex("baz:quux,foo:bar,".getBytes())));
+    }
+
+    @Test
+    public void shouldHandleSystemEnvironmentWhileComputingDigest() throws IOException {//guards against serialization issues, System.getenv map is not serializable. This is to avoid regression.
+        SystemEnvironment sysEnv = new SystemEnvironment();
+
+        assertThat(sysEnv.getDigest(), not(nullValue()));
     }
 
     @Test

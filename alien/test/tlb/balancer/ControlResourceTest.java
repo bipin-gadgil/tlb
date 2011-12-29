@@ -1,5 +1,6 @@
 package tlb.balancer;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import static junit.framework.Assert.fail;
@@ -34,7 +36,9 @@ import static org.mockito.Mockito.*;
 import com.googlecode.junit.ext.RunIf;
 import com.googlecode.junit.ext.JunitExtRunner;
 import com.googlecode.junit.ext.checkers.OSChecker;
-                 
+import tlb.utils.FileUtil;
+import tlb.utils.SystemEnvironment;
+
 @RunWith(JunitExtRunner.class)
 public class ControlResourceTest {
     protected Request req;

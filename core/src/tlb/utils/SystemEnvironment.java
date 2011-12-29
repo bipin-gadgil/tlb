@@ -4,11 +4,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,8 +18,11 @@ import static tlb.TlbConstants.TLB_TMP_DIR;
 public class SystemEnvironment {
     private static final Pattern REF = Pattern.compile(".*\\$\\{(.+?)\\}.*");
     public static final String TMP_DIR = "java.io.tmpdir";
+    public static final String DIGEST_KEY_VAL_SEPERATOR = ":";
+    public static final String DIGEST_ENTRY_SEPERATOR = ",";
 
-    private Map<String, String> variables;
+    private final Map<String, String> variables;
+    private volatile String digest;
 
     public static final Logger logger = Logger.getLogger(SystemEnvironment.class.getName());
 
@@ -91,14 +91,26 @@ public class SystemEnvironment {
     }
 
     public String getDigest() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream objectOut = new ObjectOutputStream(out);
-            objectOut.writeObject(variables);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (digest == null) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PrintWriter printWriter = new PrintWriter(out);
+            List<String> allKeys = new ArrayList<String>(variables.keySet());
+            Collections.sort(allKeys);
+            for (String key : allKeys) {
+                printWriter.print(key);
+                printWriter.print(DIGEST_KEY_VAL_SEPERATOR);
+                printWriter.print(variables.get(key));
+                printWriter.print(DIGEST_ENTRY_SEPERATOR);
+            }
+            printWriter.close();
+            try {
+                out.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            digest = DigestUtils.md5Hex(out.toByteArray());
         }
-        return DigestUtils.md5Hex(out.toByteArray());
+        return digest;
     }
 
     String tmpDir() {
