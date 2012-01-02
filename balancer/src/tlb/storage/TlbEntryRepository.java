@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import tlb.domain.Entry;
+import tlb.utils.Function;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -32,6 +33,9 @@ public class TlbEntryRepository {
 
     private void performWrite(Write writeOp) {
         File cacheFile = getFile();
+        if (! file.exists()) {
+            file.getParentFile().mkdirs();
+        }
         RandomAccessFile rw = null;
         try {
             synchronized (lock(cacheFile)) {
@@ -64,27 +68,51 @@ public class TlbEntryRepository {
         };
     }
 
-    public List<String> load() {
+    public <T> T loadContent(Function<FileInputStream, IOException, T> fn) {
         File cacheFile = getFile();
         FileInputStream in = null;
-        List<String> lines = null;
+        T content = null;
         if (!cacheFile.exists()) {
-            return new ArrayList<String>();
+            try {
+                return fn.execute(null);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         try {
             synchronized (lock(cacheFile)) {
                 in = new FileInputStream(cacheFile);
                 byte[] linesHeader = new byte[4];
                 in.read(linesHeader);
-                lines = IOUtils.readLines(in);
+                content = fn.execute(in);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
             IOUtils.closeQuietly(in);
         }
-        logger.info(String.format("Cached %s lines from %s, the last of which was [ %s ]", lines.size(), cacheFile.getAbsolutePath(), lastLine(lines)));
+        return content;
+    }
+
+    public List<String> loadLines() {
+        List<String> lines = loadContent(new Function<FileInputStream, IOException, List<String>>() {
+            public List<String> execute(FileInputStream fileInputStream) throws IOException {
+                if (fileInputStream == null) {
+                    return new ArrayList<String>();
+                }
+                return IOUtils.readLines(fileInputStream);
+            }
+        });
+        logger.info(String.format("Cached %s lines from %s, the last of which was [ %s ]", lines.size(), getFile().getAbsolutePath(), lastLine(lines)));
         return lines;
+    }
+
+    public String loadBody() {
+        return loadContent(new Function<FileInputStream, IOException, String>() {
+            public String execute(FileInputStream fileInputStream) throws IOException {
+               return IOUtils.toString(fileInputStream);
+            }
+        });
     }
 
     public File getFile() {
@@ -92,13 +120,17 @@ public class TlbEntryRepository {
     }
 
     public void cleanup() throws IOException {
-        if (getFile().exists()) {
+        if (exists()) {
             FileUtils.forceDelete(getFile());
         }
     }
 
+    public boolean exists() {
+        return getFile().exists();
+    }
+
     public String loadLastLine() {
-        return lastLine(load());
+        return lastLine(loadLines());
     }
 
     private String lastLine(List<String> lines) {

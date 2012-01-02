@@ -10,6 +10,7 @@ import org.restlet.resource.Representation;
 import tlb.server.repo.SuiteResultRepo;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @understands result of suite reported by job
@@ -28,6 +29,11 @@ public class SuiteResultResource extends SimpleCRUResource<SuiteResultRepo> {
     @Override
     protected Entry parseEntry(Representation entity) throws IOException {
         return SuiteResultEntry.parseSingleEntry(entity.getText());
+    }
+
+    @Override
+    protected List<SuiteResultEntry> parseEntries(Representation entity) throws IOException {
+        return SuiteResultEntry.parse(entity.getText());
     }
 
     @Override

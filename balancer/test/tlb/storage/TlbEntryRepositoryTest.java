@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class TlbEntryRepositoryTest {
     private TestUtil.LogFixture logFixture;
@@ -47,7 +48,7 @@ public class TlbEntryRepositoryTest {
         logFixture.assertHeard(String.format("Wrote line [ hacking is fun\n ] to %s", file.getAbsolutePath()));
         cruise.appendLine("foo bar baz quux\n");
         logFixture.assertHeard(String.format("Wrote line [ foo bar baz quux\n ] to %s", file.getAbsolutePath()));
-        cruise.load();
+        cruise.loadLines();
         logFixture.assertHeard(String.format("Cached 3 lines from %s, the last of which was [ foo bar baz quux ]", file.getAbsolutePath()));
     }
 
@@ -65,7 +66,7 @@ public class TlbEntryRepositoryTest {
         logFixture.startListening();
         cruise.appendLines(Arrays.asList(new NameNumberEntry("foo", 10), new NameNumberEntry("bar", 20), new NameNumberEntry("baz", 30), new NameNumberEntry("quux", 40)));
         logFixture.assertHeard(String.format("Wrote 4 lines with first line [ foo: 10 ] and last line [ quux: 40 ] to %s", file.getAbsolutePath()));
-        cruise.load();
+        cruise.loadLines();
         logFixture.assertHeard(String.format("Cached 4 lines from %s, the last of which was [ quux: 40 ]", file.getAbsolutePath()));
     }
 
@@ -102,5 +103,10 @@ public class TlbEntryRepositoryTest {
         repo.appendLine("second");
         repo.appendLine("third");
         assertThat(repo.lineCount(), is(3));
+    }
+
+    @Test
+    public void shouldLoadLastLine() {
+        fail("optimize and test the implementation");
     }
 }

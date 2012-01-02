@@ -13,8 +13,10 @@ import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SuiteResultRepo;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.core.Is.is;
@@ -48,7 +50,7 @@ public class SuiteResultResourceTest {
     }
     
     @Test
-    public void shouldUseSuiteTimeRepo() throws IOException, ClassNotFoundException {
+    public void shouldUseSuiteResultRepo() throws IOException, ClassNotFoundException {
         EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);
         SuiteResultRepo expectedRepo = mock(SuiteResultRepo.class);
         when(repoFactory.createSuiteResultRepo("namespace", EntryRepoFactory.LATEST_VERSION)).thenReturn(expectedRepo);
@@ -57,8 +59,14 @@ public class SuiteResultResourceTest {
     }
 
     @Test
-    public void shouldParseSuitTimeEntry() throws IOException {
+    public void shouldParseSuitResultEntry() throws IOException {
         final SuiteResultEntry entry = (SuiteResultEntry) suiteResultResource.parseEntry(new StringRepresentation("foo.bar.Baz: true"));
         assertThat(entry, is(new SuiteResultEntry("foo.bar.Baz", true)));
+    }
+
+    @Test
+    public void shouldParseSuitResultEntries() throws IOException {
+        final List<SuiteResultEntry> entry = suiteResultResource.parseEntries(new StringRepresentation("foo.bar.Baz: true\nfoo.baz.Quux: false\nfoo.quux.Bang: true\n"));
+        assertThat(entry, is(Arrays.asList(new SuiteResultEntry("foo.bar.Baz", true), new SuiteResultEntry("foo.baz.Quux", false), new SuiteResultEntry("foo.quux.Bang", true))));
     }
 }

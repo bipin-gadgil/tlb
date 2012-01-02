@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static junit.framework.Assert.fail;
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -51,6 +52,11 @@ public class SimpleCRUResourceTest {
         @Override
         protected Entry parseEntry(Representation entity) throws IOException {
             return new SubsetSizeEntry(Integer.parseInt(entity.getText()));
+        }
+
+        @Override
+        protected List<SubsetSizeEntry> parseEntries(Representation entity) throws IOException {
+            return SubsetSizeEntry.parse(entity.getText());
         }
     }
 
@@ -138,9 +144,9 @@ public class SimpleCRUResourceTest {
 
     @Test
     public void shouldUpdateRecords() throws ResourceException {
-        StringRepresentation representation = new StringRepresentation("14");
+        StringRepresentation representation = new StringRepresentation("14\n20\n3\n");
         simpleCRUResource.storeRepresentation(representation);
-        verify(repo).update(new SubsetSizeEntry(14));
+        verify(repo).updateAll(Arrays.asList(new SubsetSizeEntry(14), new SubsetSizeEntry(20), new SubsetSizeEntry(3)));
     }
 
     @Test

@@ -12,10 +12,7 @@ import tlb.utils.SystemEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static junit.framework.Assert.fail;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -83,6 +80,16 @@ public class NamedEntryRepoTest {
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
         assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
     }
+
+    @Test
+    public void shouldRecordSuiteRecordWhenMultipleUpdated() {
+        testCaseRepo.updateAll(Arrays.asList(parseSingleEntry("shouldBar#Bar"), parseSingleEntry("shouldFoo#Foo")));
+        List<TestCaseRepo.TestCaseEntry> entryList = testCaseRepo.sortedList();
+        assertThat(entryList.size(), is(2));
+        assertThat((TestCaseRepo.TestCaseEntry) entryList.get(0), is(new TestCaseRepo.TestCaseEntry("shouldBar", "Bar")));
+        assertThat((TestCaseRepo.TestCaseEntry) entryList.get(1), is(new TestCaseRepo.TestCaseEntry("shouldFoo", "Foo")));
+    }
+
 
     @Test
     public void shouldOverwriteExistingEntryIfAddedAgain() {

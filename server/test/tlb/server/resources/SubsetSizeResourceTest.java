@@ -13,8 +13,10 @@ import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SubsetSizeRepo;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.core.Is.is;
@@ -58,6 +60,12 @@ public class SubsetSizeResourceTest {
         assertThat((SubsetSizeRepo) repo, sameInstance(expectedRepo));
     }
 
+    @Test
+    public void shouldParseResultEntries() throws IOException {
+        List<SubsetSizeEntry> entry = subsetSizeResource.parseEntries(new StringRepresentation("115\n12\n19\n"));
+        assertThat(entry, is(Arrays.asList(new SubsetSizeEntry(115), new SubsetSizeEntry(12), new SubsetSizeEntry(19))));
+    }
+    
     @Test
     public void shouldParseResultEntry() throws IOException {
         SubsetSizeEntry entry = (SubsetSizeEntry) subsetSizeResource.parseEntry(new StringRepresentation("115"));

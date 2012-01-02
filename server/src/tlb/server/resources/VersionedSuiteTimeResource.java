@@ -9,6 +9,7 @@ import org.restlet.data.Response;
 import tlb.server.repo.SuiteTimeRepo;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @understands versioned run time of suite reported by job
@@ -26,6 +27,11 @@ public class VersionedSuiteTimeResource extends SimpleCRUResource<SuiteTimeRepo>
 
     @Override
     protected Entry parseEntry(Representation entity) throws IOException {
+        throw new UnsupportedOperationException("parsing does not make sense, as mutation of versioned data is not allowed");
+    }
+
+    @Override
+    protected List<Entry> parseEntries(Representation entity) throws IOException {
         throw new UnsupportedOperationException("parsing does not make sense, as mutation of versioned data is not allowed");
     }
 }

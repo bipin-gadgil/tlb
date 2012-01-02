@@ -44,6 +44,12 @@ public abstract class NamedEntryRepo<T extends NamedEntry> implements EntryRepo<
         dirty = true;
     }
 
+    public synchronized void updateAll(List<T> record) {
+        for (T t : record) {
+            update(t);
+        }
+    }
+
     protected static String getKey(NamedEntry record) {
         return record.getName();
     }

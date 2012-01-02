@@ -3,6 +3,7 @@ package tlb.service;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import tlb.TlbConstants;
+import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.storage.TlbEntryRepository;
 import tlb.utils.FileUtil;
@@ -19,7 +20,17 @@ import java.util.List;
  */
 public abstract class SmoothingServer implements Server {
     private static final Logger logger = Logger.getLogger(SmoothingServer.class.getName());
-    private final TlbEntryRepository oldTestTimesRepo;
+    static final String OLD_TEST_TIMES_REPO_FILE = "old_test_times";
+    static final String SUBSET_SIZE_REPO_FILE = "subset_size";
+    static final String TEST_TIMES_REPO_FILE = "test_times";
+    static final String FAILED_TESTS_REPO_FILE = "failed_tests";
+    private FileUtil fileUtil;
+    Integer subsetSize;
+
+    final TlbEntryRepository testTimesRepository;
+    final TlbEntryRepository oldTestTimesRepo;
+    final TlbEntryRepository subsetSizeRepository;
+    final TlbEntryRepository failedTestsRepository;
 
     private static class PassThroughSuiteEntry extends SuiteTimeEntry {
         public PassThroughSuiteEntry() {
@@ -36,14 +47,63 @@ public abstract class SmoothingServer implements Server {
 
     protected SmoothingServer(SystemEnvironment environment) {
         this.environment = environment;
-        oldTestTimesRepo = new TlbEntryRepository(new FileUtil(this.environment).getUniqueFile("old_test_times"));
+        fileUtil = new FileUtil(this.environment);
+        oldTestTimesRepo = new TlbEntryRepository(fileUtil.getUniqueFile(OLD_TEST_TIMES_REPO_FILE));
+        subsetSizeRepository = new TlbEntryRepository(fileUtil.getUniqueFile(SUBSET_SIZE_REPO_FILE));
+        testTimesRepository = new TlbEntryRepository(fileUtil.getUniqueFile(TEST_TIMES_REPO_FILE));
+        failedTestsRepository = new TlbEntryRepository(fileUtil.getUniqueFile(FAILED_TESTS_REPO_FILE));
+        subsetSize = null;
     }
+
+    protected int subsetSize() {
+        if (subsetSize == null) {
+            subsetSize = Integer.parseInt(subsetSizeRepository.loadLastLine());
+        }
+        return subsetSize;
+    }
+
+    public void publishSubsetSize(int size) {
+        String line = String.format("%s\n", size);
+        subsetSizeRepository.appendLine(line);
+        logger.info(String.format("Posting balanced subset size as %s to cruise server", size));
+        postSubsetSizeToServer(size);
+    }
+
+    protected abstract void postSubsetSizeToServer(int line);
+
+    protected abstract void postTestTimesToServer(String body);
+
+    public void testClassFailure(String className, boolean hasFailed) {
+        failedTestsRepository.appendLine(new SuiteResultEntry(className, hasFailed).dump());
+
+        if (subsetSize() == failedTestsRepository.lineCount()) {
+            List<String> runTests = failedTestsRepository.loadLines();
+            List<SuiteResultEntry> resultEntries = SuiteResultEntry.parse(runTests);
+            postFailedTestsToServer(resultEntries);
+            cleanupRepo(failedTestsRepository);
+            cleanupCachingFilesIfNoOtherReposExist();
+        }
+    }
+
+    protected abstract void postFailedTestsToServer(List<SuiteResultEntry> failures);
 
     public abstract List<SuiteTimeEntry> fetchLastRunTestTimes();
 
-    public abstract void processedTestClassTime(String className, long time);
+    public void processedTestClassTime(String className, long time) {
+        logger.info(String.format("recording run time for suite %s", className));
+        testTimesRepository.appendLine(new SuiteTimeEntry(className, time).dump());
 
-    public final void testClassTime(String className, long time) {
+        if (subsetSize() == testTimesRepository.lineCount()) {
+            String body = testTimesRepository.loadBody();
+            logger.info(String.format("Posting test run times for suite with size %s to the server.", subsetSize()));
+            postTestTimesToServer(body);
+            cleanupRepo(testTimesRepository);
+            cleanupRepo(oldTestTimesRepo);
+            cleanupCachingFilesIfNoOtherReposExist();
+        }
+    }
+
+    public void testClassTime(String className, long time) {
         SuiteTimeEntry entry = entryFor(className);
         entry = entry.smoothedWrt(new SuiteTimeEntry(className, time), smoothingFactor());
         processedTestClassTime(entry.getName(), entry.getTime());
@@ -62,23 +122,41 @@ public abstract class SmoothingServer implements Server {
         return new PassThroughSuiteEntry();
     }
 
-    public final void clearCachingFiles() {
-        try {
-            oldTestTimesRepo.cleanup();
-        } catch (IOException e) {
-            logger.warn("failed to delete cachedTestTimes repo", e);
-            throw new RuntimeException(e);
-        }
-        clearOtherCachingFiles();
+    private void deleteCachingFilesDir() {
+        FileUtils.deleteQuietly(new File(fileUtil.tmpDir()));
     }
 
-    protected abstract void clearOtherCachingFiles();
+    private void cleanupCachingFilesIfNoOtherReposExist() {
+        boolean anyRepoExists;
+        synchronized (this) {
+            anyRepoExists = testTimesRepository.exists() || oldTestTimesRepo.exists() || failedTestsRepository.exists();
+        }
+        if (anyRepoExists) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("not cleaning up cache dir as some repos still exist");
+            }
+        } else {
+            if (logger.isDebugEnabled()) {
+                logger.debug("clearing out the cache dir");
+            }
+            cleanupRepo(subsetSizeRepository);
+            deleteCachingFilesDir();
+        }
+    }
 
-    public final List<SuiteTimeEntry> getLastRunTestTimes() {
+    private void cleanupRepo(TlbEntryRepository repository) {
+        try {
+            repository.cleanup();
+        } catch (IOException e) {
+            logger.warn("could not delete cache file: " + e.getMessage(), e);
+        }
+    }
+
+    public List<SuiteTimeEntry> getLastRunTestTimes() {
         if (!oldTestTimesRepo.getFile().exists()) {
             cacheOldSuiteTimeEntries();
         }
-        return SuiteTimeEntry.parse(oldTestTimesRepo.load());
+        return SuiteTimeEntry.parse(oldTestTimesRepo.loadLines());
     }
 
     private void cacheOldSuiteTimeEntries() {

@@ -37,16 +37,17 @@ public class TlbServer extends SmoothingServer {
         this.httpAction = httpAction;
     }
 
-    public void processedTestClassTime(String className, long time) {
-        httpAction.put(getUrl(namespace(), suiteTimeRepoName()), String.format("%s: %s", className, time));
-    }
-
     private String suiteTimeRepoName() {
         return SUITE_TIME;
     }
 
-    public void testClassFailure(String className, boolean hasFailed) {
-        httpAction.put(suiteResultUrl(), new SuiteResultEntry(className, hasFailed).toString());
+    @Override
+    protected void postFailedTestsToServer(List<SuiteResultEntry> resultEntries) {
+        StringBuilder builder = new StringBuilder();
+        for (SuiteResultEntry resultEntry : resultEntries) {
+            builder.append(resultEntry.dump());
+        }
+        httpAction.put(suiteResultUrl(), builder.toString());
     }
 
     public List<SuiteTimeEntry> fetchLastRunTestTimes() {
@@ -57,8 +58,14 @@ public class TlbServer extends SmoothingServer {
         return SuiteResultEntry.parse(httpAction.get(suiteResultUrl()));
     }
 
-    public void publishSubsetSize(int size) {
+    @Override
+    protected void postSubsetSizeToServer(int size) {
         httpAction.post(getUrl(jobName(), SUBSET_SIZE), String.valueOf(size));
+    }
+
+    @Override
+    protected void postTestTimesToServer(String body) {
+        httpAction.put(getUrl(namespace(), suiteTimeRepoName()), body);
     }
 
     public void clearOtherCachingFiles() {

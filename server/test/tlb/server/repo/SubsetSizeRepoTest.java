@@ -7,6 +7,7 @@ import tlb.server.RepoFactoryTestUtil;
 import tlb.utils.FileUtil;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.Assert.fail;
@@ -32,6 +33,17 @@ public class SubsetSizeRepoTest {
             assertThat(e.getMessage(), is("update not allowed on repository"));
         }
     }
+
+    @Test
+    public void shouldNotAllowUpdateAll() {
+        try {
+            subsetSizeRepo.updateAll(Arrays.asList(new SubsetSizeEntry(10)));
+            fail("update should not have been allowed");
+        } catch (UnsupportedOperationException e) {
+            assertThat(e.getMessage(), is("update not allowed on repository"));
+        }
+    }
+
 
     @Test
     public void shouldListAddedEntries() {

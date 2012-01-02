@@ -81,7 +81,7 @@ public class TlbServerTest {
         env = new SystemEnvironment(clientEnv);
         toBeDeleted = new ArrayList<File>();
         server = makeTlbServer(env);
-        server.clearCachingFiles();
+        SmoothingServerTest.clearCachingFiles(new FileUtil(env));
     }
 
     private TlbServer makeTlbServer(final SystemEnvironment env) {
@@ -115,6 +115,7 @@ public class TlbServerTest {
 
     @Test
     public void shouldBeAbleToPostSuiteTime() throws NoSuchFieldException, IllegalAccessException {
+        server.subsetSizeRepository.appendLine("4\n");
         server.testClassTime("com.foo.Foo", 100);
         server.testClassTime("com.bar.Bar", 120);
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "2");
@@ -140,10 +141,15 @@ public class TlbServerTest {
         httpAction.put(suiteTimeUrl, "com.quux.Quux: 20");
 
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "4");
+        server.subsetSizeRepository.appendLine("2\n");
         server.testClassTime("com.foo.Foo", 200);
         server.testClassTime("com.bar.Bar", 160);
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "2");
+        server.subsetSizeRepository.appendLine("1\n");
+        server.subsetSize = null;
         server.testClassTime("com.baz.Baz", 15);
+        server.subsetSizeRepository.appendLine("1\n");
+        server.subsetSize = null;
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "15");
         server.testClassTime("com.quux.Quux", 160);
         String response = httpAction.get(suiteTimeUrl);
@@ -157,11 +163,16 @@ public class TlbServerTest {
 
     @Test
     public void shouldBeAbleToPostSuiteResult() throws NoSuchFieldException, IllegalAccessException {
+        server.subsetSizeRepository.appendLine("2\n");
         server.testClassFailure("com.foo.Foo", true);
         server.testClassFailure("com.bar.Bar", false);
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "2");
+        server.subsetSizeRepository.appendLine("1\n");
+        server.subsetSize = null;
         server.testClassFailure("com.baz.Baz", true);
         updateEnv(env, TlbConstants.TlbServer.TLB_PARTITION_NUMBER, "15");
+        server.subsetSizeRepository.appendLine("1\n");
+        server.subsetSize = null;
         server.testClassFailure("com.quux.Quux", true);
         final String response = httpAction.get(String.format("http://localhost:%s/job/suite_result", freePort));
         final List<SuiteResultEntry> entryList = SuiteResultEntry.parse(response);

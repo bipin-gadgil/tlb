@@ -29,7 +29,6 @@ import tlb.utils.XmlUtil;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -47,7 +46,6 @@ public class GoServer extends SmoothingServer {
     private static final String JOB_NAME = "name";
     protected static final String TEST_TIME_FILE = "tlb/test_time.properties";
     private static final Pattern STAGE_LOCATOR = Pattern.compile("(.*?)/\\d+/(.*?)/\\d+");
-    private Integer subsetSize;
     final String jobLocator;
     final String stageLocator;
     public static final String FAILED_TESTS_FILE = "tlb/failed_tests";
@@ -57,9 +55,6 @@ public class GoServer extends SmoothingServer {
     private static final String HEX = "[a-fA-F0-9]";
     private static final String UUID = HEX + "{8}-" + HEX + "{4}-" + HEX + "{4}-" + HEX + "{4}-" + HEX + "{12}";
     private static final Pattern UUID_BASED_LOAD_BALANCED_JOB = Pattern.compile("(.*?)-(" + UUID + ")");
-    final TlbEntryRepository subsetSizeRepository;
-    final TlbEntryRepository testTimesRepository;
-    final TlbEntryRepository failedTestsRepository;
 
     public GoServer(SystemEnvironment environment) {
         this(environment, createHttpAction(environment));
@@ -68,12 +63,8 @@ public class GoServer extends SmoothingServer {
     public GoServer(SystemEnvironment environment, HttpAction httpAction) {
         super(environment);
         this.httpAction = httpAction;
-        subsetSize = null;
         jobLocator = String.format("%s/%s/%s/%s/%s", v(Go.GO_PIPELINE_NAME), v(Go.GO_PIPELINE_LABEL), v(Go.GO_STAGE_NAME), v(Go.GO_STAGE_COUNTER), v(Go.GO_JOB_NAME));
         FileUtil fileUtil = new FileUtil(environment);
-        testTimesRepository = new TlbEntryRepository(fileUtil.getUniqueFile("test_times"));
-        subsetSizeRepository = new TlbEntryRepository(fileUtil.getUniqueFile("subset_size"));
-        failedTestsRepository = new TlbEntryRepository(fileUtil.getUniqueFile("failed_tests"));
         stageLocator = String.format("%s/%s/%s/%s", v(Go.GO_PIPELINE_NAME), v(Go.GO_PIPELINE_COUNTER), v(Go.GO_STAGE_NAME), v(Go.GO_STAGE_COUNTER));
     }
 
@@ -144,41 +135,23 @@ public class GoServer extends SmoothingServer {
         return environment.val(new SystemEnvironment.EnvVar(key));
     }
 
-    public void processedTestClassTime(String className, long time) {
-        logger.info(String.format("recording run time for suite %s", className));
-        testTimesRepository.appendLine(new SuiteTimeEntry(className, time).dump());
-
-        if (subsetSize() == testTimesRepository.lineCount()) {
-            List<String> testTimes = testTimesRepository.load();
-            logger.info(String.format("Posting test run times for %s suite to the cruise server.", subsetSize()));
-            postLinesToServer(SuiteTimeEntry.dump(SuiteTimeEntry.parse(testTimes)), artifactFileUrl(TEST_TIME_FILE));
-            clearCachingFiles();
-        }
+    @Override
+    protected void postTestTimesToServer(String body) {
+        postLinesToServer(body, artifactFileUrl(TEST_TIME_FILE));
     }
 
     private void postLinesToServer(String buffer, String url) {
         httpAction.put(url, buffer);
     }
 
-    public void testClassFailure(String className, boolean hasFailed) {
-        failedTestsRepository.appendLine(new SuiteResultEntry(className, hasFailed).dump());
-
-        if (subsetSize() == failedTestsRepository.lineCount()) {
-            List<String> runTests = failedTestsRepository.load();
-            List<SuiteResultEntry> resultEntries = SuiteResultEntry.parse(runTests);
-            postLinesToServer(SuiteResultEntry.dumpFailures(resultEntries), artifactFileUrl(FAILED_TESTS_FILE));
-        }
+    @Override
+    protected void postFailedTestsToServer(List<SuiteResultEntry> resultEntries) {
+        String failures = SuiteResultEntry.dumpFailures(resultEntries);
+        postLinesToServer(failures, artifactFileUrl(FAILED_TESTS_FILE));
     }
 
     private String artifactFileUrl(String atrifactFile) {
         return String.format("%s/files/%s/%s", cruiseUrl(), jobLocator, atrifactFile);
-    }
-
-    private int subsetSize() {
-        if (subsetSize == null) {
-            subsetSize = Integer.parseInt(subsetSizeRepository.loadLastLine());
-        }
-        return subsetSize;
     }
 
     public List<SuiteTimeEntry> fetchLastRunTestTimes() {
@@ -251,21 +224,9 @@ public class GoServer extends SmoothingServer {
         return samePipeline && sameStage;
     }
 
-    public void publishSubsetSize(int size) {
-        String line = String.valueOf(size) + "\n";
-        subsetSizeRepository.appendLine(line);
-        logger.info(String.format("Posting balanced subset size as %s to cruise server", size));
-        httpAction.put(artifactFileUrl(TlbConstants.TEST_SUBSET_SIZE_FILE), line);
-    }
-
-    public void clearOtherCachingFiles() {
-        for (TlbEntryRepository repository : Arrays.asList(subsetSizeRepository, testTimesRepository, failedTestsRepository)) {
-            try {
-                repository.cleanup();
-            } catch (IOException e) {
-                logger.warn("could not delete suite time cache file: " + e.getMessage(), e);
-            }
-        }
+    @Override
+    protected void postSubsetSizeToServer(int size) {
+        httpAction.put(artifactFileUrl(TlbConstants.TEST_SUBSET_SIZE_FILE), String.format("%s\n", size));
     }
 
     List<SuiteResultEntry> getLastRunFailedTests(List<String> jobNames) {

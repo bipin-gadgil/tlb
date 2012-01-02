@@ -14,6 +14,8 @@ public interface EntryRepo<T extends Entry, Impl> extends Serializable {
 
     void update(T entry);
 
+    void updateAll(List<T> entry);
+
     String dump() throws IOException;
 
     void copyFrom(Impl otherRepo);

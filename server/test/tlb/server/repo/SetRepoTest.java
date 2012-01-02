@@ -55,4 +55,9 @@ public class SetRepoTest {
     public void shouldNotAllowUpdate() {
         repo.update(new SuiteNamePartitionEntry("foo"));
     }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void shouldNotAllowUpdateAll() {
+        repo.updateAll(Arrays.asList(new SuiteNamePartitionEntry("foo")));
+    }
 }

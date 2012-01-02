@@ -10,6 +10,7 @@ import org.restlet.resource.Representation;
 import tlb.server.repo.SubsetSizeRepo;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @understands subset sizes reported by a job
@@ -28,6 +29,11 @@ public class SubsetSizeResource extends SimpleCRUResource<SubsetSizeRepo> {
     @Override
     protected Entry parseEntry(Representation entity) throws IOException {
         return SubsetSizeEntry.parseSingleEntry(entity.getText());
+    }
+
+    @Override
+    protected List<SubsetSizeEntry> parseEntries(Representation entity) throws IOException {
+        return SubsetSizeEntry.parse(entity.getText());
     }
 
     @Override

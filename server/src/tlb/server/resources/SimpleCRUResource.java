@@ -12,6 +12,7 @@ import org.restlet.resource.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @understands listing and modification of tlb resource
@@ -53,12 +54,14 @@ public abstract class SimpleCRUResource<T extends EntryRepo> extends TlbResource
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
         try {
-            repo.update(parseEntry(entity));
+            repo.updateAll(parseEntries(entity));
         } catch (Exception e) {
             logger.warn(String.format("update of representation failed for %s", entity), e);
             throw new RuntimeException(e);
         }
     }
+
+    protected abstract List<? extends Entry> parseEntries(Representation entity) throws IOException;
 
     protected abstract Entry parseEntry(Representation entity) throws IOException;
 

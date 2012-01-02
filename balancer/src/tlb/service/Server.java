@@ -23,8 +23,6 @@ public interface Server {
 
     void publishSubsetSize(int size);
 
-    void clearCachingFiles();
-
     int partitionNumber();
 
     int totalPartitions();

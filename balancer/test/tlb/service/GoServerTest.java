@@ -1,6 +1,5 @@
 package tlb.service;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -10,14 +9,12 @@ import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-import org.mockito.internal.invocation.Invocation;
 import tlb.TestUtil;
 import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
 import tlb.domain.SuiteTimeEntry;
 import tlb.service.http.HttpAction;
-import tlb.storage.TlbEntryRepository;
 import tlb.utils.FileUtil;
 import tlb.utils.SystemEnvironment;
 
@@ -73,7 +70,7 @@ public class GoServerTest {
             assertThat(server.totalPartitions(), is(3));
             assertThat(server.partitionNumber(), is(2));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -99,7 +96,7 @@ public class GoServerTest {
             assertThat(server.totalPartitions(), is(3));
             assertThat(server.partitionNumber(), is(2));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -117,17 +114,18 @@ public class GoServerTest {
             String data = "com.thoughtworks.tlb.TestSuite: 12\n";
             String url = "http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/" + GoServer.TEST_TIME_FILE;
 
+            FileUtil fileUtil = new FileUtil(environment);
+            SmoothingServerTest.clearCachingFiles(fileUtil);
             GoServer cruise = new GoServer(environment, action);
-            cruise.clearCachingFiles();
             cruise.subsetSizeRepository.appendLine("1\n");
 
             logFixture.startListening();
             cruise.testClassTime("com.thoughtworks.tlb.TestSuite", 12);
             logFixture.assertHeard("recording run time for suite com.thoughtworks.tlb.TestSuite");
-            logFixture.assertHeard("Posting test run times for 1 suite to the cruise server.");
+            logFixture.assertHeard("Posting test run times for suite with size 1 to the server.");
             verify(action).put(url, data);
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -140,26 +138,27 @@ public class GoServerTest {
             when(action.put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "20")).thenReturn("File tlb/subset_size was appended successfully");
             when(action.put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "25")).thenReturn("File tlb/subset_size was appended successfully");
             GoServer toCruise = new GoServer(environment, action);
-            toCruise.clearCachingFiles();
+            FileUtil fileUtil = new FileUtil(environment);
+            SmoothingServerTest.clearCachingFiles(fileUtil);
             logFixture.startListening();
             toCruise.publishSubsetSize(10);
             logFixture.assertHeard("Posting balanced subset size as 10 to cruise server");
             List<String> times = new ArrayList<String>();
             times.add("10");
-            assertThat(toCruise.subsetSizeRepository.load(), is(times));
+            assertThat(toCruise.subsetSizeRepository.loadLines(), is(times));
             toCruise.publishSubsetSize(20);
             logFixture.assertHeard("Posting balanced subset size as 20 to cruise server");
             times.add("20");
-            assertThat(toCruise.subsetSizeRepository.load(), is(times));
+            assertThat(toCruise.subsetSizeRepository.loadLines(), is(times));
             toCruise.publishSubsetSize(25);
             logFixture.assertHeard("Posting balanced subset size as 25 to cruise server");
             times.add("25");
-            assertThat(toCruise.subsetSizeRepository.load(), is(times));
+            assertThat(toCruise.subsetSizeRepository.loadLines(), is(times));
             verify(action).put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "10\n");
             verify(action).put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "20\n");
             verify(action).put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "25\n");
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -177,16 +176,16 @@ public class GoServerTest {
             String url = "http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/" + GoServer.TEST_TIME_FILE;
 
             GoServer cruise = new GoServer(env, action);
-            cruise.clearCachingFiles();
+            SmoothingServerTest.clearCachingFiles(fileUtil);
             cruise.subsetSizeRepository.appendLine("5\n");
             cruise.testClassTime("com.thoughtworks.tlb.TestSuite", 12);
-            assertCacheState(env, 1, "com.thoughtworks.tlb.TestSuite: 12", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 1, "com.thoughtworks.tlb.TestSuite: 12", cruise.testTimesRepository);
             cruise.testClassTime("com.thoughtworks.tlb.TestTimeBased", 15);
-            assertCacheState(env, 2, "com.thoughtworks.tlb.TestTimeBased: 15", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 2, "com.thoughtworks.tlb.TestTimeBased: 15", cruise.testTimesRepository);
             cruise.testClassTime("com.thoughtworks.tlb.TestCountBased", 10);
-            assertCacheState(env, 3, "com.thoughtworks.tlb.TestCountBased: 10", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 3, "com.thoughtworks.tlb.TestCountBased: 10", cruise.testTimesRepository);
             cruise.testClassTime("com.thoughtworks.tlb.TestCriteriaSelection", 30);
-            assertCacheState(env, 4, "com.thoughtworks.tlb.TestCriteriaSelection: 30", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 4, "com.thoughtworks.tlb.TestCriteriaSelection: 30", cruise.testTimesRepository);
 
             when(action.put(url, data)).thenReturn("File tlb/test_time.properties was appended successfully");
 
@@ -196,7 +195,7 @@ public class GoServerTest {
 
             verify(action).put(url, data);
         } finally {
-            FileUtils.deleteQuietly(new File(fileUtil.tmpDir()));
+            SmoothingServerTest.clearCachingFiles(fileUtil);
         }
     }
 
@@ -211,30 +210,33 @@ public class GoServerTest {
             String url = "http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/" + GoServer.FAILED_TESTS_FILE;
 
             GoServer cruise = new GoServer(env, action);
-            cruise.clearCachingFiles();
-            cruise.subsetSizeRepository.appendLine("3\n\10\n6\n");
+            SmoothingServerTest.clearCachingFiles(new FileUtil(env));
+            cruise.subsetSizeRepository.appendLine("3\n10\n6\n");
+            cruise.testClassTime("com.thoughtworks.tlb.PassingSuite", 10l);
             cruise.testClassFailure("com.thoughtworks.tlb.PassingSuite", false);
-            assertCacheState(env, 1, "com.thoughtworks.tlb.PassingSuite: false", cruise.failedTestsRepository);
+            SmoothingServerTest.assertCacheState(env, 1, "com.thoughtworks.tlb.PassingSuite: false", cruise.failedTestsRepository);
             cruise.testClassFailure("com.thoughtworks.tlb.FailedSuiteOne", true);
-            assertCacheState(env, 2, "com.thoughtworks.tlb.FailedSuiteOne: true", cruise.failedTestsRepository);
+            SmoothingServerTest.assertCacheState(env, 2, "com.thoughtworks.tlb.FailedSuiteOne: true", cruise.failedTestsRepository);
             cruise.testClassFailure("com.thoughtworks.tlb.FailedSuiteTwo", true);
-            assertCacheState(env, 3, "com.thoughtworks.tlb.FailedSuiteTwo: true", cruise.failedTestsRepository);
+            SmoothingServerTest.assertCacheState(env, 3, "com.thoughtworks.tlb.FailedSuiteTwo: true", cruise.failedTestsRepository);
             cruise.testClassFailure("com.thoughtworks.tlb.PassingSuiteTwo", false);
-            assertCacheState(env, 4, "com.thoughtworks.tlb.PassingSuiteTwo: false", cruise.failedTestsRepository);
+            SmoothingServerTest.assertCacheState(env, 4, "com.thoughtworks.tlb.PassingSuiteTwo: false", cruise.failedTestsRepository);
             cruise.testClassFailure("com.thoughtworks.tlb.FailedSuiteThree", true);
-            assertCacheState(env, 5, "com.thoughtworks.tlb.FailedSuiteThree: true", cruise.failedTestsRepository);
+            SmoothingServerTest.assertCacheState(env, 5, "com.thoughtworks.tlb.FailedSuiteThree: true", cruise.failedTestsRepository);
 
             when(action.put(url, data)).thenReturn("File tlb/failed_tests was appended successfully");
 
             cruise.testClassFailure("com.thoughtworks.tlb.PassingSuiteThree", false);
 
-            assertThat(cruise.failedTestsRepository.getFile().exists(), is(true));
+            assertThat(cruise.failedTestsRepository.getFile().exists(), is(false));
             assertThat(cruise.subsetSizeRepository.getFile().exists(), is(true));
+            assertThat(cruise.testTimesRepository.getFile().exists(), is(true));
+            assertThat(cruise.oldTestTimesRepo.getFile().exists(), is(true));
             //should not clear files as test time post(which happens after this) needs it
 
             verify(action).put(url, data);
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(env).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(env));
         }
     }
 
@@ -250,12 +252,12 @@ public class GoServerTest {
             String url = "http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/" + GoServer.TEST_TIME_FILE;
 
             GoServer cruise = new GoServer(env, action);
-            cruise.clearCachingFiles();
+            SmoothingServerTest.clearCachingFiles(fileUtil);
             cruise.subsetSizeRepository.appendLine("5\n10\n3\n");
             cruise.testClassTime("com.thoughtworks.tlb.TestSuite", 12);
-            assertCacheState(env, 1, "com.thoughtworks.tlb.TestSuite: 12", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 1, "com.thoughtworks.tlb.TestSuite: 12", cruise.testTimesRepository);
             cruise.testClassTime("com.thoughtworks.tlb.TestCriteriaSelection", 30);
-            assertCacheState(env, 2, "com.thoughtworks.tlb.TestCriteriaSelection: 30", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 2, "com.thoughtworks.tlb.TestCriteriaSelection: 30", cruise.testTimesRepository);
 
             when(action.put(url, data)).thenReturn("File tlb/test_time.properties was appended successfully");
 
@@ -265,7 +267,7 @@ public class GoServerTest {
 
             verify(action).put(url, data);
         } finally {
-            FileUtils.deleteQuietly(new File(fileUtil.tmpDir()));
+            SmoothingServerTest.clearCachingFiles(fileUtil);
         }
     }
 
@@ -300,12 +302,12 @@ public class GoServerTest {
             String url = "http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/firefox-2/" + GoServer.TEST_TIME_FILE;
 
             GoServer cruise = new GoServer(env, action);
-            cruise.clearCachingFiles();
+            SmoothingServerTest.clearCachingFiles(fileUtil);
             cruise.subsetSizeRepository.appendLine("5\n10\n3\n");
             cruise.testClassTime("com.thoughtworks.cruise.one.One", 100);
-            assertCacheState(env, 1, "com.thoughtworks.cruise.one.One: 55", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 1, "com.thoughtworks.cruise.one.One: 55", cruise.testTimesRepository);
             cruise.testClassTime("com.thoughtworks.cruise.two.Two", 40);
-            assertCacheState(env, 2, "com.thoughtworks.cruise.two.Two: 30", cruise.testTimesRepository);
+            SmoothingServerTest.assertCacheState(env, 2, "com.thoughtworks.cruise.two.Two: 30", cruise.testTimesRepository);
 
             when(action.put(url, data)).thenReturn("File tlb/test_time.properties was appended successfully");
 
@@ -315,26 +317,8 @@ public class GoServerTest {
 
             verify(action).put(url, data);
         } finally {
-            FileUtils.deleteQuietly(new File(fileUtil.tmpDir()));
+            SmoothingServerTest.clearCachingFiles(fileUtil);
         }
-    }
-
-    private void assertCacheState(SystemEnvironment env, int lineCount, String lastLine, TlbEntryRepository repository) throws IOException {
-        List<String> cache = repository.load();
-        assertThat(cache.size(), is(lineCount));
-        if (! cache.isEmpty()) {
-            assertThat(cache.get(lineCount - 1), is(lastLine));
-        }
-    }
-
-    private List cacheFileContents(SystemEnvironment env, String locator) throws IOException {
-        FileUtil fileUtil = new FileUtil(env);
-        File cacheFile = fileUtil.getUniqueFile(locator);
-        if (! cacheFile.exists()) return new ArrayList();
-        FileInputStream fileIn = new FileInputStream(cacheFile);
-        List cachedLines = IOUtils.readLines(fileIn);
-        IOUtils.closeQuietly(fileIn);
-        return cachedLines;
     }
 
     @Test
@@ -347,7 +331,7 @@ public class GoServerTest {
             toService.publishSubsetSize(10);
             verify(action).put("http://test.host:8153/go/files/pipeline-foo/pipeline-foo-26/stage-foo-bar/1/job-baz/tlb/subset_size", "10\n");
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -368,7 +352,7 @@ public class GoServerTest {
             Collections.sort(failedTests);
             assertThat(failedTests, is(Arrays.asList("com.thoughtworks.cruise.AnotherFailedTest", "com.thoughtworks.cruise.FailedTest", "com.thoughtworks.cruise.YetAnotherFailedTest")));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -405,7 +389,7 @@ public class GoServerTest {
             logFixture.assertHeard("Couldn't find tests that failed in the last run");
             logFixture.assertHeardException(exception);
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -439,7 +423,7 @@ public class GoServerTest {
             expected.add(new SuiteTimeEntry("com.thoughtworks.cruise.five.Five", 50l));
             assertThat(runTimes, is(expected));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -471,7 +455,7 @@ public class GoServerTest {
             expected.add(new SuiteTimeEntry("com.thoughtworks.cruise.five.Five", 50l));
             assertThat(runTimes, is(expected));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -494,7 +478,7 @@ public class GoServerTest {
                 assertThat(e, is(NullPointerException.class));
             }
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -521,7 +505,7 @@ public class GoServerTest {
                 assertThat(e.getMessage(), is("Couldn't find a historical run for stage in '10' pages of stage feed."));
             }
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
 
         map.put(TlbConstants.Go.GO_STAGE_FEED_MAX_SEARCH_DEPTH.key, "17");
@@ -536,7 +520,7 @@ public class GoServerTest {
                 assertThat(e.getMessage(), is("Couldn't find a historical run for stage in '17' pages of stage feed."));
             }
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
 
         map.put(TlbConstants.Go.GO_STAGE_FEED_MAX_SEARCH_DEPTH.key, "2");
@@ -552,7 +536,7 @@ public class GoServerTest {
                 assertThat(e.getMessage(), is("Couldn't find a historical run for stage in '2' pages of stage feed."));
             }
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -595,7 +579,7 @@ public class GoServerTest {
             }
             assertThat(e.getMessage(), is("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet."));
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 
@@ -628,7 +612,7 @@ public class GoServerTest {
             assertThat(server.getJobs(), is(Arrays.asList("firefox-1", "firefox-2", "firefox-3", "rails", "smoke")));
             logFixture.assertHeard("jobs found [firefox-1, firefox-2, firefox-3, rails, smoke]");
         } finally {
-            FileUtils.deleteQuietly(new File(new FileUtil(environment).tmpDir()));
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
         }
     }
 

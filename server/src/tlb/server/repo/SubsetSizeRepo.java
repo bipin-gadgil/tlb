@@ -37,6 +37,10 @@ public class SubsetSizeRepo implements EntryRepo<SubsetSizeEntry, SubsetSizeRepo
         throw new UnsupportedOperationException("update not allowed on repository");
     }
 
+    public void updateAll(List<SubsetSizeEntry> entry) {
+        throw new UnsupportedOperationException("update not allowed on repository");
+    }
+
     public synchronized void diskDumpTo(Writer writer) throws IOException {
         dumpTo(writer);
         dirty = false;

@@ -13,8 +13,10 @@ import tlb.server.repo.EntryRepoFactory;
 import tlb.server.repo.SuiteTimeRepo;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.core.Is.is;
@@ -52,7 +54,13 @@ public class SuiteTimeResourceTest {
         final SuiteTimeEntry entry = (SuiteTimeEntry) suiteTimeResource.parseEntry(new StringRepresentation("foo.bar.Baz: 135"));
         assertThat(entry, is(new SuiteTimeEntry("foo.bar.Baz", 135)));
     }
-    
+
+    @Test
+    public void shouldParseSuitTimeEntries() throws IOException {
+        final List<SuiteTimeEntry> entry = suiteTimeResource.parseEntries(new StringRepresentation("foo.bar.Baz: 135\nfoo.baz.Quux: 27\nfoo.quux.Bang: 129\n"));
+        assertThat(entry, is(Arrays.asList(new SuiteTimeEntry("foo.bar.Baz", 135), new SuiteTimeEntry("foo.baz.Quux", 27), new SuiteTimeEntry("foo.quux.Bang", 129))));
+    }
+
     @Test
     public void shouldUseSuiteTimeRepo() throws IOException, ClassNotFoundException {
         EntryRepoFactory repoFactory = mock(EntryRepoFactory.class);

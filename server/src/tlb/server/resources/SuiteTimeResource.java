@@ -10,6 +10,7 @@ import org.restlet.resource.Representation;
 import tlb.server.repo.SuiteTimeRepo;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @understands run time of suite reported by job
@@ -27,6 +28,11 @@ public class SuiteTimeResource extends SimpleCRUResource<SuiteTimeRepo> {
     @Override
     protected Entry parseEntry(Representation entity) throws IOException {
         return SuiteTimeEntry.parseSingleEntry(entity.getText());
+    }
+
+    @Override
+    protected List<SuiteTimeEntry> parseEntries(Representation entity) throws IOException {
+        return SuiteTimeEntry.parse(entity.getText());
     }
 
     @Override

@@ -18,7 +18,6 @@ import tlb.server.repo.SuiteTimeRepo;
 import tlb.utils.SystemEnvironment;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -71,9 +70,19 @@ public class VersionedSuiteTimeResourceTest {
     }
 
     @Test
-    public void shouldNotSupportParsingOfEntryAsAddingToVersionedRepoIsNotPermitted() throws ResourceException, IOException {
+    public void shouldNotSupportParsingOfEntry_AsAddingToVersionedRepoIsNotPermitted() throws ResourceException, IOException {
         try {
             suiteTimeResource.parseEntry(new StringRepresentation("foo.bar.Baz: 120"));
+            fail("should not have parsed entry, as mutation of versioned data is not allowed");
+        } catch (Exception e) {
+            assertThat(e, is(UnsupportedOperationException.class));
+        }
+    }
+
+    @Test
+    public void shouldNotSupportParsingOfEntries_AsAddingToVersionedRepoIsNotPermitted() throws ResourceException, IOException {
+        try {
+            suiteTimeResource.parseEntries(new StringRepresentation("foo.bar.Baz: 120\nquux.baz.Bang: 105\n"));
             fail("should not have parsed entry, as mutation of versioned data is not allowed");
         } catch (Exception e) {
             assertThat(e, is(UnsupportedOperationException.class));
