@@ -107,6 +107,13 @@ public class TlbEntryRepositoryTest {
 
     @Test
     public void shouldLoadLastLine() {
-        fail("optimize and test the implementation");
+        TlbEntryRepository repo = new TlbEntryRepository(new File(new File(tmpDir.getAbsolutePath()), "foo"));
+        repo.appendLine("foo\n");
+        assertThat(repo.loadLastLine(), is("foo"));
+        repo.appendLine("bar\n");
+        assertThat(repo.loadLastLine(), is("bar"));
+        repo.appendLine("baz\n");
+        repo.appendLine("quux\n");
+        assertThat(repo.loadLastLine(), is("quux"));
     }
 }
