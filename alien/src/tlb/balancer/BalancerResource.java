@@ -6,6 +6,7 @@ import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
+import tlb.service.Server;
 import tlb.splitter.TestSplitter;
 import org.restlet.Context;
 import org.restlet.resource.*;
@@ -27,12 +28,14 @@ public class BalancerResource extends Resource {
 
     private final TestOrderer orderer;
     private final TestSplitter splitter;
+    private final Server server;
 
     public BalancerResource(Context context, Request request, Response response) {
         super(context, request, response);
         getVariants().add(new Variant(MediaType.TEXT_PLAIN));
         orderer = (TestOrderer) context.getAttributes().get(TlbClient.ORDERER);
         splitter = (TestSplitter) context.getAttributes().get(TlbClient.SPLITTER);
+        server = (Server) context.getAttributes().get(TlbClient.TALK_TO_SERVICE);
     }
 
     @Override
@@ -57,6 +60,7 @@ public class BalancerResource extends Resource {
             return;
         }
         Collections.sort(suiteFilesSubset, orderer);
+        server.publishSubsetSize(suiteFilesSubset.size());
         final StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : suiteFilesSubset) {
             builder.append(suiteFile.dump());

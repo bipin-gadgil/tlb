@@ -15,6 +15,8 @@ import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.orderer.TestOrderer;
+import tlb.service.Server;
+import tlb.service.TlbServer;
 import tlb.splitter.AbstractTestSplitter;
 import tlb.splitter.TestSplitter;
 import tlb.splitter.correctness.IncorrectBalancingException;
@@ -42,6 +44,7 @@ public class BalancerResourceTest {
 
     private HashMap<String,Object> attrs;
     private Response mockResponse;
+    private Server server;
 
     @Before
     public void setUp() throws ClassNotFoundException, IOException {
@@ -54,10 +57,12 @@ public class BalancerResourceTest {
 
         criteria = mock(AbstractTestSplitter.class);
         orderer = mock(TestOrderer.class);
+        server = mock(Server.class);
 
         final HashMap<String, Object> ctxMap = new HashMap<String, Object>();
         ctxMap.put(TlbClient.SPLITTER, criteria);
         ctxMap.put(TlbClient.ORDERER, orderer);
+        ctxMap.put(TlbClient.TALK_TO_SERVICE, server);
         context.setAttributes(ctxMap);
 
         mockResponse = mock(Response.class);
@@ -86,6 +91,21 @@ public class BalancerResourceTest {
         verify(criteria).filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), "module_foo");
         verify(orderer).compare(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"));
         assertThat(representation.getText(), is("foo/bar/Quux.class\nfoo/bar/Baz.class\n"));
+    }
+
+    @Test
+    public void shouldReportSubsetSizeAfterFiltering() throws ResourceException, IOException {
+        when(criteria.filterSuites(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Bang.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))), "module_foo"))
+                .thenReturn(new ArrayList<TlbSuiteFile>(Arrays.asList(new TlbSuiteFileImpl("foo/bar/Baz.class"), new TlbSuiteFileImpl("foo/bar/Quux.class"))));
+        when(orderer.compare(any(TlbSuiteFileImpl.class), any(TlbSuiteFileImpl.class))).thenReturn(0);
+
+        attrs.put(HttpConstants.ATTRIBUTE_HEADERS, new Form(Arrays.asList(new Parameter(TlbConstants.Balancer.TLB_MODULE_NAME_HEADER, "module_foo"))));
+
+        balancerResource.acceptRepresentation(new StringRepresentation("foo/bar/Baz.class\nfoo/bar/Bang.class\nfoo/bar/Quux.class\n"));
+
+        verify(server).publishSubsetSize(2);
+
+        assertThat(representation.getText(), is("foo/bar/Baz.class\nfoo/bar/Quux.class\n"));
     }
 
     @Test
