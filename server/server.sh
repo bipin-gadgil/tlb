@@ -16,6 +16,8 @@ server_err=server.err
 
 install_dir=`dirname $0`
 
+TLB_SERVER_COMMAND=${CUSTOM_TLB_SERVER_COMMAND:-'<path>/server.sh'}
+
 function start_server {
     load_status
     check_if_already_running
@@ -60,7 +62,7 @@ function check_if_already_running {
     if [ $status != does-not-exist ]; then
         echo "PID file: $pid_file already exists, it seems a tlb server is already running off this directory(`pwd`)."
         echo "The process id of this process, according to PID file, should be $pid"
-        echo "Please stop this process(use 'server.sh stop' or call 'server.sh cleanup' to have this pid file removed)"
+        echo "Please stop this process(use '$TLB_SERVER_COMMAND stop' or call '$TLB_SERVER_COMMAND cleanup' to have this pid file removed)"
         exit 1
     fi
 }
@@ -100,7 +102,7 @@ elif [ $arg = cleanup ]; then
 elif [ $arg = status ]; then
     display_status
 else
-    echo "Usage: <path>/server.sh <action>"
+    echo "Usage: $TLB_SERVER_COMMAND <action>"
     echo "    Valid values for <action> are 'start', 'stop', 'status' and 'cleanup' (without quotes)"
     echo "        start:   starts the server(off current working dir)"
     echo "        stop:    stops the server(running off current working dir)"

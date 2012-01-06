@@ -16,7 +16,7 @@ if "%1%"=="start" (
     call :delete_pid_file
   )
 ) else (
-  echo '%1%' is not a supported option. Options have to be one of 'start', 'stop' or 'status'
+  echo '%1%' is not a supported option. Options have to be one of 'start', 'stop', 'status' or 'cleanup'
 )
 goto :EOF
 
