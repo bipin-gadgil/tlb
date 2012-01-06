@@ -14,18 +14,20 @@ pid_file=.server.pid
 server_out=server.out
 server_err=server.err
 
+install_dir=`dirname $0`
+
 function start_server {
     load_status
     check_if_already_running
 
     if [ $status = does-not-exist ]; then
-        tlb_jar=`ls -t | grep '^tlb-server.*\.jar$' | head -1` 
-        java -jar $tlb_jar 1>$server_out 2>$server_err &
+        tlb_jar=`ls -t $install_dir | grep '^tlb-server.*\.jar$' | head -1` 
+        java -jar $install_dir/$tlb_jar 1>$server_out 2>$server_err &
         pid=$!
         disown
 
         echo $pid > $pid_file
-        echo "Server started(and demonized), PID: $pid"
+        echo "Server started in `pwd`(and demonized), PID: $pid"
     fi 
 }
 
@@ -35,7 +37,7 @@ function stop_server {
         kill $pid
         remove_pid_file
     else
-        echo "Doesn't look like tlb server is running"
+        echo "Doesn't look like tlb server is running out of `pwd`"
         exit 1
     fi
 }
@@ -56,9 +58,9 @@ function load_status {
 
 function check_if_already_running {
     if [ $status != does-not-exist ]; then
-        echo "PID file: $pid_file already exists, it seems a tlb server is already running off this directory."
+        echo "PID file: $pid_file already exists, it seems a tlb server is already running off this directory(`pwd`)."
         echo "The process id of this process, according to PID file, should be $pid"
-        echo "Please stop this process(user 'server.sh stop' or call 'server.sh cleanup' to have this pid file removed)"
+        echo "Please stop this process(use 'server.sh stop' or call 'server.sh cleanup' to have this pid file removed)"
         exit 1
     fi
 }
@@ -75,11 +77,11 @@ function remove_pid_file {
 function display_status {
     load_status
     if [ $status = running ]; then
-        echo "The server is running (PID: $pid)"
+        echo "The server is running out of `pwd`(PID: $pid)"
     elif [ $status = unknown ]; then
-        echo "There should be a server running with PID: $pid(according to pid file content), but this script failed to find its status"
+        echo "There should be a server running out of `pwd` with PID: $pid(according to pid file content), but this script failed to find its status"
     elif [ $status = does-not-exist ]; then
-        echo "The server is NOT running"
+        echo "No server is running out of `pwd`"
     else
         echo "Unknown status"
     fi

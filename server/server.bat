@@ -32,15 +32,15 @@ goto :EOF
   START "Test Load Balancer Server in %cd%" /MIN server.cmd
   echo %PID% > %pid_file%
   call :populate_pid
-  echo Server started. The PID is: %PID%
+  echo Server started from current working directory. The PID is: %PID%
 goto :EOF
 
 :status
   call :is_server_running
   if "%server_running%"=="true" (
-    echo TLB server is running with process ID: %PID%
+    echo TLB server is running out of current working directory with process ID: %PID%
   ) else (
-    echo TLB server is not running
+    echo No TLB server is running out of current working directory
   )
 goto :EOF
 
@@ -49,7 +49,7 @@ goto :EOF
   if "%server_running%"=="true" (
     call :kill_server
   ) else (
-    echo Does not look like TLB server is running
+    echo Does not look like any TLB server is running out of current working directory
   )
 goto :EOF
 
@@ -57,7 +57,7 @@ goto :EOF
   call :populate_pid
   TASKKILL /F /T /PID %PID%
   call :delete_pid_file
-  echo Stopped TLB server
+  echo Stopped TLB server running out of current working directory
 goto :EOF
 
 :populate_pid
