@@ -8,6 +8,7 @@
 
     <property name="java.target.dir" location="${target.dir}/java"/>
     <property name="java.classes.dir" location="${java.target.dir}/classes"/>
+    <property name="java.classes.for-test.dir" location="${java.target.dir}/classes-for-test"/>
     <property name="java.test.classes.dir" location="${java.target.dir}/test-classes"/>
     <property name="java.test.reports.dir" location="${java.target.dir}/reports"/>
 
@@ -15,20 +16,31 @@
         <fileset dir="${java.lib.dir}" includes="*.jar" id="java.dependencies.fileset"/>
     </path>
 
+    <path id="java.dependencies.all">
+        <path refid="java.dependencies"/>
+        <path refid="balancer.dependencies"/>
+        <path refid="core.dependencies"/>
+    </path>
+
     <path id="java.src.classpath">
         <pathelement path="${java.classes.dir}"/>
         <pathelement path="${balancer.classes.dir}"/>
         <pathelement path="${core.classes.dir}"/>
-        <path refid="java.dependencies"/>
-        <path refid="balancer.dependencies"/>
-        <path refid="core.dependencies"/>
+        <path refid="java.dependencies.all"/>
+    </path>
+
+    <path id="java.src.for-test.classpath">
+        <pathelement path="${java.classes.for-test.dir}"/>
+        <pathelement path="${balancer.classes.for-test.dir}"/>
+        <pathelement path="${core.classes.for-test.dir}"/>
+        <path refid="java.dependencies.all"/>
     </path>
 
     <path id="java.test.classpath">
         <pathelement path="${java.test.classes.dir}"/>
         <pathelement path="${balancer.test.classes.dir}"/>
         <pathelement path="${core.test.classes.dir}"/>
-        <path refid="java.src.classpath"/>
+        <path refid="java.src.for-test.classpath"/>
         <path refid="test.dependencies"/>
     </path>
 
@@ -58,6 +70,7 @@
             <classpath refid="java.src.classpath"/>
             <src path="${java.src.dir}"/>
         </javac>
+        <copydir src="${java.classes.dir}" dest="${java.classes.for-test.dir}"/>
     </target>
 
     <target name="java.compile.tests" depends="java.compile, init, balancer.compile.tests">
@@ -72,6 +85,6 @@
     </target>
 
     <target name="emma.instr.java" depends="java.compile">
-        <emma-instr classes-dir="${java.classes.dir}" name="java"/>
+        <emma-instr classes-src="${java.classes.dir}" classes-dest="${java.classes.for-test.dir}" name="java"/>
     </target>
 </project>

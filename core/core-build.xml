@@ -7,6 +7,7 @@
 
     <property name="core.target.dir" location="${target.dir}/core"/>
     <property name="core.classes.dir" location="${core.target.dir}/classes"/>
+    <property name="core.classes.for-test.dir" location="${core.target.dir}/classes-for-test"/>
     <property name="core.test.classes.dir" location="${core.target.dir}/test-classes"/>
     <property name="core.test.reports.dir" location="${core.target.dir}/reports"/>
 
@@ -19,8 +20,13 @@
         <pathelement path="${core.classes.dir}"/>
     </path>
 
+    <path id="core.src.for-test.classpath">
+        <path refid="core.dependencies"/>
+        <pathelement path="${core.classes.for-test.dir}"/>
+    </path>
+
     <path id="core.test.classpath">
-        <path refid="core.src.classpath"/>
+        <path refid="core.src.for-test.classpath"/>
         <pathelement path="${core.test.classes.dir}"/>
         <path refid="test.dependencies"/>
     </path>
@@ -29,6 +35,7 @@
         <mkdir dir="${core.classes.dir}"/>
         <mkdir dir="${core.test.classes.dir}"/>
         <mkdir dir="${core.test.reports.dir}"/>
+        <mkdir dir="${core.classes.for-test.dir}"/>
     </target>
 
     <target name="core.compile" depends="init">
@@ -36,6 +43,7 @@
             <classpath refid="core.src.classpath"/>
             <src path="${core.src.dir}"/>
         </javac>
+        <copydir src="${core.classes.dir}" dest="${core.classes.for-test.dir}"/>
     </target>
 
     <target name="core.compile.tests" depends="core.compile, init">
@@ -50,6 +58,6 @@
     </target>
 
     <target name="emma.instr.core" depends="core.compile">
-        <emma-instr classes-dir="${core.classes.dir}" name="core"/>
+        <emma-instr classes-src="${core.classes.dir}" classes-dest="${core.classes.for-test.dir}" name="core"/>
     </target>
 </project>
