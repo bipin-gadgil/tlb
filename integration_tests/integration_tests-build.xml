@@ -24,7 +24,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="integration-tests.init">
+    <target name="integration-tests.init" depends="base.init">
         <mkdir dir="${integration-tests.test.classes.dir}"/>
         <mkdir dir="${integration-tests.test.reports.dir}"/>
     </target>

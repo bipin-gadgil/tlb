@@ -43,7 +43,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="server.init">
+    <target name="server.init" depends="base.init">
         <mkdir dir="${server.classes.dir}"/>
         <mkdir dir="${server.test.classes.dir}"/>
         <mkdir dir="${server.test.reports.dir}"/>

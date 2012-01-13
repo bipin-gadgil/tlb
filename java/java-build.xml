@@ -44,7 +44,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="java.init">
+    <target name="java.init" depends="base.init">
         <mkdir dir="${java.classes.dir}"/>
         <mkdir dir="${java.test.classes.dir}"/>
         <mkdir dir="${java.test.reports.dir}"/>
@@ -63,6 +63,7 @@
                 <include name="*.jar"/>
             </fileset>
         </copy>
+        <dup-lib-checker libDir="${java.dependencies.dir}"/>
     </target>
 
     <target name="java.compile" depends="init, balancer.compile">

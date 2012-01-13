@@ -40,7 +40,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="balancer.init">
+    <target name="balancer.init" depends="base.init">
         <mkdir dir="${balancer.classes.dir}"/>
         <mkdir dir="${balancer.test.classes.dir}"/>
         <mkdir dir="${balancer.test.reports.dir}"/>

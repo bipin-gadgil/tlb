@@ -43,7 +43,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="alien.init">
+    <target name="alien.init" depends="base.init">
         <mkdir dir="${alien.classes.dir}"/>
         <mkdir dir="${alien.classes.for-test.dir}"/>
         <mkdir dir="${alien.test.classes.dir}"/>

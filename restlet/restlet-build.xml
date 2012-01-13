@@ -40,7 +40,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="restlet.init">
+    <target name="restlet.init" depends="base.init">
         <mkdir dir="${restlet.classes.dir}"/>
         <mkdir dir="${restlet.classes.for-test.dir}"/>
         <mkdir dir="${restlet.test.classes.dir}"/>

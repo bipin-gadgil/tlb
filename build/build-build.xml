@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project name="tlb-build" basedir="..">
+    <property name="build.dir" location="${basedir}/build"/>
+    <property name="build.src.dir" location="${build.dir}/src"/>
+    <property name="build.test.dir" location="${build.dir}/test"/>
+    <property name="build.lib.dir" location="${lib.dir}/build"/>
+
+    <property name="build.target.dir" location="${target.dir}/build"/>
+    <property name="build.jar" location="${build.target.dir}/build.jar"/>
+    <property name="build.classes.dir" location="${build.target.dir}/classes"/>
+    <property name="build.classes.for-test.dir" location="${build.target.dir}/classes-for-test"/>
+    <property name="build.test.classes.dir" location="${build.target.dir}/test-classes"/>
+    <property name="build.test.reports.dir" location="${build.target.dir}/reports"/>
+
+    <path id="build.dependencies">
+        <fileset dir="${build.lib.dir}" includes="*.jar" id="build.dependencies.fileset"/>
+    </path>
+
+    <path id="build.src.classpath">
+        <path refid="build.dependencies"/>
+        <pathelement path="${build.classes.dir}"/>
+    </path>
+
+    <path id="build.test.classpath">
+        <path refid="build.src.classpath"/>
+        <pathelement path="${build.test.classes.dir}"/>
+        <path refid="test.dependencies"/>
+    </path>
+
+    <target name="build.init">
+        <mkdir dir="${build.classes.dir}"/>
+        <mkdir dir="${build.test.classes.dir}"/>
+        <mkdir dir="${build.test.reports.dir}"/>
+    </target>
+
+    <target name="build.compile" depends="build.init">
+        <javac destdir="${build.classes.dir}" target="1.5" source="1.5" debug="true" includeantruntime="false">
+            <classpath refid="build.src.classpath"/>
+            <src path="${build.src.dir}"/>
+        </javac>
+    </target>
+
+    <target name="build.compile.tests" depends="build.compile, build.init">
+        <javac destdir="${build.test.classes.dir}" target="1.5" source="1.5" includeantruntime="false">
+            <classpath refid="build.test.classpath"/>
+            <src path="${build.test.dir}"/>
+        </javac>
+    </target>
+
+    <target name="build.test" depends="build.compile.tests, build.compile">
+        <test-task-config test.classpath="build.test.classpath" test.classes.dir="${build.test.classes.dir}" test.reports.dir="${build.test.reports.dir}" emma.file="${build.emma.file}"/>
+    </target>
+
+    <target name="build.jar" depends="build.compile">
+        <jar destfile="${build.jar}/">
+            <fileset dir="${build.classes.dir}"/>
+        </jar>
+    </target>
+</project>
