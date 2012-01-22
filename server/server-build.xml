@@ -7,6 +7,7 @@
 
     <property name="server.target.dir" location="${target.dir}/server"/>
     <property name="server.classes.dir" location="${server.target.dir}/classes"/>
+    <property name="server.classes.for-test.dir" location="${server.target.dir}/classes-for-test"/>
     <property name="server.test.classes.dir" location="${server.target.dir}/test-classes"/>
     <property name="server.test.reports.dir" location="${server.target.dir}/reports"/>
 
@@ -14,24 +15,35 @@
         <fileset dir="${server.lib.dir}" includes="*.jar" id="server.dependencies.fileset"/>
     </path>
 
+    <path id="server.dependencies.all">
+        <path refid="server.dependencies"/>
+        <path refid="restlet.dependencies"/>
+        <path refid="core.dependencies"/>
+    </path>
+
     <path id="server.src.classpath">
         <pathelement path="${server.classes.dir}"/>
         <pathelement path="${restlet.classes.dir}"/>
         <pathelement path="${core.classes.dir}"/>
-        <path refid="server.dependencies"/>
-        <path refid="restlet.dependencies"/>
-        <path refid="core.dependencies"/>
+        <path refid="server.dependencies.all"/>
+    </path>
+
+    <path id="server.src.for-test.classpath">
+        <pathelement path="${server.classes.for-test.dir}"/>
+        <pathelement path="${restlet.classes.for-test.dir}"/>
+        <pathelement path="${core.classes.for-test.dir}"/>
+        <path refid="server.dependencies.all"/>
     </path>
 
     <path id="server.test.classpath">
         <pathelement path="${server.test.classes.dir}"/>
         <pathelement path="${restlet.test.classes.dir}"/>
         <pathelement path="${core.test.classes.dir}"/>
-        <path refid="server.src.classpath"/>
+        <path refid="server.src.for-test.classpath"/>
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="server.init">
+    <target name="server.init" depends="base.init">
         <mkdir dir="${server.classes.dir}"/>
         <mkdir dir="${server.test.classes.dir}"/>
         <mkdir dir="${server.test.reports.dir}"/>
@@ -42,6 +54,7 @@
             <classpath refid="server.src.classpath"/>
             <src path="${server.src.dir}"/>
         </javac>
+        <copydir src="${server.classes.dir}" dest="${server.classes.for-test.dir}"/>
     </target>
 
     <target name="server.compile.tests" depends="server.compile, init, restlet.compile.tests">
@@ -86,6 +99,6 @@
     </macrodef>
 
     <target name="emma.instr.server" depends="server.compile">
-        <emma-instr classes-dir="${server.classes.dir}" name="server"/>
+        <emma-instr classes-src="${server.classes.dir}" classes-dest="${server.classes.for-test.dir}" name="server"/>
     </target>
 </project>

@@ -13,6 +13,7 @@
     <property name="dog-fooding.reports.target.dir" location="${target.dir}/reports"/>
     <property name="all.tests.dir" location="${target.dir}/all-tests"/>
 
+    <property name="build.dir" location="${basedir}/build"/>
     <property name="core.dir" location="${basedir}/core"/>
     <property name="balancer.dir" location="${basedir}/balancer"/>
     <property name="restlet.dir" location="${basedir}/restlet"/>
@@ -23,9 +24,10 @@
 
     <property name="dist.dir" location="${target.dir}/dist"/>
     <property name="tmp.dir" location="${target.dir}/tmp"/>
+    <property name="dependencies.tmp.dir" location="${tmp.dir}/dependencies"/>
     <property name="emma.dir" location="${target.dir}/emma"/>
     <property name="emma.tmp.dir" location="${target.dir}/emma-tmp"/>
-    <property name="emma.version" value="2.0.5312"/>
+    <property name="emma.version" value="2.1.5320"/>
 
     <property name="sample-projects.dir" location="${basedir}/../sample_projects"/>
 
@@ -69,6 +71,7 @@
         <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" sync="true"/>
     </target>
 
+    <import file="${build.dir}/build-build.xml"/>
     <import file="${core.dir}/core-build.xml"/>
     <import file="${balancer.dir}/balancer-build.xml"/>
     <import file="${restlet.dir}/restlet-build.xml"/>
@@ -78,7 +81,7 @@
 
     <import file="${integration_tests.dir}/integration_tests-build.xml"/>
 
-    <target name="init" depends="resolve, core.init, balancer.init, java.init, restlet.init, alien.init, server.init, integration-tests.init">
+    <target name="base.init" depends="build.jar">
         <mkdir dir="${target.dir}"/>
         <mkdir dir="${tmp.dir}"/>
         <mkdir dir="${dog-fooding.reports.target.dir}"/>
@@ -92,10 +95,14 @@
             </classpath>
         </taskdef>
         <tstamp>
-            <format property="build-time" pattern="MMM/dd/yyyy hh:mm aa"  timezone="${ENV.TZ}"/>
+            <format property="build-time" pattern="MMM/dd/yyyy hh:mm aa" timezone="${ENV.TZ}"/>
         </tstamp>
         <property name="build-time-with-timezone" value="${build-time} UTC"/>
+
+        <typedef name="dup-lib-checker" classname="tlb.packaging.DuplicateLibraryChecker" classpath="${build.jar}"/>
     </target>
+
+    <target name="init" depends="resolve, base.init, core.init, balancer.init, java.init, restlet.init, alien.init, server.init, integration-tests.init"/>
 
     <target name="clean">
         <delete dir="${target.dir}" includeemptydirs="true"/>
@@ -185,11 +192,31 @@
         </sequential>
     </macrodef>
 
+    <macrodef name="populate-dependency-dir">
+        <attribute name="name"/>
+        <element name="dependencies"/>
+        <sequential>
+            <delete dir="${dependencies.tmp.dir}/@{name}"/>
+            <mkdir dir="${dependencies.tmp.dir}/@{name}"/>
+            <copy todir="${dependencies.tmp.dir}/@{name}">
+                <dependencies/>
+            </copy>
+            <dup-lib-checker libDir="${dependencies.tmp.dir}/@{name}"/>
+        </sequential>
+    </macrodef>
+
     <macrodef name="onejar-restlet">
         <attribute name="jar-name"/>
         <attribute name="name"/>
         <element name="additional-dependencies" optional="true"/>
         <sequential>
+            <populate-dependency-dir name="@{name}">
+                <dependencies>
+                    <fileset refid="core.dependencies.fileset"/>
+                    <fileset refid="restlet.dependencies.fileset"/>
+                    <additional-dependencies/>
+                </dependencies>
+            </populate-dependency-dir>
             <onejar destfile="${target.dir}/@{name}">
                 <manifest>
                     &extension-name;
@@ -197,9 +224,7 @@
                 </manifest>
                 <main jar="@{jar-name}"/>
                 <lib>
-                    <fileset refid="core.dependencies.fileset"/>
-                    <fileset refid="restlet.dependencies.fileset"/>
-                    <additional-dependencies/>
+                    <fileset dir="${dependencies.tmp.dir}/@{name}"/>
                 </lib>
             </onejar>
         </sequential>
@@ -443,16 +468,21 @@
     </target>
 
     <macrodef name="emma-instr">
-        <attribute name="classes-dir"/>
+        <attribute name="classes-src"/>
+        <attribute name="classes-dest"/>
         <attribute name="name"/>
         <sequential>
-            <delete dir="${emma.tmp.dir}" quiet="true"/>
-            <move file="@{classes-dir}" tofile="${emma.tmp.dir}"/>
-            <delete dir="@{classes-dir}"/>
+            <delete dir="${emma.tmp.dir}"/>
+            <delete dir="@{classes-dest}"/>
             <property name="@{name}.emma.file" location="${emma.dir}/@{name}.emma"/>
             <emma enabled="true">
-                <instr instrpath="${emma.tmp.dir}" destdir="@{classes-dir}/.." metadatafile="${@{name}.emma.file}" merge="true" mode="fullcopy"/>
+                <instr instrpath="@{classes-src}" destdir="${emma.tmp.dir}" metadatafile="${@{name}.emma.file}" merge="true" mode="fullcopy"/>
             </emma>
+            <copy todir="@{classes-dest}">
+                <fileset dir="${emma.tmp.dir}/classes">
+                    <include name="**"/>
+                </fileset>
+            </copy>
         </sequential>
     </macrodef>
 

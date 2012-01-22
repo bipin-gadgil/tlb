@@ -9,13 +9,13 @@
 
     <path id="integration-tests.test.classpath">
         <pathelement path="${integration-tests.test.classes.dir}"/>
-        <pathelement path="${server.classes.dir}"/>
+        <pathelement path="${server.classes.for-test.dir}"/>
         <pathelement path="${server.test.classes.dir}"/>
-        <pathelement path="${restlet.classes.dir}"/>
+        <pathelement path="${restlet.classes.for-test.dir}"/>
         <pathelement path="${restlet.test.classes.dir}"/>
-        <pathelement path="${balancer.classes.dir}"/>
+        <pathelement path="${balancer.classes.for-test.dir}"/>
         <pathelement path="${balancer.test.classes.dir}"/>
-        <pathelement path="${core.classes.dir}"/>
+        <pathelement path="${core.classes.for-test.dir}"/>
         <pathelement path="${core.test.classes.dir}"/>
         <path refid="server.dependencies"/>
         <path refid="restlet.dependencies"/>
@@ -24,7 +24,7 @@
         <path refid="test.dependencies"/>
     </path>
 
-    <target name="integration-tests.init">
+    <target name="integration-tests.init" depends="base.init">
         <mkdir dir="${integration-tests.test.classes.dir}"/>
         <mkdir dir="${integration-tests.test.reports.dir}"/>
     </target>
