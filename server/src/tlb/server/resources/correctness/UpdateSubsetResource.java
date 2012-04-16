@@ -1,5 +1,6 @@
 package tlb.server.resources.correctness;
 
+import org.apache.log4j.Logger;
 import org.restlet.Context;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -30,6 +31,8 @@ public class UpdateSubsetResource extends SetResource {
     public static final SuiteNamePartitionEntry.SuiteNameCountEntryComparator NAME_ENTRY_COMPARATOR = new SuiteNamePartitionEntry.SuiteNameCountEntryComparator();
     private SubsetCorrectnessChecker subsetCorrectnessChecker;
 
+    private static final Logger logger = Logger.getLogger(UpdateSubsetResource.class.getName());
+
     public UpdateSubsetResource(Context context, Request request, Response response) {
         super(context, request, response);
     }
@@ -43,14 +46,19 @@ public class UpdateSubsetResource extends SetResource {
 
     @Override
     public void acceptRepresentation(Representation entity) throws ResourceException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Partition %s/%s of %s[v:%s](m:%s) reported its subset.", jobNumber(), totalJobs(), reqNamespace(), reqVersion(), reqModuleName()));
+        }
         if (! universalSetRepo.isPrimed()) {
             getResponse().setStatus(new Status(Status.CLIENT_ERROR_NOT_ACCEPTABLE, NO_UNIVERSAL_SET_FOUND));
             getResponse().setEntity(new StringRepresentation("Universal set for given job-name, job-version and module-name combination doesn't exist."));
             return;
         }
+        final int partitionNumber = jobNumber();
+        final int totalPartitions = totalJobs();
         SetRepo.OperationResult result = reqPayload(new Function<Reader, IOException, SetRepo.OperationResult>() {
             public SetRepo.OperationResult execute(Reader reader) throws IOException {
-                return subsetCorrectnessChecker.reportSubset(Integer.parseInt(strAttr(JOB_NUMBER)), Integer.parseInt(strAttr(TOTAL_JOBS)), reader);
+                return subsetCorrectnessChecker.reportSubset(partitionNumber, totalPartitions, reader);
             }
         }, entity);
 
@@ -60,5 +68,13 @@ public class UpdateSubsetResource extends SetResource {
             getResponse().setStatus(new Status(Status.CLIENT_ERROR_CONFLICT, CURRENT_PARTITION_VIOLATES_CORRECTNESS_CHECK_FOR_SUBSET));
             getResponse().setEntity(new StringRepresentation(result.getMessage()));
         }
+    }
+
+    private int totalJobs() {
+        return Integer.parseInt(strAttr(TOTAL_JOBS));
+    }
+
+    private int jobNumber() {
+        return Integer.parseInt(strAttr(JOB_NUMBER));
     }
 }

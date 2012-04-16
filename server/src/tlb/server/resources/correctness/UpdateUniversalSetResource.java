@@ -1,5 +1,6 @@
 package tlb.server.resources.correctness;
 
+import org.apache.log4j.Logger;
 import org.restlet.Context;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -21,12 +22,17 @@ import static tlb.TlbConstants.Correctness.CURRENT_PARTITION_POSTED_INCORRECT_UN
  * @understands maintaining universal set for correctness checks
  */
 public class UpdateUniversalSetResource extends SetResource {
+    private static final Logger logger = Logger.getLogger(UpdateUniversalSetResource.class.getName());
+
     public UpdateUniversalSetResource(Context context, Request request, Response response) {
         super(context, request, response);
     }
 
     @Override
     public void acceptRepresentation(Representation entity) throws ResourceException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Some partition of %s[v:%s](m:%s) reported its universal set.", reqNamespace(), reqVersion(), reqModuleName()));
+        }
         if (! universalSetRepo.isPrimed()) {
             synchronized (EntryRepoFactory.mutex(universalSetRepo.getIdentifier())) {
                 if (! universalSetRepo.isPrimed()) {

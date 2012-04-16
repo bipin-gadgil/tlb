@@ -408,9 +408,7 @@
         <root url="file://$PROJECT_DIR$/lib/build" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES>
-        <root url="intellijad://intellijad" />
-      </SOURCES>
+      <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/lib/build" recursive="false" />
     </library>
     <library name="core">
@@ -428,9 +426,7 @@
         <root url="file://$PROJECT_DIR$/lib/java" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES>
-        <root url="intellijad://intellijad" />
-      </SOURCES>
+      <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/lib/java" recursive="false" />
     </library>
     <library name="restlet">

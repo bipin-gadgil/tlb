@@ -1,5 +1,6 @@
 package tlb.server.resources.correctness;
 
+import org.apache.log4j.Logger;
 import org.restlet.Context;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -22,6 +23,7 @@ import static tlb.TlbConstants.Correctness.SOME_PARTITIONS_DID_NOT_EXECUTE;
  */
 public class VerifyPartitionCompletenessResource extends TlbResource {
     private PartitionRecordRepo partitionRecordRepo;
+    private static final Logger logger = Logger.getLogger(VerifyPartitionCompletenessResource.class.getName());
 
     public VerifyPartitionCompletenessResource(Context context, Request request, Response response) {
         super(context, request, response);
@@ -41,6 +43,9 @@ public class VerifyPartitionCompletenessResource extends TlbResource {
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Partitions for %s[v:%s](m:%s) verified partition completeness.", reqNamespace(), reqVersion(), reqModuleName()));
+        }
         SetRepo.OperationResult operationResult = new SetRepo.OperationResult(true);
         if (partitionRecordRepo.checkAllPartitionsExecuted(operationResult)) {
             getResponse().setStatus(Status.SUCCESS_OK);
