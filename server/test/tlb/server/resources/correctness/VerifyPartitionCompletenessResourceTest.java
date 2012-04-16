@@ -83,6 +83,6 @@ public class VerifyPartitionCompletenessResourceTest {
         repo.subsetReceivedFromPartition(new PartitionIdentifier(5, 5));
         Representation represent = resource.represent(new Variant(MediaType.TEXT_PLAIN));
         verify(response).setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
-        assertThat(represent.getText(), is("- [1, 4] of total 5 partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
+        assertThat(represent.getText(), is("- [1, 4] of total 5 partition(s)(for module my-module) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
     }
 }

@@ -56,9 +56,10 @@ public class UpdateSubsetResource extends SetResource {
         }
         final int partitionNumber = jobNumber();
         final int totalPartitions = totalJobs();
+        final String moduleName = reqModuleName();
         SetRepo.OperationResult result = reqPayload(new Function<Reader, IOException, SetRepo.OperationResult>() {
             public SetRepo.OperationResult execute(Reader reader) throws IOException {
-                return subsetCorrectnessChecker.reportSubset(partitionNumber, totalPartitions, reader);
+                return subsetCorrectnessChecker.reportSubset(partitionNumber, totalPartitions, moduleName, reader);
             }
         }, entity);
 

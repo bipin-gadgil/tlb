@@ -7,7 +7,6 @@ import tlb.server.repo.SetRepo;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +22,10 @@ public class SubsetCorrectnessChecker {
         this.partitionRecordRepo = partitionRecordRepo;
     }
 
-    public SetRepo.OperationResult reportSubset(int partitionNumber, int totalPartitions, final Reader reader) throws IOException {
-        SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(partitionNumber, totalPartitions, reader);
+    public SetRepo.OperationResult reportSubset(int partitionNumber, int totalPartitions, String moduleName, final Reader reader) throws IOException {
+        SetRepo.OperationResult operationResult = universalSetRepo.usedBySubset(partitionNumber, totalPartitions, moduleName, reader);
         partitionRecordRepo.subsetReceivedFromPartition(new PartitionIdentifier(partitionNumber, totalPartitions));
-        if (partitionRecordRepo.allSubsetsReceivedWithConsistentConfiguration(operationResult)) {
+        if (partitionRecordRepo.allSubsetsReceivedWithConsistentConfiguration(moduleName, operationResult)) {
             List<SuiteNamePartitionEntry> unassignedSuites = new ArrayList<SuiteNamePartitionEntry>();
             for (SuiteNamePartitionEntry persistentEntry : universalSetRepo.list()) {
                 if (! persistentEntry.isUsedByAnyPartition()) {
@@ -34,7 +33,7 @@ public class SubsetCorrectnessChecker {
                 }
             }
             if (! unassignedSuites.isEmpty()) {
-                operationResult.appendErrorDescription(String.format("Collective exhaustion of tests violated with none of the %s partition picked running suites: %s. Failing partition %s as this is the last one to execute.", totalPartitions, SetRepo.sortedListFor(unassignedSuites), partitionNumber));
+                operationResult.appendErrorDescription(String.format("Collective exhaustion of tests violated as none of the %s partition picked up suites: %s(of module %s). Failing partition %s as this is the last partition to execute.", totalPartitions, SetRepo.sortedListFor(unassignedSuites), moduleName, partitionNumber));
                 operationResult.setSuccess(false);
             }
         }

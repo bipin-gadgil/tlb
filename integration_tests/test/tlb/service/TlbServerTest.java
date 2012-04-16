@@ -352,7 +352,7 @@ public class TlbServerTest {
         ValidationResult validationResult = server.validateSubSet(files, "foo-module");
 
         assertThat(validationResult.hasFailed(), is(true));
-        assertThat(validationResult.getMessage(), is("- Found 1 unknown(not present in universal set) suite(s) named: [com.bar.Baz].\nHad total of 3 suites named [com.bar.Bar, com.bar.Baz, com.foo.Foo] in partition 4 of 15. Corresponding universal set had a total of 2 suites named [com.bar.Bar: 4/15, com.foo.Foo: 4/15].\n"));
+        assertThat(validationResult.getMessage(), is("- Found 1 unknown(not present in universal set) suite(s) named: [com.bar.Baz].\nHad total of 3 suites named [com.bar.Bar, com.bar.Baz, com.foo.Foo] in partition 4 of 15(for module foo-module). Corresponding universal set had a total of 2 suites named [com.bar.Bar: 4/15, com.foo.Foo: 4/15].\n"));
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
     }
 
@@ -379,7 +379,7 @@ public class TlbServerTest {
         validationResult = server.validateSubSet(Arrays.asList(suiteThree), "foo-module");
         assertThat(validationResult.hasFailed(), is(true));
 
-        assertThat(validationResult.getMessage(), is("- Collective exhaustion of tests violated with none of the 2 partition picked running suites: [suite/Two]. Failing partition 2 as this is the last one to execute.\nHad total of 1 suites named [suite/Three] in partition 2 of 2. Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two].\n"));
+        assertThat(validationResult.getMessage(), is("- Collective exhaustion of tests violated as none of the 2 partition picked up suites: [suite/Two](of module foo-module). Failing partition 2 as this is the last partition to execute.\nHad total of 1 suites named [suite/Three] in partition 2 of 2(for module foo-module). Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two].\n"));
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
     }
 
@@ -404,7 +404,7 @@ public class TlbServerTest {
         validationResult = server.validateSubSet(Arrays.asList(suiteTwo, suiteThree), "foo-module");
         assertThat(validationResult.hasFailed(), is(true));
 
-        assertThat(validationResult.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 2/2. Suites [suite/Two: 1/2] have already been selected for running by other partitions.\nHad total of 2 suites named [suite/Three, suite/Two] in partition 2 of 2. Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two: 1/2].\n"));
+        assertThat(validationResult.getMessage(), is("- Mutual exclusion of test-suites across splits violated by partition 2/2. Suites [suite/Two: 1/2] have already been selected for running by other partitions.\nHad total of 2 suites named [suite/Three, suite/Two] in partition 2 of 2(for module foo-module). Corresponding universal set had a total of 3 suites named [suite/One: 1/2, suite/Three: 2/2, suite/Two: 1/2].\n"));
         assertThat((ValidationResult.Status) TestUtil.deref("status", validationResult), is(ValidationResult.Status.FAILED));
     }
 
@@ -478,7 +478,7 @@ public class TlbServerTest {
 
         ValidationResult validationResult = server.verifyAllPartitionsExecutedFor("foo-module");
 
-        assertThat(validationResult.getMessage(), is("- [2] of total 2 partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
+        assertThat(validationResult.getMessage(), is("- [2] of total 2 partition(s)(for module foo-module) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
         assertThat(validationResult.hasFailed(), is(true));
     }
 

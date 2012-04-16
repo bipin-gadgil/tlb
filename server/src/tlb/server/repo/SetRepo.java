@@ -6,7 +6,6 @@ import tlb.domain.SuiteNamePartitionEntry;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -70,7 +69,7 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         throw new UnsupportedOperationException("not allowed on this type of repository");
     }
 
-    public OperationResult usedBySubset(int partitionNumber, int totalPartitions, final Reader reader) throws IOException {
+    public OperationResult usedBySubset(int partitionNumber, int totalPartitions, final String moduleName, final Reader reader) throws IOException {
         List<SuiteNamePartitionEntry> unknownSuites = new ArrayList<SuiteNamePartitionEntry>();
         Map<String, Integer> occurrenceCount = new HashMap<String, Integer>();
         List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions = new ArrayList<SuiteNamePartitionEntry>();
@@ -93,10 +92,10 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
                 unknownSuites.add(subsetEntry);
             }
         }
-        return computeResult(partitionNumber, totalPartitions, unknownSuites, occurrenceCount, alreadySelectedByOtherPartitions, subsetSuites);
+        return computeResult(partitionNumber, totalPartitions, moduleName, unknownSuites, occurrenceCount, alreadySelectedByOtherPartitions, subsetSuites);
     }
 
-    private OperationResult computeResult(int partitionNumber, int totalPartitions, List<SuiteNamePartitionEntry> unknownSuites, Map<String, Integer> occurrenceCount, List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions, List<SuiteNamePartitionEntry> subsetSuites) {
+    private OperationResult computeResult(int partitionNumber, int totalPartitions, final String moduleName, List<SuiteNamePartitionEntry> unknownSuites, Map<String, Integer> occurrenceCount, List<SuiteNamePartitionEntry> alreadySelectedByOtherPartitions, List<SuiteNamePartitionEntry> subsetSuites) {
         ArrayList<String> nonRepeatedOccurrenceCountKeys = new ArrayList<String>();
         for (Map.Entry<String, Integer> occurrenceCountEntry : occurrenceCount.entrySet()) {
             if (occurrenceCountEntry.getValue() == 1) {
@@ -121,7 +120,7 @@ public class SetRepo extends NamedEntryRepo<SuiteNamePartitionEntry> {
         }
         List<SuiteNamePartitionEntry> univSet = sortedList();
         Collections.sort(subsetSuites, new SuiteNamePartitionEntry.SuiteNameCountEntryComparator());
-        failureResult.appendContext(String.format("Had total of %s suites named %s in partition %s of %s. Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, univSet.size(), univSet));
+        failureResult.appendContext(String.format("Had total of %s suites named %s in partition %s of %s(for module %s). Corresponding universal set had a total of %s suites named %s.", subsetSuites.size(), subsetSuites, partitionNumber, totalPartitions, moduleName, univSet.size(), univSet));
 
         return failureResult;
     }

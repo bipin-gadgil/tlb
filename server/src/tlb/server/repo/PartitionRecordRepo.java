@@ -14,9 +14,8 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
         update(partitionIdentifier);
     }
 
-    public boolean allSubsetsReceivedWithConsistentConfiguration(SetRepo.OperationResult operationResult) {
-        return withNonEmptyList(operationResult, new EnforceConsistentConfigurationForPartitions());
-
+    public boolean allSubsetsReceivedWithConsistentConfiguration(String moduleName, SetRepo.OperationResult operationResult) {
+        return withNonEmptyList(operationResult, new EnforceConsistentConfigurationForPartitions(moduleName));
     }
 
     public List<PartitionIdentifier> parse(String partitionIdsString) {
@@ -27,8 +26,8 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
         return PartitionIdentifier.parseSingleEntry(line);
     }
 
-    public boolean checkAllPartitionsExecuted(SetRepo.OperationResult operationResult) {
-        return withNonEmptyList(operationResult, new CheckAllPartitionsExecuted());
+    public boolean checkAllPartitionsExecuted(String moduleName, SetRepo.OperationResult operationResult) {
+        return withNonEmptyList(operationResult, new CheckAllPartitionsExecuted(moduleName));
     }
 
     private boolean withNonEmptyList(SetRepo.OperationResult operationResult, PartitionIdentifierCollectionAction action) {
@@ -43,6 +42,12 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
     }
 
     private static class CheckAllPartitionsExecuted implements PartitionIdentifierCollectionAction {
+        private final String moduleName;
+
+        public CheckAllPartitionsExecuted(String moduleName) {
+            this.moduleName = moduleName;
+        }
+
         public boolean performAction(SetRepo.OperationResult operationResult, Collection<PartitionIdentifier> list) {
             int totalPartitions = list.iterator().next().totalPartitions;
             boolean[] partitionsReceived = new boolean[totalPartitions];
@@ -57,7 +62,7 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
             }
             if (partitionsNotRun.size() > 0) {
                 operationResult.setSuccess(false);
-                operationResult.appendErrorDescription(String.format("%s of total %s partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.", partitionsNotRun, totalPartitions));
+                operationResult.appendErrorDescription(String.format("%s of total %s partition(s)(for module %s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.", partitionsNotRun, totalPartitions, moduleName));
             } else {
                 operationResult.appendContext("All partitions executed.");
             }
@@ -66,12 +71,18 @@ public class PartitionRecordRepo extends NamedEntryRepo<PartitionIdentifier> {
     }
 
     private static class EnforceConsistentConfigurationForPartitions implements PartitionIdentifierCollectionAction {
+        private final String moduleName;
+
+        public EnforceConsistentConfigurationForPartitions(String moduleName) {
+            this.moduleName = moduleName;
+        }
+
         public boolean performAction(SetRepo.OperationResult operationResult, Collection<PartitionIdentifier> list) {
             int totalPartitions = list.iterator().next().totalPartitions;
             boolean[] partitionsReceived = new boolean[totalPartitions];
             for (PartitionIdentifier partitionIdentifier : list) {
                 if (totalPartitions != partitionIdentifier.totalPartitions) {
-                    operationResult.appendErrorDescription(String.format("Partitions %s are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.", list));
+                    operationResult.appendErrorDescription(String.format("Partitions %s(for module %s) are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.", list, moduleName));
                     operationResult.setSuccess(false);
                 }
                 partitionsReceived[partitionIdentifier.partitionNumber - 1] = true;

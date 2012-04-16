@@ -9,7 +9,6 @@ import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.StringRepresentation;
 import org.restlet.resource.Variant;
-import tlb.TlbConstants;
 import tlb.server.repo.PartitionRecordRepo;
 import tlb.server.repo.SetRepo;
 import tlb.server.resources.TlbResource;
@@ -47,7 +46,7 @@ public class VerifyPartitionCompletenessResource extends TlbResource {
             logger.debug(String.format("Partitions for %s[v:%s](m:%s) verified partition completeness.", reqNamespace(), reqVersion(), reqModuleName()));
         }
         SetRepo.OperationResult operationResult = new SetRepo.OperationResult(true);
-        if (partitionRecordRepo.checkAllPartitionsExecuted(operationResult)) {
+        if (partitionRecordRepo.checkAllPartitionsExecuted(reqModuleName(), operationResult)) {
             getResponse().setStatus(Status.SUCCESS_OK);
         } else {
             getResponse().setStatus(new Status(Status.CLIENT_ERROR_EXPECTATION_FAILED, SOME_PARTITIONS_DID_NOT_EXECUTE));

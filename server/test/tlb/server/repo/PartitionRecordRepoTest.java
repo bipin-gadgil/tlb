@@ -23,31 +23,31 @@ public class PartitionRecordRepoTest {
     @Test
     public void shouldUnderstandWhen_allPartitionsHaveReportedSubsetValues_inSimpleScenario() {
         repo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(false));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("my-module", operationResult), is(false));
         assertThat(operationResult.isSuccess(), is(true));
 
         repo.subsetReceivedFromPartition(new PartitionIdentifier(3, 3));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(false));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("my-module", operationResult), is(false));
         assertThat(operationResult.isSuccess(), is(true));
 
         repo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(true));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("my-module", operationResult), is(true));
         assertThat(operationResult.isSuccess(), is(true));
     }
 
     @Test
     public void shouldIdentifyWhenHasPartitionsRunningWithInconsistentTotalPartitionsConfiguration() {
         repo.subsetReceivedFromPartition(new PartitionIdentifier(1, 3));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(false));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("some-module", operationResult), is(false));
         assertThat(operationResult.isSuccess(), is(true));
 
         repo.subsetReceivedFromPartition(new PartitionIdentifier(3, 4));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(false));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("some-module", operationResult), is(false));
         assertThat(operationResult.isSuccess(), is(false));
-        assertThat(operationResult.getMessage(), is("- Partitions [1/3, 3/4] are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.\n"));
+        assertThat(operationResult.getMessage(), is("- Partitions [1/3, 3/4](for module some-module) are being run with inconsistent total-partitions configuration. This may lead to violation of mutual-exclusion or collective-exhaustion or both. Total partitions value should be the same across all partitions of a job-name and job-version combination.\n"));
 
         repo.subsetReceivedFromPartition(new PartitionIdentifier(2, 3));
-        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration(operationResult), is(true));
+        assertThat(repo.allSubsetsReceivedWithConsistentConfiguration("some-module", operationResult), is(true));
         assertThat(operationResult.isSuccess(), is(false));
     }
 
@@ -57,8 +57,8 @@ public class PartitionRecordRepoTest {
         repo.subsetReceivedFromPartition(new PartitionIdentifier(2, 6));
         repo.subsetReceivedFromPartition(new PartitionIdentifier(5, 6));
         SetRepo.OperationResult result = new SetRepo.OperationResult(true);
-        assertThat(repo.checkAllPartitionsExecuted(result), is(false));
-        assertThat(result.getMessage(), is("- [1, 4, 6] of total 6 partition(s) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
+        assertThat(repo.checkAllPartitionsExecuted("bad-module", result), is(false));
+        assertThat(result.getMessage(), is("- [1, 4, 6] of total 6 partition(s)(for module bad-module) were not executed. This violates collective exhaustion. Please check your partition configuration for potential mismatch in total-partitions value and actual 'number of partitions' configured and check your build process triggering mechanism for failures.\n"));
         assertThat(result.isSuccess(), is(false));
     }
 
@@ -67,7 +67,7 @@ public class PartitionRecordRepoTest {
         repo.subsetReceivedFromPartition(new PartitionIdentifier(1, 2));
         repo.subsetReceivedFromPartition(new PartitionIdentifier(2, 2));
         SetRepo.OperationResult result = new SetRepo.OperationResult(true);
-        assertThat(repo.checkAllPartitionsExecuted(result), is(true));
+        assertThat(repo.checkAllPartitionsExecuted("some-module", result), is(true));
         assertThat(result.getMessage(), is("All partitions executed.\n"));
         assertThat(result.isSuccess(), is(true));
     }
@@ -89,7 +89,7 @@ public class PartitionRecordRepoTest {
     @Test
     public void shouldFailGracefullyWhenNoPartitionsPopulated_andCorrectnessCheckIsCalled() {
         SetRepo.OperationResult result = new SetRepo.OperationResult(true);
-        repo.checkAllPartitionsExecuted(result);
+        repo.checkAllPartitionsExecuted("random-module", result);
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- No record found for partition execution. Please verify correctness check was enabled on this build.\n"));
     }
@@ -97,7 +97,7 @@ public class PartitionRecordRepoTest {
     @Test
     public void shouldFailGracefullyWhenNoPartitionsPopulated_andConfigurationConsistencyCheckIsCalled() {
         SetRepo.OperationResult result = new SetRepo.OperationResult(true);
-        repo.allSubsetsReceivedWithConsistentConfiguration(result);
+        repo.allSubsetsReceivedWithConsistentConfiguration("random-module", result);
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), is("- No record found for partition execution. Please verify correctness check was enabled on this build.\n"));
     }
