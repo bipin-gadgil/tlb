@@ -3,6 +3,7 @@ package tlb.service;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.domain.SuiteResultEntry;
@@ -25,6 +26,8 @@ import static tlb.TlbConstants.TlbServer.TLB_JOB_VERSION;
  * @understands exchanging balancing/ordering related data with the TLB server
  */
 public class TlbServer extends SmoothingServer {
+    private static final Logger logger = Logger.getLogger(TlbServer.class.getName());
+
     private final HttpAction httpAction;
 
     //reflectively invoked by factory
@@ -92,7 +95,14 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateUniversalSet(List<TlbSuiteFile> universalSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessPost(universalSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName));
+        String namespace = namespace();
+        String jobVersion = jobVersion();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Posting to validate universal set for %s[v:%s](m:%s)", namespace, jobVersion, moduleName));
+        }
+
+        RemoteValidationResponse resp = correctnessPost(universalSet, getUrl(namespace, CORRECTNESS_CHECK, jobVersion, TlbConstants.Server.EntryRepoFactory.UNIVERSAL_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_CREATED) {
             return new ValidationResult(ValidationResult.Status.FIRST, "First validation snapshot.");
@@ -106,7 +116,16 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName) {
-        RemoteValidationResponse resp = correctnessPost(subSet, getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), String.valueOf(totalPartitions()), String.valueOf(partitionNumber()), TlbConstants.Server.EntryRepoFactory.SUB_SET, moduleName));
+        String namespace = namespace();
+        String jobVersion = jobVersion();
+        String totalPartition = String.valueOf(totalPartitions());
+        String partitionNumber = String.valueOf(partitionNumber());
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Posting to validate subset %s/%s for %s[v:%s](m:%s)", partitionNumber, totalPartition, namespace, jobVersion, moduleName));
+        }
+
+        RemoteValidationResponse resp = correctnessPost(subSet, getUrl(namespace, CORRECTNESS_CHECK, jobVersion, totalPartition, partitionNumber, TlbConstants.Server.EntryRepoFactory.SUB_SET, moduleName));
 
         if (resp.status == HttpStatus.SC_NOT_ACCEPTABLE) {
             return new ValidationResult(ValidationResult.Status.FAILED, resp.body);
@@ -120,7 +139,12 @@ public class TlbServer extends SmoothingServer {
     }
 
     public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
-        HttpResponse httpResponse = httpAction.doGet(getUrl(namespace(), CORRECTNESS_CHECK, jobVersion(), TlbConstants.Server.VERIFY_PARTITION_COMPLETENESS, moduleName));
+        String namespace = namespace();
+        String jobVersion = jobVersion();
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Verifying partitions executed for %s[v:%s](m:%s)", namespace, jobVersion, moduleName));
+        }
+        HttpResponse httpResponse = httpAction.doGet(getUrl(namespace, CORRECTNESS_CHECK, jobVersion, TlbConstants.Server.VERIFY_PARTITION_COMPLETENESS, moduleName));
         RemoteValidationResponse resp = validationResponse(httpResponse);
 
         if (resp.status == HttpStatus.SC_EXPECTATION_FAILED) {
@@ -137,7 +161,11 @@ public class TlbServer extends SmoothingServer {
         for (TlbSuiteFile suiteFile : set) {
             builder.append(suiteFile.dump());
         }
-        HttpResponse httpResponse = httpAction.doPost(url, builder.toString());
+        String body = builder.toString();
+        if (logger.isDebugEnabled()) {
+            logger.debug("Posting for correctness check: << " + body + " >>");
+        }
+        HttpResponse httpResponse = httpAction.doPost(url, body);
         return validationResponse(httpResponse);
     }
 
