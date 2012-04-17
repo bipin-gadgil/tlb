@@ -172,24 +172,13 @@ public class TimeBasedTestSplitterTest {
         TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
         logFixture.startListening();
         List<TlbSuiteFile> filteredResources = criteria.filterSuites(resources, moduleName);
-        logFixture.assertHeard("got total of 7 files to balance");
-        logFixture.assertHeard("total jobs to distribute load [ 2 ]");
-        logFixture.assertHeard("Historical test time data has entries for 5 suites");
-        logFixture.assertHeard("5 entries of historical test time data found relevant");
-        logFixture.assertHeard("Encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance");
-        logFixture.assertHeard("assigned total of 4 files to [ job-1 ]");
         assertThat(filteredResources.size(), is(4));
         assertThat(filteredResources, hasItems(second, firstNew, first, third));
 
         when(server.partitionNumber()).thenReturn(2);
         criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
         filteredResources = criteria.filterSuites(resources, moduleName);
-        logFixture.assertHeard("got total of 7 files to balance", 2);
-        logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
-        logFixture.assertHeard("Historical test time data has entries for 5 suites", 2);
-        logFixture.assertHeard("5 entries of historical test time data found relevant", 2);
         logFixture.assertHeard("Encountered 2 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
-        logFixture.assertHeard("assigned total of 3 files to [ job-2 ]");
         assertThat(filteredResources.size(), is(3));
         assertThat(filteredResources, hasItems(fourth, fifth, secondNew));
     }
@@ -214,7 +203,6 @@ public class TimeBasedTestSplitterTest {
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("Historical test time data has entries for 5 suites");
         logFixture.assertHeard("3 entries of historical test time data found relevant");
-        logFixture.assertHeard("Encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance");
         logFixture.assertHeard("assigned total of 1 files to [ job-1 ]");
 
         when(server.partitionNumber()).thenReturn(2);
@@ -225,7 +213,6 @@ public class TimeBasedTestSplitterTest {
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
         logFixture.assertHeard("Historical test time data has entries for 5 suites", 2);
         logFixture.assertHeard("3 entries of historical test time data found relevant", 2);
-        logFixture.assertHeard("Encountered 0 new files which don't have historical time data, used average time [ 3.0 ] to balance", 2);
         logFixture.assertHeard("assigned total of 2 files to [ job-2 ]");
     }
 

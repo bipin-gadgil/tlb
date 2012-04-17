@@ -7,10 +7,13 @@ import tlb.service.Server;
 import tlb.service.TalksToServer;
 import tlb.splitter.timebased.Bucket;
 import tlb.splitter.timebased.TestFile;
-import tlb.utils.FileUtil;
+import tlb.utils.CollectionUtils;
 import tlb.utils.SystemEnvironment;
 
 import java.util.*;
+
+import static tlb.utils.CollectionUtils.mean;
+import static tlb.utils.CollectionUtils.sortedCopy;
 
 
 /**
@@ -84,28 +87,69 @@ public class TimeBasedTestSplitter extends JobFamilyAwareSplitter implements Tal
         }
 
         List<TestFile> testFiles = new ArrayList<TestFile>();
-        double totalTime = 0;
 
         for (SuiteTimeEntry suiteTimeEntry : suiteTimeEntries) {
             String fileName = suiteTimeEntry.getName();
             double time = suiteTimeEntry.getTime();
-            totalTime += time;
             if (currentFileNames.remove(fileName)) testFiles.add(new TestFile(fileNameToResource.get(fileName), time));
         }
 
         logger.info(String.format("%s entries of historical test time data found relevant", testFiles.size()));
 
-        double avgTime = totalTime / suiteTimeEntries.size();
-
-        logger.info(String.format("Encountered %s new files which don't have historical time data, used average time [ %s ] to balance", currentFileNames.size(), avgTime));
-
-        for (String newFile : currentFileNames) {
-            testFiles.add(new TestFile(fileNameToResource.get(newFile), avgTime));
-        }
+        addNewTests(fileNameToResource, currentFileNames, testFiles, suiteTimeEntries);
 
         Collections.sort(testFiles);
-        
+
         return testFiles;
+    }
+
+    private void addNewTests(Map<String, TlbSuiteFile> fileNameToResource, Set<String> currentFileNames, List<TestFile> testFiles, List<SuiteTimeEntry> suiteTimeEntries) {
+        if (currentFileNames.isEmpty()) return;
+
+        double newTime = calculateNewTime(groupSimilarEntries(suiteTimeEntries), suiteTimeEntries.size());
+        logger.info(String.format("Encountered %s new files which don't have historical time data, used average time [ %s ] to balance", currentFileNames.size(), newTime));
+
+        for (String newFile : currentFileNames) {
+            testFiles.add(new TestFile(fileNameToResource.get(newFile), newTime));
+        }
+    }
+
+    private List<List<Long>> groupSimilarEntries(List<SuiteTimeEntry> suiteTimeEntries) {
+        List<List<Long>> groupedTimes = new ArrayList<List<Long>>();
+        List<Long> latestGroup = new ArrayList<Long>();
+        groupedTimes.add(latestGroup);
+        for (SuiteTimeEntry entry : sortedCopy(suiteTimeEntries)) {
+            long time = entry.getTime();
+            if (latestGroup.size() > 1 && !comparableDifferences(latestGroup, time)) {
+                latestGroup = new ArrayList<Long>();
+                groupedTimes.add(latestGroup);
+            }
+            latestGroup.add(time);
+        }
+        return groupedTimes;
+    }
+
+    private double calculateNewTime(List<List<Long>> groupedTimes, int size) {
+        double time = 0.0;
+        for (List<Long> groupedTime : groupedTimes) {
+            time += (((double) groupedTime.size()) / size) * mean(groupedTime);
+        }
+        return time;
+    }
+
+    private boolean comparableDifferences(List<Long> groupedTimes, long time) {
+        double mean = meanDifference(groupedTimes);
+        Long largest = groupedTimes.get(groupedTimes.size() - 1);
+        long diff = time - largest;
+        return  diff > .7 * mean && diff < 1.3 * mean || diff < .1 * largest;
+    }
+
+    private double meanDifference(List<Long> groupedTimes) {
+        long sum = 0;
+        for (int i = 1; i < groupedTimes.size(); i++) {
+            sum += groupedTimes.get(i) - groupedTimes.get(i - 1);
+        }
+        return ((double)sum  / (groupedTimes.size() - 1));
     }
 
     private List<TlbSuiteFile> resourcesFrom(Bucket bucket) {
