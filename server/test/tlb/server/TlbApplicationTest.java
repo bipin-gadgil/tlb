@@ -6,6 +6,7 @@ import org.restlet.Context;
 import org.restlet.Finder;
 import org.restlet.Restlet;
 import tlb.server.resources.*;
+import tlb.server.resources.correctness.HomeResource;
 import tlb.server.resources.correctness.UpdateSubsetResource;
 import tlb.server.resources.correctness.UpdateUniversalSetResource;
 import tlb.server.resources.correctness.VerifyPartitionCompletenessResource;
@@ -81,6 +82,14 @@ public class TlbApplicationTest {
         assertThat(routeMaping.keySet(), hasItem("/{namespace}/correctness_check/{listing_version}/verify_partition_completeness/{module_name}"));
         Restlet restlet = routeMaping.get("/{namespace}/correctness_check/{listing_version}/verify_partition_completeness/{module_name}");
         assertThat(((Finder)restlet).getTargetClass().getName(), is(VerifyPartitionCompletenessResource.class.getName()));
+    }
+
+    @Test
+    public void shouldHaveARouteFor_homePage() {
+        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
+        assertThat(routeMaping.keySet(), hasItem("/"));
+        Restlet restlet = routeMaping.get("/");
+        assertThat(((Finder)restlet).getTargetClass().getName(), is(HomeResource.class.getName()));
     }
 
 }

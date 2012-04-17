@@ -8,6 +8,7 @@ import tlb.server.resources.SubsetSizeResource;
 import tlb.server.resources.SuiteResultResource;
 import tlb.server.resources.SuiteTimeResource;
 import tlb.server.resources.VersionedSuiteTimeResource;
+import tlb.server.resources.correctness.HomeResource;
 import tlb.server.resources.correctness.UpdateSubsetResource;
 import tlb.server.resources.correctness.UpdateUniversalSetResource;
 import tlb.server.resources.correctness.VerifyPartitionCompletenessResource;
@@ -27,6 +28,8 @@ public class TlbApplication extends Application {
     @Override
     public Restlet createRoot() {
         Router router = new Router(getContext());
+
+        router.attachDefault(HomeResource.class);
 
         router.attach(String.format("/{%s}/%s", REQUEST_NAMESPACE, SUBSET_SIZE), SubsetSizeResource.class);
 
