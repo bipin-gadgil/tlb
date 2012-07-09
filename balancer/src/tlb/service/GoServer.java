@@ -300,4 +300,8 @@ public class GoServer extends SmoothingServer {
     public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
         throw new UnsupportedOperationException("Correctness-check feature is only available when working against TLB server. Go server support does not include correctness-checking yet.");
     }
+
+    public String partitionIdentifier() {
+        return String.format("job: '%s', partition: %s/%s", jobName(), partitionNumber(), totalPartitions());
+    }
 }

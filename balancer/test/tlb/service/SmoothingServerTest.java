@@ -250,5 +250,9 @@ public class SmoothingServerTest {
         public ValidationResult verifyAllPartitionsExecutedFor(String moduleName) {
             throw new UnsupportedOperationException("not implemented yet");
         }
+
+        public String partitionIdentifier() {
+            return delegate.partitionIdentifier();
+        }
     }
 }

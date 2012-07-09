@@ -441,6 +441,12 @@ public class TlbServerTest {
     }
 
     @Test
+    public void shouldIdentifyPartition() {
+        makeTlbServerFor(2, 5);
+        assertThat(server.partitionIdentifier(), is("job: 'job-2', version: '" + jobVersion + "', partition: 2/5"));
+    }
+
+    @Test
     public void shouldSucceed_allPartitionsExecutedValidation_ifAllPartitionsForGivenModuleHaveRun() throws IllegalAccessException {
         makeTlbServerFor(1, 2);
 

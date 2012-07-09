@@ -197,11 +197,24 @@ public class TestUtil {
     }
 
     public static SystemEnvironment initEnvironment(String jobName) {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put(TlbConstants.Go.GO_JOB_NAME, jobName);
-        map.put(TlbConstants.Go.GO_STAGE_NAME, "stage-1");
+        Map<String, String> map = initEnvMap(jobName);
         return new SystemEnvironment(map);
     }
+
+    private static Map<String, String> initEnvMap(String jobName) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put(TlbConstants.TlbServer.TLB_JOB_NAME, jobName);
+        map.put(TlbConstants.TlbServer.TLB_JOB_VERSION, "build_no_19");
+        return map;
+    }
+
+    public static SystemEnvironment initEnvironment(String jobName, int partitionNumber, int totalPartitions) {
+        Map<String, String> env = initEnvMap(jobName);
+        env.put(TlbConstants.TlbServer.TLB_PARTITION_NUMBER, String.valueOf(partitionNumber));
+        env.put(TlbConstants.TlbServer.TLB_TOTAL_PARTITIONS, String.valueOf(totalPartitions));
+        return new SystemEnvironment(env);
+    }
+
 
     public static File createTmpDir() {
         String tmpDir = System.getProperty("test.tmp.dir", System.getProperty(SystemEnvironment.TMP_DIR));

@@ -187,6 +187,7 @@ public class TimeBasedTestSplitterTest {
     public void shouldIgnoreDeletedTests() throws Exception{
         when(server.totalPartitions()).thenReturn(2);
         when(server.getLastRunTestTimes()).thenReturn(testTimes());
+        when(server.partitionIdentifier()).thenReturn("foo bar");
 
         TlbSuiteFile first = new TlbSuiteFileImpl(convertToPlatformSpecificPath("com/foo/First.class"));
         TlbSuiteFile second = new TlbSuiteFileImpl(convertToPlatformSpecificPath("com/foo/Second.class"));
@@ -195,7 +196,7 @@ public class TimeBasedTestSplitterTest {
         List<TlbSuiteFile> resources = Arrays.asList(second, first, third);
 
         when(server.partitionNumber()).thenReturn(1);
-        TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-1"));
+        TimeBasedTestSplitter criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job"));
         logFixture.startListening();
 
         assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(second)));
@@ -203,17 +204,17 @@ public class TimeBasedTestSplitterTest {
         logFixture.assertHeard("total jobs to distribute load [ 2 ]");
         logFixture.assertHeard("Historical test time data has entries for 5 suites");
         logFixture.assertHeard("3 entries of historical test time data found relevant");
-        logFixture.assertHeard("assigned total of 1 files to [ job-1 ]");
+        logFixture.assertHeard("assigned total of 1 files to [ foo bar ]");
 
         when(server.partitionNumber()).thenReturn(2);
-        criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job-2"));
+        criteria = new TimeBasedTestSplitter(server, TestUtil.initEnvironment("job"));
 
         assertThat(criteria.filterSuites(resources, moduleName), is(Arrays.asList(first, third)));
         logFixture.assertHeard("got total of 3 files to balance", 2);
         logFixture.assertHeard("total jobs to distribute load [ 2 ]", 2);
         logFixture.assertHeard("Historical test time data has entries for 5 suites", 2);
         logFixture.assertHeard("3 entries of historical test time data found relevant", 2);
-        logFixture.assertHeard("assigned total of 2 files to [ job-2 ]");
+        logFixture.assertHeard("assigned total of 2 files to [ foo bar ]");
     }
 
     private List<SuiteTimeEntry> testTimes() {

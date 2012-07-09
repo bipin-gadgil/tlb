@@ -11,6 +11,9 @@ import tlb.service.Server;
 import tlb.service.TalksToServer;
 import tlb.utils.SystemEnvironment;
 
+import static tlb.TlbConstants.TlbServer.*;
+import static tlb.utils.SystemEnvironment.EnvVar;
+
 /**
  * @understands the criteria for splitting a given test suite across jobs from the same family
  */
@@ -44,7 +47,7 @@ public abstract class JobFamilyAwareSplitter extends AbstractTestSplitter implem
         }
 
         List<TlbSuiteFile> subset = subset(fileResources);
-        logger.info(String.format("assigned total of %s files to [ %s ]", subset.size(), env.val(new SystemEnvironment.EnvVar(TlbConstants.Go.GO_JOB_NAME))));
+        logger.info(String.format("assigned total of %s files to [ %s ]", subset.size(), server.partitionIdentifier()));
         server.publishSubsetSize(subset.size());
         return subset;
     }

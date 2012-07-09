@@ -52,7 +52,25 @@ public class GoServerTest {
         SystemEnvironment environment = initEnvironment("http://test.host:8153/cruise");
         assertCanFindJobsFrom("http://test.host:8153/cruise", environment);
     }
-    
+
+    @Test
+    public void shouldIdentifyPartitionCorrectly() throws Exception {
+        Map<String, String> envMap = initEnvMap("http://test.host:8153/go");
+        envMap.put(TlbConstants.Go.GO_JOB_NAME, "firefox-2");
+        SystemEnvironment environment = new SystemEnvironment(envMap);
+        try {
+            HttpAction action = mock(HttpAction.class);
+
+            when(action.get("http://test.host:8153/go/pipelines/pipeline-foo/26/stage-foo-bar/1.xml")).thenReturn(TestUtil.fileContents("resources/stage_detail_with_jobs_in_random_order.xml"));
+            stubJobDetails(action);
+
+            server = new GoServer(environment, action);
+            assertThat(server.partitionIdentifier(), is("job: 'firefox-2', partition: 2/3"));
+        } finally {
+            SmoothingServerTest.clearCachingFiles(new FileUtil(environment));
+        }
+    }
+
     @Test
     public void shouldUnderstandPartitionsForPearJobsIdentifiedByNumber() throws Exception{
         Map<String, String> envMap = initEnvMap("http://test.host:8153/go");

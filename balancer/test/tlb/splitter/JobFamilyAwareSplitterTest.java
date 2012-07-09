@@ -8,6 +8,7 @@ import tlb.TlbConstants;
 import tlb.TlbSuiteFile;
 import tlb.TlbSuiteFileImpl;
 import tlb.service.GoServer;
+import tlb.service.TlbServer;
 import tlb.utils.SystemEnvironment;
 
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class JobFamilyAwareSplitterTest {
         envMap.put(TlbConstants.Go.GO_JOB_NAME, "build-1");
         GoServer toCruise = mock(GoServer.class);
         when(toCruise.totalPartitions()).thenReturn(3);
+        when(toCruise.partitionIdentifier()).thenReturn("foo bar baz quux");
 
         JobFamilyAwareSplitter criteria = new JobFamilyAwareSplitter(new SystemEnvironment(envMap)) {
             protected List<TlbSuiteFile> subset(List<TlbSuiteFile> fileResources) {
@@ -51,7 +53,7 @@ public class JobFamilyAwareSplitterTest {
         List<TlbSuiteFile> resources = criteria.filterSuites(new ArrayList<TlbSuiteFile>(), "module_bar");
         logFixture.assertHeard("got total of 0 files to balance");
         logFixture.assertHeard("total jobs to distribute load [ 3 ]");
-        logFixture.assertHeard("assigned total of 2 files to [ build-1 ]");
+        logFixture.assertHeard("assigned total of 2 files to [ foo bar baz quux ]");
         assertThat(resources.size(), is(2));
         verify(toCruise).publishSubsetSize(2);
     }

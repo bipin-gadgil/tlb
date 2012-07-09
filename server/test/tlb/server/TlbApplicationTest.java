@@ -2,9 +2,7 @@ package tlb.server;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.restlet.Context;
-import org.restlet.Finder;
-import org.restlet.Restlet;
+import org.restlet.*;
 import tlb.server.resources.*;
 import tlb.server.resources.correctness.HomeResource;
 import tlb.server.resources.correctness.UpdateSubsetResource;
@@ -86,10 +84,10 @@ public class TlbApplicationTest {
 
     @Test
     public void shouldHaveARouteFor_homePage() {
-        HashMap<String, Restlet> routeMaping = getRoutePatternsAndResources(app);
-        assertThat(routeMaping.keySet(), hasItem("/"));
-        Restlet restlet = routeMaping.get("/");
-        assertThat(((Finder)restlet).getTargetClass().getName(), is(HomeResource.class.getName()));
+        Route defaultRoute = ((Router) app.createRoot()).getDefaultRoute();
+        String pattern = defaultRoute.getTemplate().getPattern();
+        assertThat(pattern, is(""));
+        assertThat(((Finder)defaultRoute.getNext()).getTargetClass().getName(), is(HomeResource.class.getName()));
     }
 
 }

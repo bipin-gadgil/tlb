@@ -32,4 +32,6 @@ public interface Server {
     ValidationResult validateSubSet(List<TlbSuiteFile> subSet, String moduleName);
 
     ValidationResult verifyAllPartitionsExecutedFor(String moduleName);
+
+    String partitionIdentifier();
 }

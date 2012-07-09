@@ -156,6 +156,10 @@ public class TlbServer extends SmoothingServer {
         }
     }
 
+    public String partitionIdentifier() {
+        return String.format("job: '%s', version: '%s', partition: %s/%s", jobName(), jobVersion(), partitionNumber(), totalPartitions());
+    }
+
     private RemoteValidationResponse correctnessPost(List<TlbSuiteFile> set, final String url) {
         StringBuilder builder = new StringBuilder();
         for (TlbSuiteFile suiteFile : set) {
