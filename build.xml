@@ -304,7 +304,7 @@
 
     <target name="tar-examples" depends="prepare-dist, -load.short.rev">
         <property name="example-projects.tar" location="${tmp.dir}/examples.tar"/>
-        <exec executable="git" output="${example-projects.tar}">
+        <exec executable="git" output="${example-projects.tar}" error="/dev/null">
             <arg value="archive"/>
             <arg value="--remote=${sample-projects.dir}"/>
             <arg value="--format=tar"/>
